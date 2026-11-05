@@ -1,4 +1,4 @@
-package mtogo.Server;
+package mtogo.server;
 
 import mtogo.config.AppProperties;
 import org.springframework.context.annotation.Configuration;
