@@ -1,0 +1,52 @@
+{
+  "version": "0.2",
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "import": ["@cspell/dict-da-dk/cspell-ext.json"],
+  "language": "en-US, en-GB, da-DK",
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/target/**",
+    "**/.mvn/**",
+    "**/.idea/**",
+    "**/.git/**",
+    "**/.github/**",
+    "**/coverage/**",
+    "**/logs/**",
+    "**/tmp/**",
+    ".cspell.jsonc",
+  ],
+  "files": [
+    "**/*.md",
+    "**/*.txt",
+    "**/*.json",
+    "**/*.jsonc",
+    "**/*.yml",
+    "**/*.yaml",
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "Repo dictionary",
+      "path": "./.dict/repo.dictionary",
+    },
+  ],
+  "dictionaries": ["Repo dictionary"],
+  "languageSettings": [
+    {
+      "languageId": "markdown",
+      "dictionaries": ["Repo dictionary"],
+    },
+    {
+      "languageId": "plaintext",
+      "dictionaries": ["Repo dictionary"],
+    },
+  ],
+  "ignoreRegExpList": [
+    "^---[\\s\\S]*?^---$", // ignore YAML front matter
+    "^```[\\s\\S]*?^```$", // ignore code blocks
+    "(?:^|[\\s([{])`[^`\\n]+`", // ignore inline code
+    "<!--.*?-->", // ignore HTML comments
+    "https?://\\S+", // ignore URLs
+    "\\b[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(?:/\\S*)?", // ignore domain names
+  ],
+}

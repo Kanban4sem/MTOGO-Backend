@@ -1,0 +1,33 @@
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === IDEs ===
+.idea/
+*.iml
+.vscode/
+
+# === Maven / build output ===
+# NOTE: the Maven wrapper (backend/mvnw, backend/.mvn/wrapper/) MUST be committed
+backend/target/
+
+# === Logs and local data ===
+backend/logs/
+backend/storage/
+*.log
+
+# === Environment variables and secrets ===
+# Only .env.example (dummy values) is committed. Real values live in .env.
+.env
+*.env
+.env.*
+!.env.example
+
+# === IntelliJ HTTP client: keep .http files, never private env files ===
+**/http-client.private.env.json
+backend/src/main/resources/http/http-client.env.json
+
+# === TakT ===
+.tt_cache
+
+_temp.token

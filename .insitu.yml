@@ -1,0 +1,106 @@
+# .insitu.yml - TakT quality checks for MTOGO Backend
+# The same checks run locally (pre-commit hook) and in GitHub Actions.
+
+defaults:
+  die-on-error: true
+  timeout: 10m
+  verbose: false
+
+inventory:
+  - id: gh-auth
+    name: GitHub Authentication
+    command: gh auth status
+
+  - id: install-gh-insitu
+    name: Install gh-insitu
+    command: gh extension install devx-cafe/gh-insitu
+
+  - id: install-gh-tt
+    name: Install gh-tt
+    command: gh extension install devx-cafe/gh-tt
+
+  - id: install-takt-shortcuts
+    name: Install TakT shortcuts
+    command: |
+      gh alias set workon '!gh tt workon "$@"' --clobber
+      gh alias set wrapup '!gh tt wrapup "$@"' --clobber
+      gh alias set deliver '!gh tt deliver "$@"' --clobber
+      gh alias set semver '!gh tt semver "$@"' --clobber
+
+  - id: safe-repo
+    name: Mark repository as safe for git operations
+    command: git config --global --add safe.directory "$(pwd)"
+
+  - id: repo-gitconfig
+    name: Use repo-root .gitconfig for consistent git settings
+    command: |
+      git config --local --get include.path | grep -e ../.gitconfig >/dev/null 2>&1 || \
+      git config --local --add include.path ../.gitconfig
+
+  - id: install-npm-tools
+    name: Install linting and checker tools
+    command: |
+      npm install -g prettier markdownlint-cli2 cspell @cspell/dict-da-dk
+
+  - id: cspell
+    name: Run cspell
+    command: cspell
+
+  - id: markdownlint
+    name: Run markdownlint
+    command: markdownlint-cli2
+
+  - id: prettier
+    name: Run prettier
+    command: prettier --check .
+
+  - id: backend-verify
+    name: Backend build and tests (Maven wrapper)
+    command: cd backend && ./mvnw -q -B verify
+
+  - id: fix-markdown
+    name: Fix all fixable markdown issues
+    command: markdownlint-cli2 --fix
+
+  - id: fix-prettier
+    name: Fix all fixable prettier issues
+    command: prettier --write .
+
+waves:
+  - id: post-create
+    name: Dev Container Post Create
+    parallel: true
+    checks:
+      - gh-auth
+      - install-npm-tools
+      - install-gh-insitu
+      - install-gh-tt
+      - install-takt-shortcuts
+      - safe-repo
+      - repo-gitconfig
+
+  - id: prep-runner
+    name: Run to prepare GitHub runner
+    parallel: true
+    checks:
+      - gh-auth
+      - install-gh-insitu
+      - repo-gitconfig
+      - install-npm-tools
+
+  - id: trunk-worthy
+    name: Minimum quality checks before commit
+    parallel: true
+    checks:
+      - cspell
+      - markdownlint
+      - prettier
+      - backend-verify
+
+  - id: fix-all
+    name: Fix anything that can be fixed automatically
+    parallel: false # fixers edit the same files, so they must run one at a time
+    checks:
+      - fix-markdown
+      - fix-prettier
+      - cspell
