@@ -1,55 +1,33 @@
-# === Dependencies ===
-node_modules/
-
-# === Next.js build output ===
-.next/
-out/
-
-# === Production build ===
-dist/
-
-# === Logs ===
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# === Environment variables ===
-*.env
-.env
-.env.local
-.env.development
-.env.production
-.env.test
-next-env.d.ts
-
 # === OS files ===
 .DS_Store
 Thumbs.db
 
-# === IntelliJ / JetBrains ===
+# === IDEs ===
+.idea/
 *.iml
-backend/.mvn/
-backend/target/
-backend/src/main/resources/http/
-!backend/src/main/resources/http/
-backend/src/main/resources/http/*
-!backend/src/main/resources/http/*.http
-!backend/src/main/resources/http/http-client.env.json
-**/http-client.private.env.json
-backend/logs
-backend/storage/
-backend/.idea
-
-# === Editor caches ===
 .vscode/
-.cache/
 
-# === TypeScript ===
-*.tsbuildinfo
+# === Maven / build output ===
+# NOTE: the Maven wrapper (backend/mvnw, backend/.mvn/wrapper/) MUST be committed
+backend/target/
 
-# === Sensitive ===
-docker-compose.yml
-**/application.properties
-backend/src/main/resources/application.properties
+# === Logs and local data ===
+backend/logs/
+backend/storage/
+*.log
+
+# === Environment variables and secrets ===
+# Only .env.example (dummy values) is committed. Real values live in .env.
+.env
+*.env
+.env.*
+!.env.example
+
+# === IntelliJ HTTP client: keep .http files, never private env files ===
+**/http-client.private.env.json
 backend/src/main/resources/http/http-client.env.json
+
+# === TakT ===
+.tt_cache
+
+_temp.token

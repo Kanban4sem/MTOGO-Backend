@@ -1,4 +1,4 @@
-# Tier 0 entry point for all prompts / solutions.
+# Tier 0 entry point for all prompts / solutions
 
 Text
 

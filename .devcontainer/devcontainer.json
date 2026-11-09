@@ -1,0 +1,33 @@
+{
+  "name": "MTOGO Backend",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/python": {
+      "version": "3.14"
+    },
+    "ghcr.io/devcontainers/features/node:2.1.1": {
+      "version": "24"
+    },
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "25",
+      "installMaven": "false"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "postCreateCommand": "gh ext install devx-cafe/gh-insitu && gh insitu run post-create",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vmware.vscode-spring-boot",
+        "DavidAnson.vscode-markdownlint",
+        "streetsidesoftware.code-spell-checker"
+      ]
+    }
+  },
+  "remoteEnv": {
+    "GH_TOKEN": "${localEnv:GH_TOKEN}"
+  }
+}

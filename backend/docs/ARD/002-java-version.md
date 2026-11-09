@@ -4,15 +4,17 @@
 
 Approved by:
 
-- [X] Jonas
+- [x] Jonas
 - [ ] Jesper
 - [ ] Daniel
 - [ ] Dino
 
 ## Context
+
 We need a Java version that is compatible with our chosen Framework - Spring Boot 4. As for my - Jonas' - understanding Java 25 is less compatible with Spring Boot 4 as old dependencies have not been fully merged to the newest Java 25 version. Upon further research it seems to be okay and working as intended as per 05/11-2026.
 
 ## Decision
+
 We as a team has desided on using Java 25 as our JDK / SDK for this MTOGO project as a starting point. It is compatible with Spring Boot 4 and has the functionality that we as a team seek in order to complete our project.
 
 ## Alternatives
