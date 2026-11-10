@@ -2,3 +2,4 @@ tmp/**
 backend/target/**
 backend/.mvn/**
 .idea/**
+.agents/**

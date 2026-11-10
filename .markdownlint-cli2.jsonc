@@ -1,6 +1,12 @@
 // Configuration for markdownlint-cli2
 {
-  "globs": ["**/*.md", "!**/node_modules/**", "!**/target/**", "!**/tmp/**"],
+  "globs": [
+    "**/*.md",
+    "!**/node_modules/**",
+    "!**/target/**",
+    "!**/tmp/**",
+    "!.agents/**",
+  ],
   "config": {
     "MD004": { "style": "dash" },
     "MD013": false,
