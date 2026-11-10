@@ -66,6 +66,14 @@ inventory:
     name: Fix all fixable prettier issues
     command: prettier --write .
 
+  - id: java-format-check
+    name: Check Java formatting
+    command: cd backend && ./mvnw -q -B spotless:check
+
+  - id: java-format-fix
+    name: Fix Java formatting
+    command: cd backend && ./mvnw -q -B spotless:apply
+
 waves:
   - id: post-create
     name: Dev Container Post Create
@@ -96,11 +104,13 @@ waves:
       - markdownlint
       - prettier
       - backend-verify
+      - java-format-check
 
   - id: fix-all
     name: Fix anything that can be fixed automatically
-    parallel: false # fixers edit the same files, so they must run one at a time
+    parallel: false
     checks:
       - fix-markdown
       - fix-prettier
       - cspell
+      - java-format-fix
