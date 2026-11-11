@@ -8,12 +8,12 @@ Thumbs.db
 .vscode/
 
 # === Maven / build output ===
-# NOTE: the Maven wrapper (backend/mvnw, backend/.mvn/wrapper/) MUST be committed
-backend/target/
+# NOTE: the Maven wrapper (mvnw, .mvn/wrapper/) MUST be committed
+target/
 
 # === Logs and local data ===
-backend/logs/
-backend/storage/
+logs/
+storage/
 *.log
 
 # === Environment variables and secrets ===
@@ -25,7 +25,7 @@ backend/storage/
 
 # === IntelliJ HTTP client: keep .http files, never private env files ===
 **/http-client.private.env.json
-backend/src/main/resources/http/http-client.env.json
+src/main/resources/http/http-client.env.json
 
 # === TakT ===
 .tt_cache

@@ -1,0 +1,5 @@
+interface:
+  display_name: "MTOGO Spec"
+  short_description: "Write the issue's spec"
+policy:
+  allow_implicit_invocation: false

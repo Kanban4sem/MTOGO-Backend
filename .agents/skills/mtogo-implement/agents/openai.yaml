@@ -1,0 +1,5 @@
+interface:
+  display_name: "MTOGO Implement"
+  short_description: "Implement a spec test-first"
+policy:
+  allow_implicit_invocation: false

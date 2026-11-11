@@ -24,6 +24,12 @@ Then let the dev container inherit your login. On Mac add this line to `~/.zprof
 export GH_TOKEN=$(/opt/homebrew/bin/gh auth token)
 ```
 
+On Windows, run this once in PowerShell instead:
+
+```powershell
+[Environment]::SetEnvironmentVariable("GH_TOKEN", (gh auth token), "User")
+```
+
 Restart your terminal and VS Code afterwards.
 
 ### 3. Open the repository in the dev container
@@ -65,13 +71,18 @@ Rules:
 
 ## Configuration
 
-Configuration lives in `backend/src/main/resources/application.properties` and contains no secrets. Copy `backend/.env.example` to `backend/.env` and fill in real values. The `.env` file is never committed.
+Configuration lives in `src/main/resources/application.properties` and contains no secrets. Copy `.env.example` to `.env` and fill in real values. The `.env` file is never committed.
 
 ## Build and test
 
 ```bash
-cd backend
 ./mvnw verify
 ```
 
-`verify` also writes a JaCoCo coverage report to `backend/target/site/jacoco/`. Open `index.html` in a browser to see which code the tests cover. SonarQube reads `jacoco.xml`.
+`verify` also writes a JaCoCo coverage report to `target/site/jacoco/`. Open `index.html` in a browser to see which code the tests cover. SonarQube reads `jacoco.xml`.
+
+## How we work
+
+- [CONTRIBUTING](CONTRIBUTING.md): issues, workflow, commit messages, quality gates and ADRs
+- [Coding standards](docs/coding-standards.md) and [Definition of Done](docs/definition-of-done.md)
+- [AI workflow](docs/ai-workflow.md) and [`AGENTS.md`](AGENTS.md): how we work with AI agents

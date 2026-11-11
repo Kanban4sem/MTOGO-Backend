@@ -56,7 +56,7 @@ inventory:
 
   - id: backend-verify
     name: Backend build and tests (Maven wrapper)
-    command: cd backend && ./mvnw -q -B verify
+    command: ./mvnw -q -B verify
 
   - id: fix-markdown
     name: Fix all fixable markdown issues
@@ -68,11 +68,11 @@ inventory:
 
   - id: java-format-check
     name: Check Java formatting
-    command: cd backend && ./mvnw -q -B spotless:check
+    command: ./mvnw -q -B spotless:check
 
   - id: java-format-fix
     name: Fix Java formatting
-    command: cd backend && ./mvnw -q -B spotless:apply
+    command: ./mvnw -q -B spotless:apply
 
 waves:
   - id: post-create

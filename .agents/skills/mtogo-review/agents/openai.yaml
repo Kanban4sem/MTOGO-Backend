@@ -1,0 +1,5 @@
+interface:
+  display_name: "MTOGO Review"
+  short_description: "Review a branch against standards and spec"
+policy:
+  allow_implicit_invocation: false

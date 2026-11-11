@@ -1,0 +1,6 @@
+# Line endings: LF in the repository and in the working tree, so shell scripts
+# such as mvnw run in the Linux dev container. Windows scripts keep CRLF.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.jar binary

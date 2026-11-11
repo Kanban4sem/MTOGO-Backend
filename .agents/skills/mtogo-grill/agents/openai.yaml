@@ -1,0 +1,5 @@
+interface:
+  display_name: "MTOGO Grill"
+  short_description: "Grill an issue into an agreed plan"
+policy:
+  allow_implicit_invocation: false

@@ -16,6 +16,7 @@
     "**/tmp/**",
     ".cspell.jsonc",
     "**/.agents/**",
+    "**/.claude/**",
     "skills-lock.json",
   ],
   "files": [

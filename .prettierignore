@@ -1,5 +1,6 @@
 tmp/**
-backend/target/**
-backend/.mvn/**
+target/**
+.mvn/**
 .idea/**
 .agents/**
+.claude/**
