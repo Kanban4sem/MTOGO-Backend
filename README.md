@@ -73,3 +73,5 @@ Configuration lives in `backend/src/main/resources/application.properties` and c
 cd backend
 ./mvnw verify
 ```
+
+`verify` also writes a JaCoCo coverage report to `backend/target/site/jacoco/`. Open `index.html` in a browser to see which code the tests cover. SonarQube reads `jacoco.xml`.

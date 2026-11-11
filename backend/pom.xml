@@ -29,6 +29,8 @@
         <jjwt.version>0.13.0</jjwt.version>
         <dotenv.version>3.2.0</dotenv.version>
         <rest-assured.version>6.3.0</rest-assured.version>
+        <!-- Java 25 needs JaCoCo 0.8.14 or newer -->
+        <jacoco.version>0.8.14</jacoco.version>
     </properties>
 
     <!-- Dependencies -->
@@ -174,6 +176,27 @@
                         </eclipse>
                     </java>
                 </configuration>
+            </plugin>
+            <!-- Coverage is reported to SonarQube; thresholds live in its quality gate, not here -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
