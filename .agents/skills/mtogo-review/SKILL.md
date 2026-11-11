@@ -54,7 +54,7 @@ Start both sub-agents together, in the foreground. If your harness has no sub-ag
 
 **Standards sub-agent** gets the diff command, the commit list, the paths of the standards sources and the smell baseline pasted in full. Brief: "Report per file and hunk: (a) every place the diff breaks a documented rule, citing the document and the rule; (b) any baseline smell, named, with the hunk quoted. Breaches of a documented rule can be hard violations; smells are always judgement calls, and a documented rule overrides a smell. Check the tests against the Testing section: rule sets designed from the acceptance criteria, CSV files, Detroit school. Skip what tooling enforces. Under 400 words."
 
-**Spec sub-agent** gets the diff command, the commit list, the spec path and the issue's acceptance criteria. Brief: "Report: (a) acceptance criteria, user stories or testing decisions that are missing or partial; (b) behaviour in the diff the spec didn't ask for; (c) requirements that look implemented but wrongly; (d) places where the implementation note disagrees with the code. Quote the spec line for each finding. Under 400 words."
+**Spec sub-agent** gets the diff command, the commit list, the spec path and the issue's acceptance criteria. Brief: "Report: (a) acceptance criteria, behaviours or testing decisions that are missing or partial; (b) anything the diff does that the spec didn't ask for; (c) requirements that look implemented but wrongly; (d) places where the implementation note disagrees with the code. Quote the spec line for each finding. Under 400 words."
 
 ## 4. Check the Definition of Done
 

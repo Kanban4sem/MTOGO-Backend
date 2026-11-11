@@ -1,6 +1,6 @@
 # AI Workflow
 
-**Version:** 1.1 · **Date:** 2026-11-11
+**Version:** 2.0 · **Date:** 2026-11-11
 
 How we use AI agents (Claude Code and Codex) to take an issue from the board to `main`. The flow is based on the skills in [mattpocock/skills](https://github.com/mattpocock/skills), adapted to TakT and to Kanban issues without tickets.
 
@@ -37,7 +37,7 @@ We use no tickets. Each issue has exactly one spec, so the board shows the whole
 - An issue too large to implement in one session is split on the board, not into tickets.
 - An issue belongs to one repository. Work in the other repository (`MTOGO-Backend` or `MTOGO-Frontend`) gets its own linked issue and spec.
 
-The issue stays the source of the acceptance criteria. If grilling changes them, the agent proposes the new text and updates the issue once you approve. The spec copies them and adds user stories, implementation decisions, testing decisions and what is out of scope.
+The issue stays the source of the acceptance criteria. If grilling changes them, the agent proposes the new text and updates the issue once you approve. The spec copies them and adds the feature-flag decision, the behaviour, implementation decisions, testing decisions and what is out of scope.
 
 ## Specs and implementation notes
 
@@ -88,7 +88,8 @@ Use these outside the main flow, or within a session when they fit:
 
 How to change this document is described in [CONTRIBUTING](../CONTRIBUTING.md#changing-the-documents).
 
-| Version | Date       | Change             | Issue    |
-| ------- | ---------- | ------------------ | -------- |
-| 1.0     | 2026-11-10 | First version      | MTOGO#32 |
-| 1.1     | 2026-11-11 | Moved from `MTOGO` | #5       |
+| Version | Date       | Change                                                                   | Issue    |
+| ------- | ---------- | ------------------------------------------------------------------------ | -------- |
+| 1.0     | 2026-11-10 | First version                                                            | MTOGO#32 |
+| 1.1     | 2026-11-11 | Moved from `MTOGO`                                                       | #5       |
+| 2.0     | 2026-11-11 | Specs list behaviour in any readable format, and record the feature flag | #12      |

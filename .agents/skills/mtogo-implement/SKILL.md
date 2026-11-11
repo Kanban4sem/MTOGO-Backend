@@ -35,7 +35,7 @@ From the repository root, run the test class you are working on after each chang
 - Work outside the spec becomes a proposed follow-up issue. Create it with `gh issue create` once the developer approves.
 - At green checkpoints you may save with `gh tt wrapup -m "<message>"`.
 
-The build is done when every acceptance criterion and user story maps to a passing test (or, in the frontend, a listed manual check), and the full suite passes.
+The build is done when every acceptance criterion and behaviour maps to a passing test (or, in the frontend, a listed manual check), and the full suite passes.
 
 ## 3. Write the implementation note
 

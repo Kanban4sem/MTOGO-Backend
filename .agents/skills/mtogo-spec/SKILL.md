@@ -19,7 +19,7 @@ List the test seams and rule sets from the grilling, each with a one-line note o
 
 ## 3. Write the spec
 
-Write the spec using the template and section rules in [SPEC-FORMAT.md](SPEC-FORMAT.md). Use the glossary's terms throughout. Every acceptance criterion in the issue appears in the spec and is covered by at least one user story and one testing decision.
+Write the spec using the template and section rules in [SPEC-FORMAT.md](SPEC-FORMAT.md). Use the glossary's terms throughout. Every acceptance criterion in the issue appears in the spec and is covered by at least one behaviour and one testing decision. Fill in the feature-flag field from the developer's answer during grilling, and ask now if it wasn't settled.
 
 ## 4. Save and link
 

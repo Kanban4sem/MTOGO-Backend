@@ -41,11 +41,13 @@ assignees: []
 ## Acceptance criteria
 
 > [!TIP]
-> **Optional section/header**
-> If relevant add a list of simple acceptance criteria
->
-> - [ ] Criterion 1
-> - [ ] Criterion 2
+> **Required.** The spec copies these, so the issue can't go through the AI workflow without them.
+> Write a plain checklist of what must be true when the issue is done. One checkable statement per line. Given/When/Then is not needed.
+> **Ask:**
+> _"How do we know this is done?"_
+
+- [ ] Criterion 1
+- [ ] Criterion 2
 
 &nbsp;
 

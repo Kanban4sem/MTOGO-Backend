@@ -9,7 +9,7 @@ The issue stays the card on the board and the checklist for the [Definition of D
 ```md
 # <Issue title>
 
-**Version:** 1.0 · **Date:** <YYYY-MM-DD> · **Issue:** #<issue>
+**Version:** 1.0 · **Date:** <YYYY-MM-DD> · **Issue:** #<issue> · **Feature flag:** <None, or `<flag-name>`, off by default>
 
 ## Acceptance criteria
 
@@ -17,9 +17,9 @@ Copied from #<issue>. The issue is the source: change the issue first, then this
 
 - [ ] <criterion>
 
-## User stories
+## Behaviour
 
-1. As a <actor>, I want <feature>, so that <benefit>
+1. <actor> can <action> when <condition>
 
 ## Implementation decisions
 
@@ -50,7 +50,8 @@ Copied from #<issue>. The issue is the source: change the issue first, then this
 
 ## Sections
 
-- **User stories**: an extensive numbered list covering every behaviour the issue asks for, in domain language from the [glossary](../../../docs/glossary.md).
+- **Feature flag**: the developer's answer to whether the issue needs a flag, as `AGENTS.md` requires. `None`, or the flag's name. A flag is off by default.
+- **Behaviour**: an extensive numbered list covering everything the issue asks the system to do, one behaviour per line, in domain language from the [glossary](../../../docs/glossary.md). Include what the system refuses, not only what it allows. For example: "1. A customer can cancel an order while it is Pending." and "2. A customer cannot cancel an order that is Delivered." A user story ("As a …, I want …, so that …") is also fine where the benefit matters to the reader, but no format is required. The rule is that each line is readable and can be tested.
 - **Implementation decisions**: the modules built or changed and their interfaces, API contracts (paths, DTOs, status codes), schema changes (Flyway migrations), access rules and the ADRs that apply. No file paths or code snippets, since they go stale. The exception is a prototype snippet that states a decision more precisely than prose (a state machine, a schema), trimmed to the decision and marked as coming from a prototype.
 - **Testing decisions**: the seams agreed with the developer, and for each one the rule sets from [Testing](../../../docs/coding-standards.md#testing): which method or endpoint, the techniques (EP, BVA, decision table) and the CSV rule-set name (`cancel-status`). Name existing tests to copy as prior art. In the frontend, list the manual checks against the running API instead.
 - **Out of scope**: what the grilling ruled out, and the follow-up issues it created.
