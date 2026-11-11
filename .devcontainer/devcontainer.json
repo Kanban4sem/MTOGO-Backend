@@ -27,6 +27,10 @@
       ]
     }
   },
+  "runArgs": ["--add-host=host.docker.internal:host-gateway"],
+  "containerEnv": {
+    "TESTCONTAINERS_HOST_OVERRIDE": "host.docker.internal"
+  },
   "remoteEnv": {
     "GH_TOKEN": "${localEnv:GH_TOKEN}"
   }

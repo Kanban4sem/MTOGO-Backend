@@ -81,6 +81,28 @@ Configuration lives in `src/main/resources/application.properties` and contains 
 
 `verify` also writes a JaCoCo coverage report to `target/site/jacoco/`. Open `index.html` in a browser to see which code the tests cover. SonarQube reads `jacoco.xml`.
 
+The tests start PostgreSQL with Testcontainers, so Docker must be running.
+
+## Docker image
+
+Build the jar first, then the image:
+
+```bash
+./mvnw package
+docker build -t mtogo-backend .
+```
+
+Run it against your local PostgreSQL. Inside a container, `localhost` is the container itself, so use `host.docker.internal` to reach the database on your machine:
+
+```bash
+docker run -p 8080:8080 \
+  -e DB_URL=jdbc:postgresql://host.docker.internal:5432/mtogo \
+  -e DB_USER=mtogo -e DB_PASSWORD=<your password> \
+  mtogo-backend
+```
+
+After about a minute `docker ps` shows the container as `healthy`. Docker checks `GET /actuator/health`, the only endpoint that is open without authentication.
+
 ## How we work
 
 - [CONTRIBUTING](CONTRIBUTING.md): issues, workflow, commit messages, quality gates and ADRs

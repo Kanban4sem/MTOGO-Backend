@@ -1,0 +1,3 @@
+# Only the built jar goes into the image, so a local .env never does
+*
+!target/app.jar

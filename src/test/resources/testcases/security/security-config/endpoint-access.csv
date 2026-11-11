@@ -1,0 +1,4 @@
+path,expected,reason
+/actuator/health,200,"EP: the health check is public"
+/actuator/info,401,"EP: other actuator endpoints require authentication"
+/v1/orders,401,"EP: API endpoints require authentication"
