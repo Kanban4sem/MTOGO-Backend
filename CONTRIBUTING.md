@@ -1,6 +1,6 @@
 # Contributing
 
-**Version:** 2.0 · **Date:** 2026-11-11
+**Version:** 2.1 · **Date:** 2026-11-11
 
 MTOGO is developed with Kanban and trunk-based development using [TakT](https://github.com/devx-cafe/gh-tt). Every change starts as an issue and ends as one commit on `main`.
 
@@ -138,9 +138,9 @@ An ADR lives in the repository that owns the decision, and the other repository 
 
 ## Changing the documents
 
-This applies to this document, the Definition of Done, the coding standards, the AGENTS document, the AI workflow and the glossary.
+This applies to this document, the Definition of Done, the coding standards, the AGENTS document, the AI workflow, the glossary and the minimum viable product.
 
-This document, the Definition of Done, the AI workflow, the glossary and the general sections of the coding standards are shared with [MTOGO-Frontend](https://github.com/Kanban4sem/MTOGO-Frontend), which keeps its own copy. A change to a shared document gets a linked issue in both repositories, so the copies stay the same.
+This document, the Definition of Done, the AI workflow, the glossary, the minimum viable product and the general sections of the coding standards are shared with [MTOGO-Frontend](https://github.com/Kanban4sem/MTOGO-Frontend), which keeps its own copy. A change to a shared document gets a linked issue in both repositories, so the copies stay the same.
 
 1. Create an issue that describes the change.
 2. Agree on it as a team.
@@ -156,3 +156,4 @@ This document, the Definition of Done, the AI workflow, the glossary and the gen
 | 1.0     | 2026-11-10 | First version                                                             | -        |
 | 1.1     | 2026-11-10 | Glossary, issue per repository, ADR status, one-line commits, AI workflow | MTOGO#32 |
 | 2.0     | 2026-11-11 | Moved from `MTOGO`. Linked issues for shared documents, ADR ownership     | #5       |
+| 2.1     | 2026-11-11 | The minimum viable product is a shared document                           | #19      |

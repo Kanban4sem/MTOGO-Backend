@@ -108,3 +108,4 @@ After about a minute `docker ps` shows the container as `healthy`. Docker checks
 - [CONTRIBUTING](CONTRIBUTING.md): issues, workflow, commit messages, quality gates and ADRs
 - [Coding standards](docs/coding-standards.md) and [Definition of Done](docs/definition-of-done.md)
 - [AI workflow](docs/ai-workflow.md) and [`AGENTS.md`](AGENTS.md): how we work with AI agents
+- [Minimum viable product](docs/minimum-viable-product.md): what the first release contains and the order status lifecycle
