@@ -49,6 +49,13 @@ assignees: []
 - [ ] Criterion 1
 - [ ] Criterion 2
 
+## Time spent
+
+> [!TIP]
+> **Required before `deliver`.** The total time everyone spent on the issue, rounded up to the nearest 30 minutes, in hours (2 h 12 min is `2.5 h`).
+
+0 h
+
 &nbsp;
 
 > [!NOTE]

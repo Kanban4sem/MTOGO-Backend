@@ -1,6 +1,6 @@
 # Contributing
 
-**Version:** 3.1 · **Date:** 2026-11-12
+**Version:** 4.0 · **Date:** 2026-11-12
 
 MTOGO is developed with Kanban and trunk-based development using [TakT](https://github.com/devx-cafe/gh-tt). Every change starts as an issue and ends as one commit on `main`.
 
@@ -40,8 +40,10 @@ Every change starts with an issue created from the issue template.
 
 - Create the issue in the repository whose code it changes and add it to the board. `gh tt workon` only finds issues in the current repository, and one issue ends as one commit on one `main`. Work that changes both repositories gets one linked issue in each.
 - Write the title in imperative mood without a type prefix: `Add order endpoint`. The title becomes the subject of the commit on `main`.
-- Set the type of work with the issue's Type field or a label.
+- Give the issue one work label: `development` for planned work, `ad hoc` for a small change outside the plan, or `bug` for a hotfix. Only `development` issues need the [four-eyes](#four-eyes-principle) approval before Ready. Also set the Type field and the `backend` or `frontend` label.
 - Fill in the acceptance criteria. The Definition of Done is checked against them.
+- Before `deliver`, fill in **Time spent** at the bottom of the issue: the total time everyone spent on it, rounded up to the nearest 30 minutes, in hours (2 h 12 min is `2.5 h`).
+- When the issue is done, add the label of the course week it was delivered in (`week 1`, `week 2`, …).
 
 ## Workflow
 
@@ -98,12 +100,13 @@ gh tt wrapup -m "feat(order): add order entity"
 
 ## Four-eyes principle
 
-At least two people see every change before it is delivered. This happens while the work is done, not as an approval step afterwards:
+At least two people agree on every feature before it is built. The check is on the issue, not on the code:
 
-- Pair or mob program on the issue, or
-- Involve a responsible for the files you change
+- **Before work starts:** a `development` issue moves from Specification to Ready only when two people have read and approved its content. Each approval is an `Approved by: <name>` label. `ad hoc` and `bug` issues skip this.
+- **While the work is done:** once the issue is picked up with `gh tt workon`, the developer owns the code review and the decisions made while building, helped by the AI review in `/mtogo-review`. Nobody waits for a second person to review the code.
+- **When a change reaches further:** a change that breaks or reshapes something outside the issue gets a new issue, or a note to the developer responsible for it, who decides what to do.
 
-`.github/RESPONSIBLES` maps files to the people responsible for them, one glob pattern and one or more GitHub handles per line. The file is read from the bottom up, so the last matching line wins. When `wrapup` commits changes to files you are not responsible for, it mentions the responsibles on the issue so they can join or help. Nobody waits for an approval.
+`.github/RESPONSIBLES` maps files to the people responsible for them, one glob pattern and one or more GitHub handles per line. The file is read from the bottom up, so the last matching line wins. When `wrapup` commits changes to files you are not responsible for, it mentions the responsibles on the issue, so they know about the change.
 
 ## Quality gates
 
@@ -211,3 +214,4 @@ This document, the Definition of Done, the AI workflow, the glossary, the minimu
 | 2.2     | 2026-11-11 | ADR Documentation for Feature Flags added                                 | #7       |
 | 3.0     | 2026-11-12 | Feature flags are added to and removed from `FeatureFlagsDTO`             | #30      |
 | 3.1     | 2026-11-12 | Flag steps name the tests to update, one version bump per issue           | #33      |
+| 4.0     | 2026-11-12 | Four-eyes on the issue before Ready, time spent and week labels on issues | #34      |

@@ -1,6 +1,6 @@
 # Agent Instructions
 
-**Version:** 2.1 · **Date:** 2026-11-11
+**Version:** 2.2 · **Date:** 2026-11-12
 
 MTOGO is a food delivery platform built with Kanban and trunk-based development using TakT. This repository holds the backend (Spring Boot). The frontend (React) lives in `MTOGO-Frontend`, which has its own copy of the documents below.
 
@@ -42,7 +42,7 @@ The developer's guide to the flow is [AI workflow](docs/ai-workflow.md).
 
 ## Where things live
 
-- **Issues:** GitHub issues in this repository, on the [project board](https://github.com/orgs/Kanban4sem/projects/1). Read them with `gh issue view <number>`. Work that also changes the frontend gets a linked issue in `MTOGO-Frontend`.
+- **Issues:** GitHub issues in this repository, on the [project board](https://github.com/orgs/Kanban4sem/projects/1). Read them with `gh issue view <number>`. Create one with its work label (`development`, `ad hoc` or `bug`), its repository label and its Type, as in [Issues](CONTRIBUTING.md#issues). Work that also changes the frontend gets a linked issue in `MTOGO-Frontend`.
 - **Specs:** `docs/specs/<issue>-<slug>.md`. Format and versioning: [SPEC-FORMAT.md](.agents/skills/mtogo-spec/SPEC-FORMAT.md).
 - **ADRs:** `docs/adr/<number>-<slug>.md` with a three-digit number, in the format from [Architecture decisions](CONTRIBUTING.md#architecture-decisions). This replaces `ADR-FORMAT.md` in the `domain-modeling` skill. An ADR lives in the repository that owns the decision. The backend owns the API contract.
 - **Glossary:** `docs/glossary.md`. Wherever a skill names `GLOSSARY.md` or `CONTEXT.md`, use this file.
@@ -58,3 +58,4 @@ How to change this document is described in [CONTRIBUTING](CONTRIBUTING.md#chang
 | 1.0     | 2026-11-10 | First version                                                         | MTOGO#32 |
 | 2.0     | 2026-11-11 | Moved from `MTOGO`. Feature flags, ADR ownership and shared documents | #5       |
 | 2.1     | 2026-11-11 | The minimum viable product is a shared document                       | #19      |
+| 2.2     | 2026-11-12 | Issues get a work label, repository label and Type                    | #34      |

@@ -62,7 +62,8 @@ Check these yourself against the diff:
 
 - **Item 4, documentation:** the spec's implementation note matches the current spec version; new ADRs and glossary terms are in place; README and API documentation are updated where the change affects them.
 - **Item 5, follow-up:** no `TODO` or `FIXME` in the diff; deferred work is an issue.
-- **Item 3, four-eyes:** an AI review doesn't count. Remind the developer that a second person must have seen the change.
+- **Item 3, four-eyes:** the code review is the developer's, and this review helps them. For a `development` issue, check that it has two `Approved by:` labels. Flag any change that breaks or reshapes something outside the issue, so the developer can create an issue or tell the person responsible.
+- **Item 6, time spent:** remind the developer to fill in **Time spent** on the issue before `deliver`.
 
 Items 1 and 2 are covered by the Spec and Standards axes.
 

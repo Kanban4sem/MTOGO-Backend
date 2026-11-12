@@ -1,6 +1,6 @@
 # AI Workflow
 
-**Version:** 2.0 · **Date:** 2026-11-11
+**Version:** 3.0 · **Date:** 2026-11-12
 
 How we use AI agents (Claude Code and Codex) to take an issue from the board to `main`. The flow is based on the skills in [mattpocock/skills](https://github.com/mattpocock/skills), adapted to TakT and to Kanban issues without tickets.
 
@@ -26,7 +26,7 @@ Start each session fresh (`/clear` in Claude Code, a new chat in Codex):
 - **Session 2** starts from the spec alone. If the spec isn't enough to build from, the spec is incomplete, and that's worth finding out.
 - **Session 3 and later** review the code without the assumptions made while writing it.
 
-Before `deliver`, check the Definition of Done yourself. In particular, the team must have accepted the ADRs from session 1, and a second person must have seen the change.
+Before `deliver`, check the Definition of Done yourself. In particular, the team must have accepted the ADRs from session 1.
 
 ## One issue, one spec
 
@@ -61,7 +61,7 @@ When an agent's work shapes a change, the spec and its implementation notes are 
 
 ## Four-eyes
 
-AI review does not count toward the [four-eyes principle](../CONTRIBUTING.md#four-eyes-principle). `/mtogo-review` is a tool for you; a second person still has to see the change.
+Under the [four-eyes principle](../CONTRIBUTING.md#four-eyes-principle), two people approve a `development` issue before it moves to Ready. Once you have picked it up, the code review is yours: `/mtogo-review` helps you review the change, and you decide which findings to fix.
 
 ## Other skills
 
@@ -93,3 +93,4 @@ How to change this document is described in [CONTRIBUTING](../CONTRIBUTING.md#ch
 | 1.0     | 2026-11-10 | First version                                                            | MTOGO#32 |
 | 1.1     | 2026-11-11 | Moved from `MTOGO`                                                       | #5       |
 | 2.0     | 2026-11-11 | Specs list behaviour in any readable format, and record the feature flag | #12      |
+| 3.0     | 2026-11-12 | The developer owns the code review                                       | #34      |
