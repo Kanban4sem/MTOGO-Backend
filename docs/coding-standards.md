@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 3.0 · **Date:** 2026-11-12
+**Version:** 3.1 · **Date:** 2026-11-12
 
 ## Overview
 
@@ -94,7 +94,7 @@ mtogo
 | **Domain**       | Business rules, authorization decisions that depend on data, orchestration                    | Know about HTTP requests or responses      |
 | **Data**         | Persistence with Spring Data JPA, entity ↔ DTO mapping                                        | Contain business rules                     |
 
-Dependencies point one way: presentation → domain → data.
+Dependencies point one way: presentation → domain → data. DTOs are the exception: they are the API contract, so they live in `presentation/dto/`, and the service in the domain layer returns them (rule 2).
 
 1. **Depend on interfaces and inject through constructors.** Fields are `final`. No `@Autowired` on fields.
 2. **Entities never cross the service boundary.** Services return DTOs. The DTOs are the API contract, so an entity can change without breaking the API.
@@ -372,3 +372,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 1.2     | 2026-11-10 | Fixes to Frontend Architecture          | MTOGO#33 |
 | 2.0     | 2026-11-11 | Moved from `MTOGO`, backend rules only  | #5       |
 | 3.0     | 2026-11-12 | Configuration tests                     | #30      |
+| 3.1     | 2026-11-12 | DTOs in the presentation layer          | #33      |

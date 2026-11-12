@@ -1,5 +1,0 @@
-featureLoginEnabled,expected,reason
-NULL,false,"EP: an unset flag is off"
-true,true,"EP: a flag set to true is on"
-false,false,"EP: a flag set to false is off"
-banana,ConfigurationPropertiesBindException,"EP: a value that isn't a boolean stops the backend"

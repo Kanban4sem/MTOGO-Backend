@@ -13,11 +13,6 @@ import org.springframework.validation.annotation.Validated;
 // app.login-enabled.
 public record AppProperties(@Valid @NotNull Cors cors, @Name("login-enabled") boolean isLoginEnabled)
 {
-
-    // Attributes
-
-    // _________________________________________________________________________________________________________________
-
     public record Cors(@NotBlank String allowedOrigin)
     {
     }

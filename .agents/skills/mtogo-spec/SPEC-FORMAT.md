@@ -64,7 +64,7 @@ Versions follow [Changing the documents](../../../CONTRIBUTING.md#changing-the-d
 - **Minor** (1.0 → 1.1): a clarification that does not change what is built.
 - **Major** (1.1 → 2.0): a requirement or acceptance criterion is added, changed or removed.
 
-Every version change updates the header's version and date and adds a changelog row with the issue that caused it. A later issue that changes the behaviour of an existing spec amends that spec with a new version rather than creating another spec.
+Every version change updates the header's version and date and adds a changelog row with the issue that caused it. Versions compare with `main`: an issue bumps a spec once, however many changes it makes, and a spec that isn't on `main` yet stays at 1.0. A later issue that changes the behaviour of an existing spec amends that spec with a new version rather than creating another spec.
 
 ## Implementation notes
 
@@ -81,4 +81,4 @@ The implementation notes record what was actually built for each spec version, u
 
 - `/mtogo-implement` adds the note for the spec version it implemented.
 - A review fix that leaves the spec unchanged updates the note for the current version in place and sets its date to today. Git keeps the earlier text.
-- A fix that changes the spec bumps the spec version first, then adds a new note under the new version. Earlier notes stay as history.
+- A fix that changes the spec bumps the spec version first, unless this issue already bumped it, then adds a new note under the new version. Otherwise it updates the current note in place. Earlier notes stay as history.

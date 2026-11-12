@@ -31,9 +31,9 @@ class AppPropertiesTest
             .withUserConfiguration(AppPropertiesConfiguration.class);
 
     @ParameterizedTest(name = "[{index}] {2}")
-    @CsvFileSource(resources = "/testcases/config/app-properties/login-enabled-binding.csv", numLinesToSkip = 1, nullValues = "NULL")
-    @DisplayName("Login enabled - is off unless FEATURE_LOGIN_ENABLED is true")
-    void loginEnabledIsOffUnlessSetToTrue(String featureLoginEnabled, String expected, String reason)
+    @CsvFileSource(resources = "/testcases/config/app-properties/bind-login-enabled.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Login enabled - binds only boolean values of FEATURE_LOGIN_ENABLED")
+    void loginEnabledBindsOnlyBooleanValues(String featureLoginEnabled, String expected, String reason)
     {
         ApplicationContextRunner runner = featureLoginEnabled == null
                 ? contextRunner
