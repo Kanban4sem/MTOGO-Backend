@@ -1,4 +1,9 @@
-path,expected,reason
-/actuator/health,200,"EP: the health check is public"
-/actuator/info,401,"EP: other actuator endpoints require authentication"
-/v1/orders,401,"EP: API endpoints require authentication"
+method,path,expected,reason
+GET,/actuator/health,200,"EP: the health check is public"
+GET,/v1/features,200,"EP, decision table: reading the feature flags is public"
+POST,/v1/features,401,"Decision table: any method other than GET on the feature flags requires authentication"
+GET,/v3/api-docs,200,"EP: the OpenAPI specification is public"
+GET,/swagger-ui.html,200,"EP: the Swagger UI entry page is public"
+GET,/swagger-ui/index.html,200,"EP: Swagger UI is public"
+GET,/actuator/info,401,"EP: other actuator endpoints require authentication"
+GET,/v1/orders,401,"EP: API endpoints require authentication"

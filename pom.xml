@@ -29,6 +29,7 @@
         <jjwt.version>0.13.0</jjwt.version>
         <dotenv.version>3.2.0</dotenv.version>
         <rest-assured.version>6.3.0</rest-assured.version>
+        <springdoc.version>3.2.0</springdoc.version>
         <!-- Java 25 needs JaCoCo 0.8.14 or newer -->
         <jacoco.version>0.8.14</jacoco.version>
     </properties>
@@ -102,6 +103,13 @@
             <groupId>io.github.cdimascio</groupId>
             <artifactId>dotenv-java</artifactId>
             <version>${dotenv.version}</version>
+        </dependency>
+
+        <!-- Generates the OpenAPI specification and Swagger UI from the controllers -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <dependency>

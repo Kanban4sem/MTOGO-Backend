@@ -101,7 +101,11 @@ docker run -p 8080:8080 \
   mtogo-backend
 ```
 
-After about a minute `docker ps` shows the container as `healthy`. Docker checks `GET /actuator/health`, the only endpoint that is open without authentication.
+After about a minute `docker ps` shows the container as `healthy`. Docker checks `GET /actuator/health`, which is open without authentication.
+
+## API documentation
+
+With the backend running, Swagger UI is at `/swagger-ui/index.html` and the OpenAPI specification at `/v3/api-docs`. Both are open without authentication, like `GET /actuator/health` and `GET /v1/features`. Every other endpoint requires a login.
 
 ## How we work
 

@@ -1,6 +1,6 @@
 # Contributing
 
-**Version:** 2.2 · **Date:** 2026-11-11
+**Version:** 3.0 · **Date:** 2026-11-12
 
 MTOGO is developed with Kanban and trunk-based development using [TakT](https://github.com/devx-cafe/gh-tt). Every change starts as an issue and ends as one commit on `main`.
 
@@ -133,7 +133,7 @@ An ADR lives in the repository that owns the decision, and the other repository 
 
 ### Add
 
-Declare the flag in AppProperties and application.properties, defaulting to false. Add its environment variable to .env.example with false, and set its value in each environment’s .env. Ensure the startup configuration passes it to Spring Boot. Never commit .env.
+Declare the flag in AppProperties and application.properties, defaulting to false. Add the field in `FeatureFlagsDTO` and its mapping in `FeatureFlagService`, so `GET /v1/features` returns it. In Java the flag takes the `is` prefix, as in `isLoginEnabled`. `@Name("login-enabled")` in `AppProperties` and `@JsonProperty("loginEnabled")` in `FeatureFlagsDTO` keep the property and the JSON field without it. Add its environment variable to .env.example with false, and set its value in each environment’s .env. Ensure the startup configuration passes it to Spring Boot. Never commit .env.
 
 Examples:
 
@@ -155,7 +155,7 @@ Verify the feature with the flag enabled, disabled and unset.
 
 ### Remove
 
-Create a linked follow-up issue when adding a temporary flag. Once fully released, remove its configuration, conditional checks and obsolete flag-specific tests.
+Create a linked follow-up issue when adding a temporary flag. Once fully released, remove its configuration, the field in `FeatureFlagsDTO` and its mapping in `FeatureFlagService`, conditional checks and obsolete flag-specific tests.
 
 ### Frontend Handle
 
@@ -209,3 +209,4 @@ This document, the Definition of Done, the AI workflow, the glossary, the minimu
 | 2.0     | 2026-11-11 | Moved from `MTOGO`. Linked issues for shared documents, ADR ownership     | #5       |
 | 2.1     | 2026-11-11 | The minimum viable product is a shared document                           | #19      |
 | 2.2     | 2026-11-11 | ADR Documentation for Feature Flags added                                 | #7       |
+| 3.0     | 2026-11-12 | Feature flags are added to and removed from `FeatureFlagsDTO`             | #30      |

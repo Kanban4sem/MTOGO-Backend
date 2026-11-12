@@ -23,11 +23,12 @@ class SecurityConfigTest
     @LocalServerPort
     int port;
 
-    @ParameterizedTest(name = "[{index}] {2}")
+    @ParameterizedTest(name = "[{index}] {3}")
     @CsvFileSource(resources = "/testcases/security/security-config/endpoint-access.csv", numLinesToSkip = 1)
-    @DisplayName("Endpoint access - only the health check is public")
-    void onlyHealthCheckIsPublic(String path, int expected, String reason)
+    @DisplayName("Endpoint access - only the health check, the feature flags and the API documentation are public")
+    void onlyHealthCheckFeatureFlagsAndApiDocumentationArePublic(String method, String path, int expected,
+            String reason)
     {
-        given().port(port).when().get(path).then().statusCode(expected);
+        given().port(port).when().request(method, path).then().statusCode(expected);
     }
 }

@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 2.0 · **Date:** 2026-11-11
+**Version:** 3.0 · **Date:** 2026-11-12
 
 ## Overview
 
@@ -289,16 +289,16 @@ src/test/resources/
 - Reference the file with an absolute classpath path: `/testcases/order/order-service/cancel-status.csv`.
 - CSV files are changed in the same commit as the tests that use them.
 
-| Item           | Convention                                                                                         |
-| -------------- | -------------------------------------------------------------------------------------------------- |
-| Header         | First line, camelCase names matching the method parameters, skipped with `numLinesToSkip = 1`      |
-| Column order   | Inputs, then `expected`, then `reason`                                                             |
-| `expected`     | Service tests: `ACCEPT` or the exception's simple class name. Endpoint tests: the HTTP status code |
-| `reason`       | `<techniques>: <what the row tests>`, e.g. `"EP: cancel an order in delivery"`                     |
-| Quoting        | Quote values that contain a comma or leading or trailing spaces. Always quote `reason`             |
-| `null` / empty | `NULL` with `nullValues = "NULL"`. Empty string is `""`                                            |
-| Dates          | `YYYY-MM-DD`, fixed values. Never relative to today                                                |
-| Display name   | `name = "[{index}] {n}"`, where `n` is the zero-based index of `reason`                            |
+| Item           | Convention                                                                                                                                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Header         | First line, camelCase names matching the method parameters, skipped with `numLinesToSkip = 1`                                                                                 |
+| Column order   | Inputs, then `expected`, then `reason`                                                                                                                                        |
+| `expected`     | Service tests: `ACCEPT` or the exception's simple class name. Endpoint tests: the HTTP status code. Configuration tests: the bound value or the exception's simple class name |
+| `reason`       | `<techniques>: <what the row tests>`, e.g. `"EP: cancel an order in delivery"`                                                                                                |
+| Quoting        | Quote values that contain a comma or leading or trailing spaces. Always quote `reason`                                                                                        |
+| `null` / empty | `NULL` with `nullValues = "NULL"`. Empty string is `""`                                                                                                                       |
+| Dates          | `YYYY-MM-DD`, fixed values. Never relative to today                                                                                                                           |
+| Display name   | `name = "[{index}] {n}"`, where `n` is the zero-based index of `reason`                                                                                                       |
 
 ```text
 status,expected,reason
@@ -335,12 +335,13 @@ Tests that do not check an input or business rule, such as mapping or a single h
 
 ### Techniques per test level
 
-| Level      | Setup                                                              | Apply                                                                                                                                                                               |
-| ---------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Domain     | Plain JUnit, no Spring                                             | EP, BVA and decision tables for logic in entities and other classes that need no database                                                                                           |
-| Service    | `@SpringBootTest`, Testcontainers                                  | The main place. EP, BVA and decision tables for business rules and data-dependent authorization                                                                                     |
-| Endpoint   | `@SpringBootTest` with a random port, REST Assured, Testcontainers | EP and BVA for Bean Validation rules on request DTOs. A decision table for access (`401` / `403` / `404` / `2xx`). One invalid case per service rule set to prove the error mapping |
-| Repository | `@DataJpaTest`, Testcontainers                                     | Only for custom queries                                                                                                                                                             |
+| Level         | Setup                                                                               | Apply                                                                                                                                                                               |
+| ------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain        | Plain JUnit, no Spring                                                              | EP, BVA and decision tables for logic in entities and other classes that need no database                                                                                           |
+| Service       | `@SpringBootTest`, Testcontainers                                                   | The main place. EP, BVA and decision tables for business rules and data-dependent authorization                                                                                     |
+| Endpoint      | `@SpringBootTest` with a random port, REST Assured, Testcontainers                  | EP and BVA for Bean Validation rules on request DTOs. A decision table for access (`401` / `403` / `404` / `2xx`). One invalid case per service rule set to prove the error mapping |
+| Repository    | `@DataJpaTest`, Testcontainers                                                      | Only for custom queries                                                                                                                                                             |
+| Configuration | `ApplicationContextRunner` with `withPropertyValues`, no database and no web server | EP over each property value, including an invalid value that stops the backend at startup                                                                                           |
 
 ### Designing test cases step by step
 
@@ -370,3 +371,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 1.1     | 2026-11-10 | API changes get a linked frontend issue | MTOGO#32 |
 | 1.2     | 2026-11-10 | Fixes to Frontend Architecture          | MTOGO#33 |
 | 2.0     | 2026-11-11 | Moved from `MTOGO`, backend rules only  | #5       |
+| 3.0     | 2026-11-12 | Configuration tests                     | #30      |
