@@ -1,0 +1,52 @@
+name: Deploy
+description: Deploys one image tag to an environment on the droplet and checks the public API from outside
+
+inputs:
+  environment:
+    description: stage or prod
+    required: true
+  tag:
+    description: A commit SHA for stage, a version such as 1.2.3 for prod
+    required: true
+  public-host:
+    description: The environment's public host name
+    required: true
+  ssh-key:
+    description: Private deploy key, which can only run deploy.sh
+    required: true
+  droplet-host:
+    description: Host name or IP address of the droplet
+    required: true
+  known-hosts:
+    description: known_hosts lines for the droplet
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Deploy ${{ inputs.tag }} to ${{ inputs.environment }}
+      shell: bash
+      env:
+        DEPLOY_SSH_KEY: ${{ inputs.ssh-key }}
+        DROPLET_HOST: ${{ inputs.droplet-host }}
+        DROPLET_KNOWN_HOSTS: ${{ inputs.known-hosts }}
+        DEPLOY_COMMAND: ${{ inputs.environment }} backend ${{ inputs.tag }}
+      run: |
+        install -m 700 -d ~/.ssh
+        (umask 077 && printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key)
+        printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        # The deploy key's forced command runs deploy.sh and reads this command as its arguments
+        ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+          "deploy@$DROPLET_HOST" "$DEPLOY_COMMAND"
+
+    - name: Remove the deploy key
+      if: always()
+      shell: bash
+      run: rm -f ~/.ssh/deploy_key
+
+    # Caddy only forwards /v1/* to the backend, so /actuator/health can't be reached from outside
+    - name: Check the public API of ${{ inputs.environment }}
+      shell: bash
+      env:
+        PUBLIC_HOST: ${{ inputs.public-host }}
+      run: curl -fsS --retry 5 --retry-delay 3 --retry-all-errors "https://$PUBLIC_HOST/v1/features"

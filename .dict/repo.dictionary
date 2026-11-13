@@ -29,3 +29,5 @@ postgres
 postgresql
 healthcheck
 jdbc
+actionlint
+shellcheck

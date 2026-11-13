@@ -26,7 +26,13 @@ set_tag() { sed -i "s/^$VAR=.*/$VAR=$1/" .env; }
 log()     { echo "$(date -u +%FT%TZ) $ENV_NAME $SERVICE $TAG $1" >> /opt/mtogo/deploy.log; }
 
 set_tag "$TAG"
-docker compose pull "$SERVICE"
+# The running container is untouched until the pull succeeds, so only the tag needs to go back
+if ! docker compose pull "$SERVICE"; then
+  set_tag "$OLD"
+  log "failed, could not pull image"
+  echo "Could not pull $TAG. $ENV_NAME keeps running ${OLD:-nothing}"
+  exit 1
+fi
 
 if docker compose up -d --wait --wait-timeout 180 "$SERVICE"; then
   log ok

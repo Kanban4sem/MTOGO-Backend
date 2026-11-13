@@ -1,0 +1,88 @@
+name: Deploy to stage
+# Every commit on main is built once, tagged with its SHA and deployed to stage (ADR-003)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # No concurrency group, so a waiting deployment that GitHub cancels never costs a commit its image
+  build:
+    name: Build and push the image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/kanban4sem/mtogo-backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      # A re-run of an earlier run (stage rollback) deploys the image already built for that commit
+      - name: Check whether the commit already has an image
+        id: existing
+        run: |
+          if docker buildx imagetools inspect "$IMAGE:$GITHUB_SHA" > /dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "$IMAGE:$GITHUB_SHA already exists, so it isn't built again"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Java 25
+        if: steps.existing.outputs.found == 'false'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      # The ready flow already tested this commit before it reached main
+      - name: Package the jar
+        if: steps.existing.outputs.found == 'false'
+        run: ./mvnw -q -B package -DskipTests
+
+      # The source label links the package to this repository, so the workflow token can push to it
+      - name: Build and push the image
+        if: steps.existing.outputs.found == 'false'
+        run: |
+          docker build \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            -t "$IMAGE:$GITHUB_SHA" .
+          docker push "$IMAGE:$GITHUB_SHA"
+
+  # GitHub keeps one waiting run per group and cancels the older one, which is fine: the newest commit is deployed last
+  deploy:
+    name: Deploy the image to stage
+    needs: build
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-stage
+      cancel-in-progress: false
+    environment:
+      name: stage
+      url: https://stage.mtogo.saldic.dev
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Deploy
+        uses: ./.github/actions/deploy
+        with:
+          environment: stage
+          tag: ${{ github.sha }}
+          public-host: stage.mtogo.saldic.dev
+          ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
+          droplet-host: ${{ secrets.DROPLET_HOST }}
+          known-hosts: ${{ secrets.DROPLET_KNOWN_HOSTS }}

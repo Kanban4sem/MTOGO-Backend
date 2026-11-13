@@ -1,0 +1,92 @@
+name: Release to prod
+# Prod runs the image main already built for the commit, never a rebuild (ADR-003).
+# A manual start with an earlier version is how prod is rolled back.
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to deploy, such as 1.2.3
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release a version to prod
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+      url: https://mtogo.saldic.dev
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/kanban4sem/mtogo-backend
+
+    steps:
+      # A manual start loads the deploy action from the chosen branch, so only main may use the prod secrets
+      - name: Allow manual starts from main only
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Start Release to prod from main, not from $GITHUB_REF"
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Read the version
+        id: version
+        env:
+          REQUESTED_VERSION: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+        run: |
+          if [[ ! "$REQUESTED_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$REQUESTED_VERSION' is not a version such as 1.2.3 or v1.2.3"
+            exit 1
+          fi
+          echo "version=${REQUESTED_VERSION#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      # HEAD is the tagged commit, also when the tag is annotated
+      - name: Tag the image of the tagged commit with the version
+        if: github.event_name == 'push'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          COMMIT="$(git rev-parse HEAD)"
+          if ! docker buildx imagetools inspect "$IMAGE:$COMMIT" > /dev/null; then
+            echo "::error::No image for $COMMIT. Only a commit that main has built can be released"
+            exit 1
+          fi
+          docker buildx imagetools create -t "$IMAGE:$VERSION" "$IMAGE:$COMMIT"
+
+      - name: Check that the version has an image
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if ! docker buildx imagetools inspect "$IMAGE:$VERSION" > /dev/null; then
+            echo "::error::No image for version $VERSION"
+            exit 1
+          fi
+
+      - name: Deploy
+        uses: ./.github/actions/deploy
+        with:
+          environment: prod
+          tag: ${{ steps.version.outputs.version }}
+          public-host: mtogo.saldic.dev
+          ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
+          droplet-host: ${{ secrets.DROPLET_HOST }}
+          known-hosts: ${{ secrets.DROPLET_KNOWN_HOSTS }}
