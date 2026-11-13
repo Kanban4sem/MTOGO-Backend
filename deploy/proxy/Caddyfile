@@ -1,0 +1,19 @@
+stage.mtogo.saldic.dev {
+	# The API documentation is public on stage only
+	@backend path /v1/* /v3/api-docs* /swagger-ui*
+	handle @backend {
+		reverse_proxy stage-backend:8080
+	}
+	handle {
+		reverse_proxy stage-frontend:80
+	}
+}
+
+mtogo.saldic.dev {
+	handle /v1/* {
+		reverse_proxy prod-backend:8080
+	}
+	handle {
+		reverse_proxy prod-frontend:80
+	}
+}

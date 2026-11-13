@@ -1,0 +1,49 @@
+# One environment (stage or prod). The same file is used in /opt/mtogo/stage and /opt/mtogo/prod;
+# the values that differ come from .env and backend.env next to it.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mtogo
+      POSTGRES_USER: mtogo
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mtogo -d mtogo"]
+      interval: 5s
+      retries: 10
+
+  backend:
+    image: ghcr.io/kanban4sem/mtogo-backend:${BACKEND_TAG:-unset}
+    restart: unless-stopped
+    mem_limit: 768m
+    env_file: backend.env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/mtogo
+      DB_USER: mtogo
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ALLOWED_ORIGIN: https://${PUBLIC_HOST}
+    networks:
+      default:
+      web:
+        aliases: ["${ENV_NAME}-backend"]
+
+  frontend:
+    image: ghcr.io/kanban4sem/mtogo-frontend:${FRONTEND_TAG:-unset}
+    restart: unless-stopped
+    networks:
+      web:
+        aliases: ["${ENV_NAME}-frontend"]
+
+networks:
+  web:
+    external: true
+
+volumes:
+  db-data:
