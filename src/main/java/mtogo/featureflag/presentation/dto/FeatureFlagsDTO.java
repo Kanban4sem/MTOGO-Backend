@@ -5,6 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 // The JSON fields are the flag names the frontend reads, without the is prefix.
 public record FeatureFlagsDTO(
-        @JsonProperty("loginEnabled") @Schema(description = "Whether customers can log in. Off until login is released.", example = "false") boolean isLoginEnabled)
+        @JsonProperty("authEnabled") @Schema(description = "Whether customers can log in and register. Off until authentication is released.", example = "false") boolean isAuthEnabled)
 {
 }

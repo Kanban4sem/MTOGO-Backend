@@ -1,6 +1,6 @@
 # Expose feature flags to the frontend
 
-**Version:** 1.4 · **Date:** 2026-11-12 · **Issue:** #30 · **Feature flag:** None
+**Version:** 2.0 · **Date:** 2026-11-13 · **Issue:** #30 · **Feature flag:** None
 
 ## Acceptance criteria
 
@@ -14,10 +14,10 @@ Copied from #30. The issue is the source: change the issue first, then this copy
 
 ## Behaviour
 
-1. The `loginEnabled` flag is off when `FEATURE_LOGIN_ENABLED` is not set.
-2. The `loginEnabled` flag is on when `FEATURE_LOGIN_ENABLED` is `true` when the backend starts.
-3. The `loginEnabled` flag is off when `FEATURE_LOGIN_ENABLED` is `false` when the backend starts.
-4. The backend refuses to start when `FEATURE_LOGIN_ENABLED` has a value that isn't a boolean.
+1. The `authEnabled` flag is off when `FEATURE_AUTH_ENABLED` is not set.
+2. The `authEnabled` flag is on when `FEATURE_AUTH_ENABLED` is `true` when the backend starts.
+3. The `authEnabled` flag is off when `FEATURE_AUTH_ENABLED` is `false` when the backend starts.
+4. The backend refuses to start when `FEATURE_AUTH_ENABLED` has a value that isn't a boolean.
 5. A changed flag value takes effect only after the backend restarts.
 6. Anyone can read every flag and its current value from `GET /v1/features`, without logging in.
 7. A browser or proxy never caches the flags response, so a page reload always gets the current values.
@@ -26,10 +26,10 @@ Copied from #30. The issue is the source: change the issue first, then this copy
 
 ## Implementation decisions
 
-- **Configuration:** each flag is a boolean on `AppProperties`, bound from `app.<name>-enabled=${FEATURE_<NAME>_ENABLED:false}` in `application.properties`, as in the CONTRIBUTING example. The flag sits directly under `app`, not in a nested group. In Java the flag takes the `is` prefix from the coding standards' boolean naming (`isLoginEnabled`), and `@Name("login-enabled")` keeps the property without it. The first flag is `app.login-enabled`, from `FEATURE_LOGIN_ENABLED`. `.env.example` lists `FEATURE_LOGIN_ENABLED=false`.
+- **Configuration:** each flag is a boolean on `AppProperties`, bound from `app.<name>-enabled=${FEATURE_<NAME>_ENABLED:false}` in `application.properties`, as in the CONTRIBUTING example. The flag sits directly under `app`, not in a nested group. In Java the flag takes the `is` prefix from the coding standards' boolean naming (`isAuthEnabled`), and `@Name("auth-enabled")` keeps the property without it. The first flag is `app.auth-enabled`, from `FEATURE_AUTH_ENABLED`. `.env.example` lists `FEATURE_AUTH_ENABLED=false`.
 - **Invalid values:** Spring's own boolean conversion decides what's valid (`true`/`false`, and also `yes`/`no`, `on`/`off`, `1`/`0`). Anything else fails the binding, and the backend doesn't start. No custom handling.
 - **Module:** a new `featureflag` feature package following the coding standards: a `FeatureFlagController` in the presentation layer, and `IFeatureFlagService` → `FeatureFlagService` in the domain layer. The service maps `AppProperties` to `FeatureFlagsDTO` with one explicit field per flag. There's no data layer.
-- **API contract:** `GET /v1/features` → `200` with `FeatureFlagsDTO`, a flat JSON object with one camelCase boolean per flag: `{ "loginEnabled": false }`. `@JsonProperty("loginEnabled")` keeps the JSON field without the `is` prefix. Every flag is returned. Flags aren't marked as UI or backend-only. The response has `Cache-Control: no-store`. The endpoint is documented with `@Tag` and `@Operation`, and the DTO with `@Schema`. springdoc-openapi isn't a dependency yet, so this issue adds `springdoc-openapi-starter-webmvc-ui`, as the coding standards' API documentation section requires. The path stays `/v1/features`, as decided in ADR-001.
+- **API contract:** `GET /v1/features` → `200` with `FeatureFlagsDTO`, a flat JSON object with one camelCase boolean per flag: `{ "authEnabled": false }`. `@JsonProperty("authEnabled")` keeps the JSON field without the `is` prefix. Every flag is returned. Flags aren't marked as UI or backend-only. The response has `Cache-Control: no-store`. The endpoint is documented with `@Tag` and `@Operation`, and the DTO with `@Schema`. springdoc-openapi isn't a dependency yet, so this issue adds `springdoc-openapi-starter-webmvc-ui`, as the coding standards' API documentation section requires. The path stays `/v1/features`, as decided in ADR-001.
 - **Access:** `SecurityConfig` permits `GET /v1/features` without authentication, because the login itself is behind a flag. `SecurityConfig` also permits GET on the OpenAPI specification and Swagger UI, which springdoc adds and which would otherwise need a login that doesn't exist yet. The documentation only describes the endpoints, and the proxy only forwards `/v1/*`. All other requests keep the existing `anyRequest().authenticated()` rule. CORS already covers `/v1/**`.
 - **Documentation:**
   - CONTRIBUTING (version 3.0): the Add and Remove steps in the Feature flags section gain the `FeatureFlagsDTO` field, its mapping in `FeatureFlagService` and the tests to update. The Add step names the `is` prefix and the two annotations. Changing the documents says that an issue bumps a document's version once, compared with `main`. CONTRIBUTING is a shared document, and Kanban4sem/MTOGO-Frontend#21 copies these changes.
@@ -39,22 +39,28 @@ Copied from #30. The issue is the source: change the issue first, then this copy
 
 ## Testing decisions
 
-- **Binding of `app.login-enabled`:** `ApplicationContextRunner` with `withPropertyValues`, with no database and no web server. EP over the flag value: unset → off, `true` → on, `false` → off, `banana` → the context fails to start with `ConfigurationPropertiesBindException`. The rule set is `bind-login-enabled` under `testcases/config/app-properties/`. This is the Configuration level in the coding standards. It was chosen so the four values don't need four full Spring contexts.
+- **Binding of `app.auth-enabled`:** `ApplicationContextRunner` with `withPropertyValues`, with no database and no web server. EP over the flag value: unset → off, `true` → on, `false` → off, `banana` → the context fails to start with `ConfigurationPropertiesBindException`. The rule set is `bind-auth-enabled` under `testcases/config/app-properties/`. This is the Configuration level in the coding standards. It was chosen so the four values don't need four full Spring contexts.
 - **Endpoint access:** `endpoint-access.csv` in `SecurityConfigTest` gains a `method` column, so the table covers method × path. New rows: `GET /v1/features` → `200`, `POST /v1/features` → `401`, and GET on the OpenAPI specification, `/swagger-ui.html` and Swagger UI → `200`. That class is the prior art for endpoint tests with REST Assured and Testcontainers.
-- **Endpoint response:** one `@SpringBootTest` endpoint test with `FEATURE_LOGIN_ENABLED=false`. It checks that the body holds exactly the flags in `FeatureFlagsDTO` with their values, and that the response has `Cache-Control: no-store`. The unset default is covered by the binding test.
-- **Mapping:** one plain JUnit test of `FeatureFlagService`, with `loginEnabled` both on and off in the DTO.
+- **Endpoint response:** one `@SpringBootTest` endpoint test with `FEATURE_AUTH_ENABLED=false`. It checks that the body holds exactly the flags in `FeatureFlagsDTO` with their values, and that the response has `Cache-Control: no-store`. The unset default is covered by the binding test.
+- **Mapping:** one plain JUnit test of `FeatureFlagService`, with `authEnabled` both on and off in the DTO.
+
+## Migration in #35
+
+The shared authentication flag replaces the login-only flag. It covers login and registration and remains off by default. The old environment variable and JSON key are removed. Existing environment values must move to FEATURE_AUTH_ENABLED; frontend consumers must switch to authEnabled. No authentication endpoints or separate registration flag are added. This rename needs no additional feature flag.
+
+Proposed linked frontend work: update the flag consumer and protect both authentication pages with authEnabled, and copy the updated CONTRIBUTING examples.
 
 ## Out of scope
 
 - Passing the `FEATURE_*` variables to the container in each environment. That belongs to the deployment in #20 (commented there).
 - Changing flags at runtime or targeting specific users, which ADR-001 ruled out.
-- Using `loginEnabled` in the login code. That's #13 (backend) and Kanban4sem/MTOGO-Frontend#6.
+- Using `authEnabled` in the login code. That's #13 (backend) and Kanban4sem/MTOGO-Frontend#6.
 - Loading the flags in the frontend: Kanban4sem/MTOGO-Frontend#21.
-- Removing `loginEnabled` once login is released: follow-up issues #31 and Kanban4sem/MTOGO-Frontend#22.
+- Removing `authEnabled` once login is released: follow-up issues #31 and Kanban4sem/MTOGO-Frontend#22.
 
 ## Further notes
 
-This issue has no feature flag of its own, since it adds no unfinished behaviour. `loginEnabled` is off everywhere until #13 starts using it.
+This issue has no feature flag of its own, since it adds no unfinished behaviour. `authEnabled` is off everywhere until #13 starts using it.
 
 ## Implementation notes
 
@@ -88,6 +94,12 @@ This issue has no feature flag of its own, since it adds no unfinished behaviour
 - **Tests:** the rule set is renamed to `bind-login-enabled.csv`, and the old `login-enabled-binding.csv` is removed. The test method is `loginEnabledBindsOnlyBooleanValues`, since it also covers the startup failure.
 - **Follow-up:** Kanban4sem/MTOGO-Frontend#23 copies the CONTRIBUTING and SPEC-FORMAT changes.
 
+### Spec 2.0 - 2026-11-13 - #35
+
+- **Built:** renamed the configuration, API field, environment example and local environment to the shared authentication flag. Updated configuration binding, DTO mapping and endpoint contract tests, including the bind-auth-enabled CSV rule set.
+- **Tests:** Windows Maven cannot compile with release 25; running tests in the development container was not approved. Run trunk-worthy in the backend development container before delivery.
+- **Follow-up:** proposed linked frontend consumer and shared document update described above.
+
 ## Changelog
 
 | Version | Date       | Change                                                                     | Issue |
@@ -97,3 +109,5 @@ This issue has no feature flag of its own, since it adds no unfinished behaviour
 | 1.2     | 2026-11-12 | The API documentation is public                                            | #30   |
 | 1.3     | 2026-11-12 | Endpoint access tests non-GET, configuration tests in the coding standards | #30   |
 | 1.4     | 2026-11-12 | Decisions match the code, rule set renamed after the review of #30         | #33   |
+
+| 2.0 | 2026-11-13 | Replace the login flag with the shared authentication flag | #35 |

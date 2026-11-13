@@ -1,6 +1,6 @@
 # Contributing
 
-**Version:** 4.0 · **Date:** 2026-11-12
+**Version:** 4.1 · **Date:** 2026-11-13
 
 MTOGO is developed with Kanban and trunk-based development using [TakT](https://github.com/devx-cafe/gh-tt). Every change starts as an issue and ends as one commit on `main`.
 
@@ -136,16 +136,16 @@ An ADR lives in the repository that owns the decision, and the other repository 
 
 ### Add
 
-Declare the flag in AppProperties and application.properties, defaulting to false. Add the field in `FeatureFlagsDTO` and its mapping in `FeatureFlagService`, so `GET /v1/features` returns it, and update the tests that build `AppProperties` or check `FeatureFlagsDTO`. In Java the flag takes the `is` prefix, as in `isLoginEnabled`. `@Name("login-enabled")` in `AppProperties` and `@JsonProperty("loginEnabled")` in `FeatureFlagsDTO` keep the property and the JSON field without it. Add its environment variable to .env.example with false, and set its value in each environment’s .env. Ensure the startup configuration passes it to Spring Boot. Never commit .env.
+Declare the flag in AppProperties and application.properties, defaulting to false. Add the field in `FeatureFlagsDTO` and its mapping in `FeatureFlagService`, so `GET /v1/features` returns it, and update the tests that build `AppProperties` or check `FeatureFlagsDTO`. In Java the flag takes the `is` prefix, as in `isAuthEnabled`. `@Name("auth-enabled")` in `AppProperties` and `@JsonProperty("authEnabled")` in `FeatureFlagsDTO` keep the property and the JSON field without it. Add its environment variable to .env.example with false, and set its value in each environment’s .env. Ensure the startup configuration passes it to Spring Boot. Never commit .env.
 
 Examples:
 
 ```properties
-app.login-enabled=${FEATURE_LOGIN_ENABLED:false}
+app.auth-enabled=${FEATURE_AUTH_ENABLED:false}
 ```
 
 ```dotenv
-FEATURE_LOGIN_ENABLED=true
+FEATURE_AUTH_ENABLED=true
 ```
 
 ### Use
@@ -173,13 +173,13 @@ GET /v1/features
 
 ```json
 {
-  "loginEnabled": false
+  "authEnabled": false
 }
 ```
 
 ```jsx
 {
-  flags.loginEnabled && <LoginButton />;
+  flags.authEnabled && <LoginButton />;
 }
 ```
 
@@ -215,3 +215,5 @@ This document, the Definition of Done, the AI workflow, the glossary, the minimu
 | 3.0     | 2026-11-12 | Feature flags are added to and removed from `FeatureFlagsDTO`             | #30      |
 | 3.1     | 2026-11-12 | Flag steps name the tests to update, one version bump per issue           | #33      |
 | 4.0     | 2026-11-12 | Four-eyes on the issue before Ready, time spent and week labels on issues | #34      |
+
+| 4.1 | 2026-11-13 | Use the shared authentication flag in feature flag examples | #35 |

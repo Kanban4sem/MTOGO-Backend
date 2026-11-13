@@ -17,6 +17,6 @@ public class FeatureFlagService implements IFeatureFlagService
     @Override
     public FeatureFlagsDTO getAll()
     {
-        return new FeatureFlagsDTO(appProperties.isLoginEnabled());
+        return new FeatureFlagsDTO(appProperties.isAuthEnabled());
     }
 }

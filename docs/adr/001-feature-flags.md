@@ -15,10 +15,10 @@ In order to focus on learning KanBan and getting Up To Date as a development tea
 Example:
 
 **.env file**
-FEATURE_LOGIN_ENABLED=true
+FEATURE_AUTH_ENABLED=true
 
 **application.properties file**
-app.login-enabled=${FEATURE_LOGIN_ENABLED:false}
+app.auth-enabled=${FEATURE_AUTH_ENABLED:false}
 
 The frontend fetches UI flags from GET /v1/features once at startup and stores them in shared application memory. Features are controlled through conditional rendering. Missing flags and failed requests are treated as false. Reloading the page fetches the flags again.
 

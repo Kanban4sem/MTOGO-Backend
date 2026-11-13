@@ -31,18 +31,18 @@ class AppPropertiesTest
             .withUserConfiguration(AppPropertiesConfiguration.class);
 
     @ParameterizedTest(name = "[{index}] {2}")
-    @CsvFileSource(resources = "/testcases/config/app-properties/bind-login-enabled.csv", numLinesToSkip = 1, nullValues = "NULL")
-    @DisplayName("Login enabled - binds only boolean values of FEATURE_LOGIN_ENABLED")
-    void loginEnabledBindsOnlyBooleanValues(String featureLoginEnabled, String expected, String reason)
+    @CsvFileSource(resources = "/testcases/config/app-properties/bind-auth-enabled.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Auth enabled - binds only boolean values of FEATURE_AUTH_ENABLED")
+    void authEnabledBindsOnlyBooleanValues(String featureAuthEnabled, String expected, String reason)
     {
-        ApplicationContextRunner runner = featureLoginEnabled == null
+        ApplicationContextRunner runner = featureAuthEnabled == null
                 ? contextRunner
-                : contextRunner.withPropertyValues("FEATURE_LOGIN_ENABLED=" + featureLoginEnabled);
+                : contextRunner.withPropertyValues("FEATURE_AUTH_ENABLED=" + featureAuthEnabled);
 
         runner.run(context -> {
             if (expected.equals("true") || expected.equals("false"))
             {
-                assertThat(context.getBean(AppProperties.class).isLoginEnabled(), is(Boolean.parseBoolean(expected)));
+                assertThat(context.getBean(AppProperties.class).isAuthEnabled(), is(Boolean.parseBoolean(expected)));
             } else
             {
                 assertThat(causeNames(context.getStartupFailure()), hasItem(expected));
