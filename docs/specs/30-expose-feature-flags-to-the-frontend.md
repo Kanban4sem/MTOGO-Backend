@@ -26,6 +26,8 @@ Copied from #30. The issue is the source: change the issue first, then this copy
 
 ## Implementation decisions
 
+The module structure below records the implementation delivered for this issue. [ADR-004](../adr/004-backend-structure.md) now defines the target package structure, separate request/response DTOs and optional service interfaces. Aligning the existing feature flag code is a separate code change.
+
 - **Configuration:** each flag is a boolean on `AppProperties`, bound from `app.<name>-enabled=${FEATURE_<NAME>_ENABLED:false}` in `application.properties`, as in the CONTRIBUTING example. The flag sits directly under `app`, not in a nested group. In Java the flag takes the `is` prefix from the coding standards' boolean naming (`isAuthEnabled`), and `@Name("auth-enabled")` keeps the property without it. The first flag is `app.auth-enabled`, from `FEATURE_AUTH_ENABLED`. `.env.example` lists `FEATURE_AUTH_ENABLED=false`.
 - **Invalid values:** Spring's own boolean conversion decides what's valid (`true`/`false`, and also `yes`/`no`, `on`/`off`, `1`/`0`). Anything else fails the binding, and the backend doesn't start. No custom handling.
 - **Module:** a new `featureflag` feature package following the coding standards: a `FeatureFlagController` in the presentation layer, and `IFeatureFlagService` → `FeatureFlagService` in the domain layer. The service maps `AppProperties` to `FeatureFlagsDTO` with one explicit field per flag. There's no data layer.

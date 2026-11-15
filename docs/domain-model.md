@@ -5,6 +5,8 @@
 
 The draft was made by Jonas and Jesper. Daniel and Dino have not approved it yet. It was moved here from `MTOGO/docs/brainstorm/domainmodel.md`. An online copy is on [mermaid.ai](https://mermaid.ai/d/4f7b7a63-16a6-4759-bc76-0d6c9b800673).
 
+The account model is split into user (User and UserProfile), address (Address and PostalCode) and role (Role) features. The account portion is now implemented for [issue #13](specs/13-add-customer-accounts.md), with five entities and one optional profile address. The remaining domains are still drafts. PostalCode stores city, code and country; Role uses CUSTOMER, RESTAURANT or DELIVERY_AGENT.
+
 ```mermaid
 classDiagram
 direction TB
@@ -16,8 +18,11 @@ direction TB
 class User {
     +Long id
     +String email
-    +boolean active
-    +String password_hashed
+    +boolean isActive
+    +String passwordHash
+    +long sessionVersion
+    +Role role
+    +UserProfile profile
 }
 
 class UserProfile {
@@ -26,12 +31,12 @@ class UserProfile {
     +String lastName
     +String phoneNumber
     +String preferredLanguage
-    +Long address
+    +Address address
 }
 
 class Address {
     +Long id
-    +Long postalCodeId
+    +PostalCode postalCode
     +boolean isDefault
 }
 
@@ -125,10 +130,9 @@ class Commission {
 %%                    Employee Domain
 %% ######################################################
 
-class Roles {
+class Role {
     +Long id
-    +String name
-    +String description
+    +RoleName name
 }
 
 class DeliveryAgent {
@@ -176,7 +180,6 @@ class Complaints {
 
 %% Users
 User "1" *-- "1" UserProfile : has
-User "1" --> "0..*" Address : owns
 User "1" --> "0..*" Order : places
 
 %% Menus
@@ -193,7 +196,7 @@ Order "0..*" --> "1" OrderStatus : hasStatus
 Order "1" --> "0..1" Payment : hasPayment
 
 %% User roles and delivery profiles
-Roles "1" --> "0..*" User : assignedTo
+Role "1" --> "0..*" User : assignedTo
 User "1" --> "0..1" DeliveryAgent : deliveryProfile
 
 %% Deliveries
@@ -210,8 +213,8 @@ Order "1" --> "0..1" Commission : generates
 %% Address
 Order "1" --> "0..1" Address : hasA
 Restaurant "1" --> "0..1" Address : hasA
-User "1" --> "0..1" Address : hasA
-Address "1" --> "0..1" PostalCode : hasA
+UserProfile "1" --> "0..1" Address : hasA
+Address "0..*" --> "1" PostalCode : hasA
 
 %% Feedback
 Order "1" --> "0..1" OrderFeedback : receives

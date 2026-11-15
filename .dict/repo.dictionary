@@ -31,3 +31,4 @@ healthcheck
 jdbc
 actionlint
 shellcheck
+JPQL

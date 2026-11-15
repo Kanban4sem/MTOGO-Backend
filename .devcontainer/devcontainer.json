@@ -17,6 +17,13 @@
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
   "postCreateCommand": "gh ext install devx-cafe/gh-insitu && gh insitu run post-create",
+  "postStartCommand": "bash .devcontainer/start-pgadmin.sh",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "MTOGO Backend"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [

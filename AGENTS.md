@@ -1,6 +1,6 @@
 # Agent Instructions
 
-**Version:** 2.2 · **Date:** 2026-11-12
+**Version:** 3.0 · **Date:** 2026-11-15
 
 MTOGO is a food delivery platform built with Kanban and trunk-based development using TakT. This repository holds the backend (Spring Boot). The frontend (React) lives in `MTOGO-Frontend`, which has its own copy of the documents below.
 
@@ -13,6 +13,10 @@ Read these before you change anything. They override every skill, including the 
 - [Definition of Done](docs/definition-of-done.md): when an issue is finished
 
 When a skill and these documents disagree, follow the document and tell the developer which rule you followed.
+
+## Architecture examples
+
+The backend structures in `docs/coding-standards.md` and `docs/adr/004-backend-structure.md` illustrate the agreed architecture. They are examples, not an inventory of the finished product. Do not add concrete features, entities or helpers to those examples when implementing a feature, and do not amend ADRs merely to list new features. Change architecture documents only when the developer explicitly asks to change the architectural rules or decision. Record feature implementation details in its spec and update the domain model when relevant.
 
 ## Git and TakT
 
@@ -59,3 +63,4 @@ How to change this document is described in [CONTRIBUTING](CONTRIBUTING.md#chang
 | 2.0     | 2026-11-11 | Moved from `MTOGO`. Feature flags, ADR ownership and shared documents | #5       |
 | 2.1     | 2026-11-11 | The minimum viable product is a shared document                       | #19      |
 | 2.2     | 2026-11-12 | Issues get a work label, repository label and Type                    | #34      |
+| 3.0     | 2026-11-15 | Keep architecture examples illustrative when implementing features    | #13      |

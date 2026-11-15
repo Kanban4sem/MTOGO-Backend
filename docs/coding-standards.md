@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 4.0 · **Date:** 2026-11-12
+**Version:** 5.0 · **Date:** 2026-11-15
 
 ## Overview
 
@@ -34,7 +34,7 @@ Names describe what something is or does in domain language. One concept keeps o
 
 | Element                    | Convention                                         | Example                          |
 | -------------------------- | -------------------------------------------------- | -------------------------------- |
-| Package                    | lowercase, feature first                           | `mtogo.order.domain`             |
+| Package                    | lowercase, feature first                           | `mtogo.feature.order.domain`     |
 | Class, record, enum        | PascalCase noun                                    | `OrderService`                   |
 | Interface                  | `I` + PascalCase. The implementation drops the `I` | `IOrderService` → `OrderService` |
 | Method                     | camelCase verb                                     | `getAll()`, `cancel()`           |
@@ -43,7 +43,7 @@ Names describe what something is or does in domain language. One concept keeps o
 | Constant, enum value       | UPPER_SNAKE_CASE                                   | `IN_DELIVERY`                    |
 | Test class                 | `<ClassUnderTest>Test`                             | `OrderServiceTest`               |
 
-Spring Data repositories are interfaces without the `I` prefix, because Spring generates the implementation.
+The interface naming convention applies when an interface is needed; it does not require an interface for every service. Spring Data repositories are interfaces without the `I` prefix, because Spring generates the implementation.
 
 | Suffix       | Role                                              | Example                      |
 | ------------ | ------------------------------------------------- | ---------------------------- |
@@ -71,21 +71,65 @@ Spring Data repositories are interfaces without the `I` prefix, because Spring g
 
 ## Architecture
 
-The code follows [Presentation Domain Data Layering](https://martinfowler.com/bliki/PresentationDomainDataLayering.html): the code is organised by feature first, with presentation, domain and data layers inside each feature.
+The code follows [Presentation Domain Data Layering](https://martinfowler.com/bliki/PresentationDomainDataLayering.html): features are grouped under `mtogo.feature`, with presentation, domain and data layers inside each feature. The choice is recorded in [ADR-004](adr/004-backend-structure.md).
 
 ### Backend structure
 
 ```text
-mtogo
-├── <feature>            order, restaurant, customer, ...
-│   ├── presentation     Controller, dto/
-│   ├── domain           entities, service interface and implementation
-│   └── data             Repository, Mapper
-├── security             authentication, JWT, SecurityConfig
-├── config               application configuration
-├── exceptions           ApiException hierarchy and GlobalExceptionHandler
-└── utils                stateless helpers
+MTOGO-Backend/
+    │
+    ├── .env                                                            local secrets, never committed
+    │
+    └── src/main/
+        │
+        ├── resources/
+        │   │
+        │   ├── application.properties                                  configuration with placeholders
+        │   └── db/migration/                                           Flyway SQL migrations
+        │
+        └── java/mtogo/
+                │
+                ├── feature/                                            user, order, restaurant, ...
+                │   │
+                │   ├── user/                                           everything user (entity) related
+                │   └── <feature>/                                      next feature implemented
+                │           │
+                │           │
+                │           ├── presentation/
+                │           │   │
+                │           │   ├── <Feature>Controller.java
+                │           │   │
+                │           │   └── dto/
+                │           │       ├── request/                        request records, e.g. CreateUserDTO - SoC
+                │           │       └── response/                       response records, e.g. UserDTO - Soc
+                │           │
+                │           ├── domain/
+                │           │   ├── <Entity>.java                       JPA entity, fields and relationships
+                │           │   ├── I<Feature>Service.java              optional, only when a concrete need exists
+                │           │   └── <Feature>Service.java
+                │           │
+                │           │
+                │           └── data/
+                │               ├── <Entity>Repository.java
+                │               └── <Entity>Mapper.java
+                │
+                ├── config/                                             application configuration
+                ├── exceptions/                                         ApiException hierarchy and GlobalExceptionHandler
+                ├── security/                                           authentication, JWT and SecurityConfig
+                ├── server/                                             application startup
+                ├── utils/                                              helpers used by multiple features
+                └── Main.java
 ```
+
+Each feature owns its controllers, DTOs, entities, services, repositories and mappers. Add classes when the feature needs them; the tree shows responsibilities, not files that every feature must have.
+
+- **Entities describe persisted state and relationships.** JPA annotations such as `@Entity`, `@Id` and `@OneToOne` define the mapping to the database. Entities do not execute queries, save or delete themselves, or convert themselves to DTOs.
+- **Repositories own database CRUD.** Extend `JpaRepository<Entity, IdType>` and use its existing methods for create, read, update and delete. Spring Data supplies the implementation; do not duplicate those methods in a DAO, a generic CRUD wrapper or an entity. Add derived query methods such as `findByEmail` when needed.
+- **Custom queries stay in the data layer.** Put JPQL or native SQL in repository methods with `@Query`. When those methods are insufficient, use a custom repository implementation with `EntityManager` or `JdbcTemplate`. Services and controllers contain no query code.
+- **Services own business operations.** Services call repositories, enforce business rules and use mappers for DTO conversion. Put transaction boundaries on service methods with `@Transactional` when an operation must succeed or fail as a whole, such as creating a user and profile together. Do not add service methods that merely copy every repository method without an application need.
+- **Mappers own entity/DTO conversion.** A mapper creates or updates entity fields from request DTOs and builds response DTOs from entities. It performs no database access, business decisions or password hashing. JPA/Hibernate maps entities to database rows; the DTO mapper does not.
+- **Request and response DTOs have separate responsibilities.** Request records live in `presentation/dto/request/` and define accepted input and Bean Validation constraints. Response records live in `presentation/dto/response/` and define returned fields. Do not reuse the same record for both directions. Responses never expose passwords or password hashes.
+- **Flyway owns schema SQL.** Tables, foreign keys, unique constraints and other schema changes belong in `resources/db/migration/`. Hibernate validates the schema; it does not create or update it.
 
 | Layer            | Responsible for                                                                               | Must not                                   |
 | ---------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------ |
@@ -93,9 +137,9 @@ mtogo
 | **Domain**       | Business rules, authorization decisions that depend on data, orchestration                    | Know about HTTP requests or responses      |
 | **Data**         | Persistence with Spring Data JPA, entity ↔ DTO mapping                                        | Contain business rules                     |
 
-Dependencies point one way: presentation → domain → data. DTOs are the exception: they are the API contract, so they live in `presentation/dto/`, and the service in the domain layer returns them (rule 2).
+Dependencies point one way: presentation → domain → data. DTOs are the exception: they are the API contract, so request DTOs live in `presentation/dto/request/` and response DTOs in `presentation/dto/response/`. Services accept request DTOs where needed and return response DTOs (rule 2).
 
-1. **Depend on interfaces and inject through constructors.** Fields are `final`. No `@Autowired` on fields.
+1. **Inject dependencies through constructors.** Fields are `final`. No `@Autowired` on fields. Use concrete service classes by default. Introduce an interface when it serves a concrete need, such as interchangeable implementations or a contract across a module boundary. A service does not need an interface solely because it is injected. Spring Data repositories remain interfaces so Spring can supply their implementation.
 2. **Entities never cross the service boundary.** Services return DTOs. The DTOs are the API contract, so an entity can change without breaking the API.
 3. **Field rules are Bean Validation annotations** on request DTOs (`@NotBlank`, `@Size`, `@Positive`) and are checked with `@Valid` in the controller. Rules that need stored data or combine several fields belong in the service.
 4. **Access control is declared per endpoint** with `@PreAuthorize` on the controller method. Decisions that depend on data, such as "only your own orders", belong in the service.
@@ -364,12 +408,13 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 
 ## Changelog
 
-| Version | Date       | Change                                          | Issue    |
-| ------- | ---------- | ----------------------------------------------- | -------- |
-| 1.0     | 2026-11-10 | First version                                   | -        |
-| 1.1     | 2026-11-10 | API changes get a linked frontend issue         | MTOGO#32 |
-| 1.2     | 2026-11-10 | Fixes to Frontend Architecture                  | MTOGO#33 |
-| 2.0     | 2026-11-11 | Moved from `MTOGO`, backend rules only          | #5       |
-| 3.0     | 2026-11-12 | Configuration tests                             | #30      |
-| 3.1     | 2026-11-12 | DTOs in the presentation layer                  | #33      |
-| 4.0     | 2026-11-12 | The tool configuration replaces `.editorconfig` | #34      |
+| Version | Date       | Change                                                                          | Issue    |
+| ------- | ---------- | ------------------------------------------------------------------------------- | -------- |
+| 1.0     | 2026-11-10 | First version                                                                   | -        |
+| 1.1     | 2026-11-10 | API changes get a linked frontend issue                                         | MTOGO#32 |
+| 1.2     | 2026-11-10 | Fixes to Frontend Architecture                                                  | MTOGO#33 |
+| 2.0     | 2026-11-11 | Moved from `MTOGO`, backend rules only                                          | #5       |
+| 3.0     | 2026-11-12 | Configuration tests                                                             | #30      |
+| 3.1     | 2026-11-12 | DTOs in the presentation layer                                                  | #33      |
+| 4.0     | 2026-11-12 | The tool configuration replaces `.editorconfig`                                 | #34      |
+| 5.0     | 2026-11-15 | Separate CRUD and DTO responsibilities; use service interfaces only when needed | #13      |

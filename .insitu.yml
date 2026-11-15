@@ -44,7 +44,7 @@ inventory:
 
   - id: cspell
     name: Run cspell
-    command: cspell
+    command: cspell --no-progress --no-summary --words-only --unique
 
   - id: markdownlint
     name: Run markdownlint
@@ -56,7 +56,7 @@ inventory:
 
   - id: backend-verify
     name: Backend build and tests (Maven wrapper)
-    command: ./mvnw -q -B verify
+    command: ./mvnw -q -B clean verify
 
   - id: fix-markdown
     name: Fix all fixable markdown issues

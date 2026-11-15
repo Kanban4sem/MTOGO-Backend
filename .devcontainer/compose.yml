@@ -1,0 +1,25 @@
+name: mtogo-postgres
+
+services:
+  pgadmin:
+    image: dpage/pgadmin4:9
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?Set PGADMIN_PASSWORD in .env}
+      PGADMIN_DISABLE_POSTFIX: "1"
+      PGADMIN_SERVER_JSON_FILE: /tmp/servers.json
+      MTOGO_SERVERS: |
+        {"Servers":{"1":{"Name":"MTOGO local","Group":"Development","Host":"host.docker.internal","Port":5432,"MaintenanceDB":"mtogo","Username":"${DB_USER:-mtogo}","SSLMode":"prefer"}}}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'printf "%s\n" "$$MTOGO_SERVERS" > /tmp/servers.json; exec /entrypoint.sh'
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+volumes:
+  pgadmin-data:

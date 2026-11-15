@@ -73,6 +73,53 @@ Rules:
 
 Configuration lives in `src/main/resources/application.properties` and contains no secrets. Copy `.env.example` to `.env` and fill in real values. The `.env` file is never committed.
 
+### Local database browser (pgAdmin)
+
+The backend uses `http://localhost:8080`. pgAdmin uses `http://localhost:5050`, so both can run at the same time. It starts automatically when the dev container starts, once `PGADMIN_PASSWORD` is set in `.env`. Rebuild an existing dev container once to activate this startup command.
+
+To start it immediately, run:
+
+```bash
+bash .devcontainer/start-pgadmin.sh
+```
+
+Open [pgAdmin](http://localhost:5050) on your own machine and log in with `PGADMIN_EMAIL` and `PGADMIN_PASSWORD` from `.env` (default email: `admin@example.com`). Expand **Development → MTOGO local** and enter `DB_PASSWORD` from `.env` when connecting. Tables are under **Databases → mtogo → Schemas → public → Tables**; right-click a table and choose **View/Edit Data → All Rows**.
+
+This uses the existing PostgreSQL database published on your machine's port `5432`; it does not create a database. pgAdmin reaches it through `host.docker.internal`, including when the backend runs inside the dev container. The server definition follows the [pgAdmin container configuration](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html). If your database uses another port or name, edit the registered server's connection in pgAdmin.
+
+pgAdmin is published only on `127.0.0.1`. Its settings persist in a Docker volume. Set `PGADMIN_PORT` in `.env` to choose another port, then rerun the startup command. Login variables initialize the account only on first launch; change an existing password in pgAdmin itself.
+
+To stop pgAdmin:
+
+```bash
+docker compose --env-file .env -f .devcontainer/compose.yml stop
+```
+
+## Customer accounts
+
+The account model is split between `mtogo.feature.user`, `mtogo.feature.address` and `mtogo.feature.role`. Address owns its mapping and validation; password handling and token validation are centralized in security. User-specific email normalization lives in `user/util/`.
+
+### Start from VS Code
+
+With PostgreSQL running and the `mtogo` database created, open `Main.java` and choose **Run**. When running inside the development container, set `DB_URL=jdbc:postgresql://host.docker.internal:5432/mtogo` in your ignored `.env`; when running Java directly on your host, use localhost instead. Set DB_USER and DB_PASSWORD for that PostgreSQL instance.
+
+Flyway applies migrations at startup and Hibernate validates their tables. In pgAdmin, refresh **mtogo → Schemas → public → Tables** to see users, user_profiles, addresses, postal_codes, roles and flyway_schema_history. Restarting does not recreate tables or reset data. Table creation does not depend on the authentication flag.
+
+Account endpoints are behind `FEATURE_AUTH_ENABLED`, off by default. To try them locally, enable the flag in your own `.env` and set `JWT_SECRET` to a Base64 key generated with `openssl rand -base64 32`. Restart the backend. Never commit the key.
+
+| Method | Path               | Result                                               |
+| ------ | ------------------ | ---------------------------------------------------- |
+| POST   | `/v1/users`        | Register a CUSTOMER; returns 201 and its profile     |
+| POST   | `/v1/users/login`  | Exchange email/password for an access token          |
+| GET    | `/v1/users/me`     | Read the authenticated user's profile                |
+| POST   | `/v1/users/logout` | Revoke all of the user's current tokens; returns 204 |
+
+Registration uses the frontend field names: firstName, lastName, email, password, confirmPassword, phoneNumber, preferredLanguage, postalCode, city and country. The last three must all be supplied or all omitted. Preferred language defaults to da. The current form does not collect a street address.
+
+Send the token as `Authorization: Bearer <accessToken>`. It expires after 15 minutes by default (`JWT_LIFETIME_SECONDS`). The backend does not use authentication cookies or sessions. Logout invalidates tokens across all devices; subsequent login creates a new token. Responses containing tokens and profiles must not be cached.
+
+The API contract is documented in Swagger and the [account spec](docs/specs/13-add-customer-accounts.md); the authentication decision is [ADR-005](docs/adr/005-account-authentication.md). Frontend integration remains in frontend issue #6.
+
 ## Build and test
 
 ```bash
