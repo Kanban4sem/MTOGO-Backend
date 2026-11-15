@@ -5,7 +5,7 @@
 
 The draft was made by Jonas and Jesper. Daniel and Dino have not approved it yet. It was moved here from `MTOGO/docs/brainstorm/domainmodel.md`. An online copy is on [mermaid.ai](https://mermaid.ai/d/4f7b7a63-16a6-4759-bc76-0d6c9b800673).
 
-The account model is split into user (User and UserProfile), address (Address and PostalCode) and role (Role) features. The account portion is now implemented for [issue #13](specs/13-add-customer-accounts.md), with five entities and one optional profile address. The remaining domains are still drafts. PostalCode stores city, code and country; Role uses CUSTOMER, RESTAURANT or DELIVERY_AGENT.
+The account model is split into user (User and UserProfile), address (Address and PostalCode) and role (Role) features. The account portion is now implemented for [issue #13](specs/13-add-customer-accounts.md), with five entities and one optional profile address. The restaurant feature implements Restaurant, Menu and MenuItem for [issue #14](specs/14-show-restaurants-and-their-menus.md). The remaining domains are still drafts. PostalCode stores city, code and country; Role uses CUSTOMER, RESTAURANT or DELIVERY_AGENT. Restaurant addresses remain a draft relationship.
 
 ```mermaid
 classDiagram
@@ -60,17 +60,16 @@ class PaymentService {
 
 class Restaurant {
     +Long id
-    +String cuisineType
-    +Integer estimatedPreparationMinutes
+    +String name
     +boolean acceptsOrders
-    +Long address
 }
 
 class Menu {
     +Long id
     +String name
     +String description
-    +boolean active
+    +boolean isActive
+    +Restaurant restaurant
 }
 
 class MenuItem {
@@ -78,7 +77,9 @@ class MenuItem {
     +String name
     +String description
     +BigDecimal price
-    +boolean available
+    +String imageUrl
+    +boolean isAvailable
+    +Menu menu
 }
 
 %% ######################################################

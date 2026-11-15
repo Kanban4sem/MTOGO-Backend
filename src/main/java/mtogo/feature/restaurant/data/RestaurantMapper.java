@@ -1,0 +1,27 @@
+package mtogo.feature.restaurant.data;
+
+import java.util.List;
+import mtogo.feature.restaurant.domain.*;
+import mtogo.feature.restaurant.presentation.dto.response.*;
+import org.springframework.stereotype.Component;
+
+@Component
+public class RestaurantMapper
+{
+    public RestaurantDTO toDTO(Restaurant restaurant)
+    {
+        return new RestaurantDTO(restaurant.getId(), restaurant.getName(), restaurant.isAcceptsOrders());
+    }
+
+    public MenuDTO toDTO(Menu menu, List<MenuItem> items)
+    {
+        return new MenuDTO(menu.getId(), menu.getRestaurant().getId(), menu.getName(), menu.getDescription(),
+                items.stream().map(this::toDTO).toList());
+    }
+
+    public MenuItemDTO toDTO(MenuItem item)
+    {
+        return new MenuItemDTO(item.getId(), item.getName(), item.getDescription(), item.getPrice(), item.getImageUrl(),
+                item.isAvailable());
+    }
+}

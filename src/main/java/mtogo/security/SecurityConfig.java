@@ -40,6 +40,7 @@ public class SecurityConfig
                 .httpBasic(basic -> basic.disable()).logout(logout -> logout.disable())
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/features").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/restaurants", "/v1/restaurants/*/menus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
                         .permitAll().requestMatchers(HttpMethod.POST, "/v1/users", "/v1/users/login").permitAll()
                         .requestMatchers("/v1/customer/**").hasRole("CUSTOMER").requestMatchers("/v1/restaurant/**")
