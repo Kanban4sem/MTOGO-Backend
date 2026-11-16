@@ -55,6 +55,17 @@ inventory:
     command: |
       npm install -g prettier markdownlint-cli2 cspell @cspell/dict-da-dk
 
+  # Separate from install-npm-tools, which the GitHub runner also runs.
+  - id: install-codex
+    name: Install the Codex CLI
+    command: npm install -g @openai/codex
+
+  # Docker creates new named volumes owned by root. These hold each
+  # developer's Claude Code and Codex login (see mounts in devcontainer.json).
+  - id: agent-config-owner
+    name: Give the agent config volumes to the container user
+    command: sudo chown -R "$(id -u):$(id -g)" "$HOME/.claude" "$HOME/.codex"
+
   - id: cspell
     name: Run cspell
     command: cspell --no-progress --no-summary --words-only --unique
@@ -100,6 +111,8 @@ waves:
       - safe-repo
       - repo-gitconfig
       - claude-skills-symlink
+      - install-codex
+      - agent-config-owner
 
   - id: prep-runner
     name: Run to prepare GitHub runner

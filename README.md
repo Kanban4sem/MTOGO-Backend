@@ -36,7 +36,8 @@ Restart your terminal and VS Code afterwards.
 
 1. Clone the repository and open the folder in VS Code.
 2. Press `Cmd+Shift+P` (Windows: `Ctrl+Shift+P`) and choose **Dev Containers: Reopen in Container**.
-3. The first build takes a few minutes. It installs Java 25, Node, the GitHub CLI, TakT, InSitu and our linters, and checks `.claude/skills` out as a symlink so Claude Code finds the repository's skills, also in a clone made on Windows. If your dev container already exists, rebuild it or run `gh insitu run post-create` once.
+3. The first build takes a few minutes. It installs Java 25, Node, the GitHub CLI, TakT, InSitu, our linters, and Claude Code and Codex as extensions and on the command line. It also checks `.claude/skills` out as a symlink so Claude Code finds the repository's skills, also in a clone made on Windows. If your dev container already exists, rebuild it.
+4. Log in to the AI agents once: run `claude` and `codex` in the terminal and follow the prompts. Your login lives in the Docker volumes `mtogo-claude` and `mtogo-codex`, so it survives rebuilds and also works in the MTOGO-Frontend dev container. The first rebuild that adds these volumes starts logged out.
 
 All commands below are run in the terminal **inside** the dev container.
 
