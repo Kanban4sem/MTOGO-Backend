@@ -36,7 +36,7 @@ Restart your terminal and VS Code afterwards.
 
 1. Clone the repository and open the folder in VS Code.
 2. Press `Cmd+Shift+P` (Windows: `Ctrl+Shift+P`) and choose **Dev Containers: Reopen in Container**.
-3. The first build takes a few minutes. It installs Java 25, Node, the GitHub CLI, TakT, InSitu and our linters.
+3. The first build takes a few minutes. It installs Java 25, Node, the GitHub CLI, TakT, InSitu and our linters, and checks `.claude/skills` out as a symlink so Claude Code finds the repository's skills, also in a clone made on Windows. If your dev container already exists, rebuild it or run `gh insitu run post-create` once.
 
 All commands below are run in the terminal **inside** the dev container.
 

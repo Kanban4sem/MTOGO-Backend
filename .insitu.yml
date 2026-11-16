@@ -37,6 +37,19 @@ inventory:
       git config --local --get include.path | grep -e ../.gitconfig >/dev/null 2>&1 || \
       git config --local --add include.path ../.gitconfig
 
+  # Git for Windows clones with core.symlinks=false, which checks the
+  # .claude/skills symlink out as a plain file, so Claude Code finds no skills.
+  # The config write is retried once, since repo-gitconfig writes .git/config
+  # in the same parallel wave.
+  - id: claude-skills-symlink
+    name: Check .claude/skills out as a symlink
+    command: |
+      git config --local core.symlinks true || { sleep 1; git config --local core.symlinks true; }
+      if [ ! -L .claude/skills ]; then
+        rm -f .claude/skills
+        git checkout -- .claude/skills
+      fi
+
   - id: install-npm-tools
     name: Install linting and checker tools
     command: |
@@ -86,6 +99,7 @@ waves:
       - install-takt-shortcuts
       - safe-repo
       - repo-gitconfig
+      - claude-skills-symlink
 
   - id: prep-runner
     name: Run to prepare GitHub runner
