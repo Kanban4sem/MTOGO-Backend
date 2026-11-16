@@ -1,0 +1,4 @@
+language,hasAddress,expected,reason
+NULL,false,ACCEPT,"EP: default Danish profile without an optional address"
+da,true,ACCEPT,"EP: explicit Danish profile with a complete address"
+en,true,ACCEPT,"EP: English preference survives persistence and mapping"

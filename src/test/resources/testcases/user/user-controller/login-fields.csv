@@ -1,0 +1,8 @@
+field,value,expected,reason
+email,NULL,400,"EP: missing email is a malformed request"
+email,"",400,"EP: empty email is a malformed request"
+email," ",400,"EP: whitespace-only email is a malformed request"
+email,invalid,400,"EP: email must have valid syntax"
+password,NULL,400,"EP: missing password is a malformed request"
+password,"",400,"EP: empty password is a malformed request"
+password," ",400,"EP: whitespace-only password is a malformed request"

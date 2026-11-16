@@ -1,6 +1,6 @@
-kind,reason
-expired,"BVA: token expiration is in the past"
-missingClaims,"EP: signed token without required claims"
-tampered,"EP: altered token signature or header"
-malformed,"EP: malformed token"
-inactive,"Decision table: valid token but inactive account"
+kind,expected,reason
+expired,401,"BVA: token expiration is in the past"
+missingClaims,401,"EP: signed token without required claims"
+tampered,401,"EP: altered token signature or header"
+malformed,401,"EP: malformed token"
+inactive,401,"Decision table: valid token but inactive account"

@@ -1,0 +1,3 @@
+duplicate,matching,expected,reason
+false,false,BadRequestException,"Decision table: mismatched confirmation rejects a new account without orphan data"
+true,true,ConflictException,"EP: email differing only by case conflicts with the existing account"

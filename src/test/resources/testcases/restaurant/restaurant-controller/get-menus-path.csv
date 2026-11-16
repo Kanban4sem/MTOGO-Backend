@@ -1,0 +1,6 @@
+restaurantId,expected,reason
+abc,400,"EP: nonnumeric path ID cannot be bound"
+-1,404,"EP: negative ID does not identify a restaurant"
+0,404,"EP: zero does not identify a restaurant"
+9223372036854775807,404,"EP: positive unknown ID is mapped to not found"
+closed,404,"Decision table: existing closed restaurant is mapped to not found"

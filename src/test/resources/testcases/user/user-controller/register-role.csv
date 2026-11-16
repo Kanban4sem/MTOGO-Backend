@@ -1,0 +1,4 @@
+role,expected,reason
+RESTAURANT,201,"EP: a privileged client-supplied role is ignored and CUSTOMER is persisted"
+UNKNOWN,201,"EP: an unknown client-supplied role is ignored and CUSTOMER is persisted"
+NULL,201,"EP: a null client-supplied role cannot override CUSTOMER assignment"

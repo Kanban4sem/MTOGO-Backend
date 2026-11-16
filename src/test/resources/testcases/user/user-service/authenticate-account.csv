@@ -1,0 +1,6 @@
+state,role,expected,reason
+active,CUSTOMER,ACCEPT,"Decision table: active account with current token authenticates"
+active,RESTAURANT,ACCEPT,"EP: role changes are read from the account rather than cached in the token"
+active,DELIVERY_AGENT,ACCEPT,"EP: delivery agent role survives profile mapping"
+deleted,CUSTOMER,UnauthorizedException,"Decision table: token cannot authenticate a deleted account"
+inactive,CUSTOMER,UnauthorizedException,"Decision table: token cannot authenticate a deactivated account"

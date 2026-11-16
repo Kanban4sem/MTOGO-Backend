@@ -58,11 +58,12 @@ JWT authentication is proposed for developer review. No deployed server or exist
 
 ## Implementation notes
 
-### Spec 1.0 - 2026-11-15 - #13
+### Spec 1.0 - 2026-11-16 - #38
 
 - **Built:** registration, login, current profile, account-wide logout, role scopes, validation, errors and a Flyway migration. The developer approved separate user, address and role features. Address mapping and validation belong to address; password rules and token error translation stay in security. Email normalization is reused through the user feature's util package.
 - **Deviations:** Lombok annotation processing must be explicitly enabled for Java 25; the existing dependency and version are retained.
-- **Tests:** UserControllerTest and the register-fields, login-credentials, role-access and invalid-tokens CSV sets; existing configuration and security tests.
+- **Tests:** UserServiceTest covers persisted user/profile/address mapping, CUSTOMER assignment, normalized duplicate email, generic login failures, current account state/role and account-isolated session revocation. Its CSV sets are register-profile, register-conflicts, login-credentials and authenticate-account. AddressValidatorTest uses validate-completeness for the optional address decision table. PasswordServiceTest uses hash-utf8-bytes for the exact BCrypt byte boundary. UserControllerTest retains lifecycle, role-access, invalid-tokens and account-access checks, and covers registration/login input classes and length boundaries with register-fields, register-lengths, login-fields and login-lengths. The register-role set checks that client-supplied roles cannot grant privileges. Focused error mapping and two-user profile isolation checks complement service coverage. The full login matrix moved from HTTP to service level. Existing configuration and disabled-auth tests remain in place.
+- **Validation:** On 2026-11-16, the full backend suite passed in the dev container against isolated PostgreSQL Testcontainers: 161 tests, no failures, errors or skipped tests. The fix-all and trunk-worthy checks passed, including clean verify, Java formatting, Markdown, spelling and Prettier. JaCoCo was inspected for remaining gaps in scoped behaviour; the SonarQube Cloud quality gate has not been run in this session.
 - **Follow-up:** frontend integration remains in frontend issue #6; flag removal remains #31. ADR-005 awaits developer approval.
 
 ## Changelog

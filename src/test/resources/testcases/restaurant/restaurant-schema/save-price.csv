@@ -1,0 +1,4 @@
+price,expected,reason
+-0.01,DataIntegrityViolationException,"BVA: price one cent below zero is rejected by the schema"
+0.00,ACCEPT,"BVA: zero price is allowed"
+0.01,ACCEPT,"BVA: one cent above zero is retained exactly"

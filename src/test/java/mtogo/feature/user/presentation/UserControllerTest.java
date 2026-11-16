@@ -109,12 +109,31 @@ class UserControllerTest
         }
     }
 
-    @Test
-    @DisplayName("Register - rejects duplicate emails after normalizing case and never accepts a role from the request")
-    void duplicateEmailAndRoleEscalation()
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/user/user-controller/register-lengths.csv", numLinesToSkip = 1)
+    @DisplayName("Register - enforces the documented maximum lengths of profile and address fields")
+    void registerLengths(String field, int length, int expected, String reason)
     {
         Map<String, Object> request = registration();
-        request.put("role", "RESTAURANT");
+        request.put(field, valueWithLength(field, length));
+        var response = given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users").then()
+                .statusCode(expected);
+        if (expected == 400)
+        {
+            response.contentType("application/problem+json").body("status", is(400));
+            assertEquals(0L, jdbc.queryForObject("SELECT count(*) FROM users", Long.class));
+            assertEquals(0L, jdbc.queryForObject("SELECT count(*) FROM user_profiles", Long.class));
+        } else
+        {
+            assertEquals(1L, jdbc.queryForObject("SELECT count(*) FROM users", Long.class));
+        }
+    }
+
+    @Test
+    @DisplayName("Register - duplicate normalized email is mapped to a conflict ProblemDetail")
+    void duplicateEmailMapping()
+    {
+        Map<String, Object> request = registration();
         given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users").then().statusCode(201)
                 .body("role", equalTo("CUSTOMER"));
         request.put("email", "CUSTOMER@EXAMPLE.TEST");
@@ -122,20 +141,72 @@ class UserControllerTest
                 .contentType("application/problem+json");
     }
 
-    @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/user/user-controller/login-credentials.csv", numLinesToSkip = 1)
-    @DisplayName("Login - unknown, wrong-password and inactive accounts receive the same failure")
-    void loginCredentials(String email, String password, int expected, String reason)
+    @ParameterizedTest(name = "[{index}] {2}")
+    @CsvFileSource(resources = "/testcases/user/user-controller/register-role.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Register - client-supplied roles never grant additional privileges")
+    void registerRole(String role, int expected, String reason)
+    {
+        Map<String, Object> request = registration();
+        request.put("role", role);
+        given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users").then().statusCode(expected)
+                .body("role", equalTo("CUSTOMER"));
+        assertEquals("CUSTOMER",
+                jdbc.queryForObject("SELECT r.name FROM users u JOIN roles r ON r.id = u.role_id WHERE u.email = ?",
+                        String.class, "customer@example.test"));
+    }
+
+    @Test
+    @DisplayName("Login - credential failures are translated to a generic unauthorized ProblemDetail")
+    void loginFailureMapping()
     {
         given().port(port).contentType(ContentType.JSON).body(registration()).post("/v1/users").then().statusCode(201);
-        if (email.equals("inactive@example.test"))
-        {
-            jdbc.update(
-                    "UPDATE users SET is_active = false, email = 'inactive@example.test' WHERE email = 'customer@example.test'");
-        }
-        given().port(port).contentType(ContentType.JSON).body(Map.of("email", email, "password", password))
-                .post("/v1/users/login").then().statusCode(expected)
+        given().port(port).contentType(ContentType.JSON)
+                .body(Map.of("email", "customer@example.test", "password", "Incorrect123!")).post("/v1/users/login")
+                .then().statusCode(401).contentType("application/problem+json").body("status", is(401))
                 .body("detail", equalTo("Invalid email or password"));
+    }
+
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/user/user-controller/login-fields.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Login - malformed credentials are rejected before account authentication")
+    void loginFields(String field, String value, int expected, String reason)
+    {
+        Map<String, Object> request = new HashMap<>();
+        request.put("email", "customer@example.test");
+        request.put("password", "Customer123!");
+        request.put(field, value);
+        given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users/login").then()
+                .statusCode(expected).contentType("application/problem+json").body("status", is(expected));
+    }
+
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/user/user-controller/login-lengths.csv", numLinesToSkip = 1)
+    @DisplayName("Login - distinguishes oversized credentials from well-formed but unknown credentials")
+    void loginLengths(String field, int length, int expected, String reason)
+    {
+        Map<String, Object> request = new HashMap<>();
+        request.put("email", "unknown@example.test");
+        request.put("password", "Customer123!");
+        request.put(field, valueWithLength(field, length));
+        given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users/login").then()
+                .statusCode(expected).contentType("application/problem+json").body("status", is(expected));
+    }
+
+    @Test
+    @DisplayName("Current profile - the authenticated identity cannot be replaced by another user's query parameter")
+    void currentProfileIsolation()
+    {
+        Map<String, Object> request = registration();
+        int firstId = given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users").then()
+                .statusCode(201).extract().path("id");
+        request.put("email", "other@example.test");
+        request.put("firstName", "Other");
+        int otherId = given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users").then()
+                .statusCode(201).extract().path("id");
+        given().port(port).auth().oauth2(login("CUSTOMER")).queryParam("userId", otherId).get("/v1/users/me").then()
+                .statusCode(200).header("Cache-Control", containsString("no-store")).body("id", equalTo(firstId))
+                .body("profile.firstName", equalTo("Jonas")).body("passwordHash", nullValue())
+                .body("password", nullValue()).body("sessionVersion", nullValue());
     }
 
     @ParameterizedTest(name = "[{index}] {3}")
@@ -155,10 +226,10 @@ class UserControllerTest
         given().port(port).auth().oauth2(token).get(path).then().statusCode(expected);
     }
 
-    @ParameterizedTest(name = "[{index}] {1}")
+    @ParameterizedTest(name = "[{index}] {2}")
     @CsvFileSource(resources = "/testcases/user/user-controller/invalid-tokens.csv", numLinesToSkip = 1)
     @DisplayName("Token validation - rejects expired, tampered, missing-claim, malformed and disabled-user tokens")
-    void invalidTokens(String kind, String reason)
+    void invalidTokens(String kind, int expected, String reason)
     {
         given().port(port).contentType(ContentType.JSON).body(registration()).post("/v1/users").then().statusCode(201);
         String token = login("CUSTOMER");
@@ -181,7 +252,7 @@ class UserControllerTest
         {
             jdbc.update("UPDATE users SET is_active = false WHERE id = ?", userId);
         }
-        given().port(port).auth().oauth2(token).get("/v1/users/me").then().statusCode(401)
+        given().port(port).auth().oauth2(token).get("/v1/users/me").then().statusCode(expected)
                 .contentType("application/problem+json");
     }
 
@@ -201,6 +272,18 @@ class UserControllerTest
                 .body("components.schemas.LoginUserDTO.properties.password", notNullValue())
                 .body("components.schemas.AuthenticatedUserDTO.properties.accessToken", notNullValue())
                 .body("components.schemas.AuthenticatedUserDTO.properties.password", nullValue());
+    }
+
+    private static String valueWithLength(String field, int length)
+    {
+        if (!field.equals("email"))
+        {
+            return "a".repeat(length);
+        }
+        // Keep each email label valid so only the total-length boundary is tested.
+        String prefix = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + ".";
+        String suffix = ".test";
+        return prefix + "d".repeat(length - prefix.length() - suffix.length()) + suffix;
     }
 
     private String login(String role)

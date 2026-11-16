@@ -1,0 +1,7 @@
+field,length,expected,reason
+email,253,401,"BVA: email below the request limit reaches credential authentication"
+email,254,401,"BVA: email at the request limit reaches credential authentication"
+email,255,400,"BVA: email above the request limit is rejected as invalid input"
+password,71,401,"BVA: password below the request limit reaches credential authentication"
+password,72,401,"BVA: password at the request limit reaches credential authentication"
+password,73,400,"BVA: password above the request limit is rejected as invalid input"

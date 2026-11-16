@@ -42,12 +42,12 @@ The domain-model draft provides the relationship structure. Only fields needed f
 
 ## Implementation notes
 
-### Spec 1.0 - 2026-11-15 - #14
+### Spec 1.0 - 2026-11-16 - #38
 
 - **Built:** Three entities, repositories, response mapping, public read endpoints and schema/seed migrations.
 - **Deviations:** None.
-- **Tests:** Not run at the developer's request.
-- **Validation:** Diff whitespace check passed. The required formatting command could not run because gh-insitu is unavailable in this host. A formatting/compile attempt with tests skipped produced no output and was stopped; compilation is unverified.
+- **Tests:** RestaurantServiceTest covers accepting/closed/unknown restaurants, empty results, active menus, available items, isolation between restaurants and menus, ID ordering and decimal-preserving response mapping. CSV sets: get-all-acceptance, get-menus-restaurant and get-menus-visibility. RestaurantControllerTest checks anonymous JSON access and ProblemDetail mapping with get-menus-path. RestaurantSchemaTest checks Flyway's initial catalogue and the nonnegative price boundary through save-price. All database tests use isolated PostgreSQL Testcontainers; no inherited CRUD or generated accessor tests were added.
+- **Validation:** On 2026-11-16, the full backend suite passed in the dev container: 161 tests, no failures, errors or skipped tests. The fix-all and trunk-worthy checks passed, including clean verify and formatting. JaCoCo was inspected; the SonarQube Cloud quality gate has not been run in this session.
 - **Follow-up:** Frontend integration remains MTOGO-Frontend#7.
 
 ## Changelog

@@ -1,0 +1,4 @@
+bytes,expected,reason
+71,ACCEPT,"BVA: multibyte password one byte below the BCrypt limit"
+72,ACCEPT,"BVA: multibyte password at the BCrypt limit"
+73,BadRequestException,"BVA: one byte above the limit is rejected without silently truncating the password"
