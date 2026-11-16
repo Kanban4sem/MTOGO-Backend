@@ -16,52 +16,6 @@ Use Spring Data JPA repositories for CRUD and custom queries, with no additional
 
 The detailed structure and responsibilities live in the [coding standards](../coding-standards.md#backend-structure).
 
-```text
-MTOGO-Backend/
-    │
-    ├── .env                                                            local secrets, never committed
-    │
-    └── src/main/
-        │
-        ├── resources/
-        │   │
-        │   ├── application.properties                                  configuration with placeholders
-        │   └── db/migration/                                           Flyway SQL migrations
-        │
-        └── java/mtogo/
-                │
-                ├── feature/                                            user, order, restaurant, ...
-                │   │
-                │   ├── user/                                           everything user (entity) related
-                │   └── <feature>/                                      next feature implemented
-                │           │
-                │           │
-                │           ├── presentation/
-                │           │   │
-                │           │   ├── <Feature>Controller.java
-                │           │   │
-                │           │   └── dto/
-                │           │       ├── request/                        request records, e.g. CreateUserDTO - SoC
-                │           │       └── response/                       response records, e.g. UserDTO - Soc
-                │           │
-                │           ├── domain/
-                │           │   ├── <Entity>.java                       JPA entity, fields and relationships
-                │           │   ├── I<Feature>Service.java              optional, only when a concrete need exists
-                │           │   └── <Feature>Service.java
-                │           │
-                │           │
-                │           └── data/
-                │               ├── <Entity>Repository.java
-                │               └── <Entity>Mapper.java
-                │
-                ├── config/                                             application configuration
-                ├── exceptions/                                         ApiException hierarchy and GlobalExceptionHandler
-                ├── security/                                           authentication, JWT and SecurityConfig
-                ├── server/                                             application startup
-                ├── utils/                                              helpers used by multiple features
-                └── Main.java
-```
-
 ## Alternatives
 
 - **Features directly under `mtogo`:** Keeps paths shorter, but adds a root package for every feature.

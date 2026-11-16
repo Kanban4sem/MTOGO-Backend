@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 5.0 · **Date:** 2026-11-15
+**Version:** 6.0 · **Date:** 2026-11-16
 
 ## Overview
 
@@ -8,27 +8,19 @@ These standards keep the code consistent, readable and easy to change. This copy
 
 The general rules under [Naming](#naming), the sections [REST API and JSON](#rest-api-and-json), [Documentation files](#documentation-files) and [Comments](#comments) (apart from the Javadoc rule, which is backend only) are shared with `MTOGO-Frontend`. Change them through a linked issue in both repositories, as described in [CONTRIBUTING](../CONTRIBUTING.md#changing-the-documents).
 
-| Source                                      | Answers                                   |
-| ------------------------------------------- | ----------------------------------------- |
-| [CONTRIBUTING](../CONTRIBUTING.md)          | How do we work and deliver?               |
-| [Definition of Done](definition-of-done.md) | When is an issue finished?                |
-| This document                               | How do we structure, write and test code? |
-
 Exact versions live in `pom.xml`. Technology choices are recorded as ADRs in `docs/adr/`. Add or upgrade a dependency only through an issue the team has agreed on, and prefer what the project already has.
 
 Good design reduces complexity. If a rule here makes the code more complicated, propose a change as described in [CONTRIBUTING](../CONTRIBUTING.md#changing-the-documents).
 
 ## Formatting
 
-- The tool configuration is the source of truth for formatting: Spotless in `pom.xml` for Java, and `.prettierrc.json` for Markdown, JSON and YAML.
-- Java uses Allman style: opening braces go on their own line.
-- Spotless checks Java formatting. Prettier formats Markdown, JSON and YAML.
+- The tool configuration is the source of truth for formatting: Spotless in `pom.xml` for Java (Allman style), and `.prettierrc.json` for Markdown, JSON and YAML.
 - Format the code you change, but do not reformat unrelated code.
 - Change formatting rules only in the tool configuration, in a separate issue.
 
 ## Naming
 
-Names describe what something is or does in domain language. One concept keeps one name in every layer (`Order` → `OrderDTO` → `/orders`). Avoid abbreviations and vague names such as `data`, `info`, `handle` or `manager`. If a good name is hard to find, the design is probably unclear.
+Names describe what something is or does in [domain language](../CONTRIBUTING.md#language). One concept keeps one name in every layer (`Order` → `OrderDTO` → `/orders`). Avoid abbreviations and vague names such as `data`, `info`, `handle` or `manager`. If a good name is hard to find, the design is probably unclear.
 
 ### Java
 
@@ -43,7 +35,7 @@ Names describe what something is or does in domain language. One concept keeps o
 | Constant, enum value       | UPPER_SNAKE_CASE                                   | `IN_DELIVERY`                    |
 | Test class                 | `<ClassUnderTest>Test`                             | `OrderServiceTest`               |
 
-The interface naming convention applies when an interface is needed; it does not require an interface for every service. Spring Data repositories are interfaces without the `I` prefix, because Spring generates the implementation.
+Spring Data repositories are interfaces without the `I` prefix, because Spring generates the implementation.
 
 | Suffix       | Role                                              | Example                      |
 | ------------ | ------------------------------------------------- | ---------------------------- |
@@ -77,78 +69,58 @@ The code follows [Presentation Domain Data Layering](https://martinfowler.com/bl
 
 ```text
 MTOGO-Backend/
-    │
-    ├── .env                                                            local secrets, never committed
-    │
-    └── src/main/
-        │
-        ├── resources/
-        │   │
-        │   ├── application.properties                                  configuration with placeholders
-        │   └── db/migration/                                           Flyway SQL migrations
-        │
-        └── java/mtogo/
-                │
-                ├── feature/                                            user, order, restaurant, ...
-                │   │
-                │   ├── user/                                           everything user (entity) related
-                │   └── <feature>/                                      next feature implemented
-                │           │
-                │           │
-                │           ├── presentation/
-                │           │   │
-                │           │   ├── <Feature>Controller.java
-                │           │   │
-                │           │   └── dto/
-                │           │       ├── request/                        request records, e.g. CreateUserDTO - SoC
-                │           │       └── response/                       response records, e.g. UserDTO - Soc
-                │           │
-                │           ├── domain/
-                │           │   ├── <Entity>.java                       JPA entity, fields and relationships
-                │           │   ├── I<Feature>Service.java              optional, only when a concrete need exists
-                │           │   └── <Feature>Service.java
-                │           │
-                │           │
-                │           └── data/
-                │               ├── <Entity>Repository.java
-                │               └── <Entity>Mapper.java
-                │
-                ├── config/                                             application configuration
-                ├── exceptions/                                         ApiException hierarchy and GlobalExceptionHandler
-                ├── security/                                           authentication, JWT and SecurityConfig
-                ├── server/                                             application startup
-                ├── utils/                                              helpers used by multiple features
-                └── Main.java
+├── .env                                    local secrets, never committed
+└── src/main/
+    ├── resources/
+    │   ├── application.properties          configuration with placeholders
+    │   └── db/migration/                   Flyway SQL migrations
+    └── java/mtogo/
+        ├── feature/                        user, order, restaurant, ...
+        │   ├── user/                       everything user (entity) related
+        │   └── <feature>/                  next feature implemented
+        │       ├── presentation/
+        │       │   ├── <Feature>Controller.java
+        │       │   └── dto/
+        │       │       ├── request/        request records, e.g. CreateUserDTO
+        │       │       └── response/       response records, e.g. UserDTO
+        │       ├── domain/
+        │       │   ├── <Entity>.java       JPA entity, fields and relationships
+        │       │   ├── I<Feature>Service.java  optional, only when a concrete need exists
+        │       │   └── <Feature>Service.java
+        │       └── data/
+        │           ├── <Entity>Repository.java
+        │           └── <Entity>Mapper.java
+        ├── config/                         application configuration
+        ├── exceptions/                     ApiException hierarchy and GlobalExceptionHandler
+        ├── security/                       authentication, JWT and SecurityConfig
+        ├── server/                         application startup
+        ├── utils/                          helpers used by multiple features
+        └── Main.java
 ```
 
 Each feature owns its controllers, DTOs, entities, services, repositories and mappers. Add classes when the feature needs them; the tree shows responsibilities, not files that every feature must have.
 
-- **Entities describe persisted state and relationships.** JPA annotations such as `@Entity`, `@Id` and `@OneToOne` define the mapping to the database. Entities do not execute queries, save or delete themselves, or convert themselves to DTOs.
-- **Repositories own database CRUD.** Extend `JpaRepository<Entity, IdType>` and use its existing methods for create, read, update and delete. Spring Data supplies the implementation; do not duplicate those methods in a DAO, a generic CRUD wrapper or an entity. Add derived query methods such as `findByEmail` when needed.
-- **Custom queries stay in the data layer.** Put JPQL or native SQL in repository methods with `@Query`. When those methods are insufficient, use a custom repository implementation with `EntityManager` or `JdbcTemplate`. Services and controllers contain no query code.
-- **Services own business operations.** Services call repositories, enforce business rules and use mappers for DTO conversion. Put transaction boundaries on service methods with `@Transactional` when an operation must succeed or fail as a whole, such as creating a user and profile together. Do not add service methods that merely copy every repository method without an application need.
-- **Mappers own entity/DTO conversion.** A mapper creates or updates entity fields from request DTOs and builds response DTOs from entities. It performs no database access, business decisions or password hashing. JPA/Hibernate maps entities to database rows; the DTO mapper does not.
-- **Request and response DTOs have separate responsibilities.** Request records live in `presentation/dto/request/` and define accepted input and Bean Validation constraints. Response records live in `presentation/dto/response/` and define returned fields. Do not reuse the same record for both directions. Responses never expose passwords or password hashes.
-- **Flyway owns schema SQL.** Tables, foreign keys, unique constraints and other schema changes belong in `resources/db/migration/`. Hibernate validates the schema; it does not create or update it.
+| Layer            | Responsible for                                                                                                 | Must not                                   |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Presentation** | Reading the request, validating its shape, calling one service method, returning the response                   | Contain business rules or use repositories |
+| **Domain**       | Entities, business rules, authorization decisions that depend on data, orchestration and transaction boundaries | Know about HTTP requests or responses      |
+| **Data**         | Repositories and queries, entity ↔ DTO mapping                                                                  | Contain business rules                     |
 
-| Layer            | Responsible for                                                                               | Must not                                   |
-| ---------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Presentation** | Reading the request, validating its shape, calling one service method, returning the response | Contain business rules or use repositories |
-| **Domain**       | Business rules, authorization decisions that depend on data, orchestration                    | Know about HTTP requests or responses      |
-| **Data**         | Persistence with Spring Data JPA, entity ↔ DTO mapping                                        | Contain business rules                     |
-
-Dependencies point one way: presentation → domain → data. DTOs are the exception: they are the API contract, so request DTOs live in `presentation/dto/request/` and response DTOs in `presentation/dto/response/`. Services accept request DTOs where needed and return response DTOs (rule 2).
+Dependencies point one way: presentation → domain → data. DTOs are the exception: they are the API contract, so they live in the presentation layer, and services accept request DTOs and return response DTOs.
 
 1. **Inject dependencies through constructors.** Fields are `final`. No `@Autowired` on fields. Use concrete service classes by default. Introduce an interface when it serves a concrete need, such as interchangeable implementations or a contract across a module boundary. A service does not need an interface solely because it is injected. Spring Data repositories remain interfaces so Spring can supply their implementation.
-2. **Entities never cross the service boundary.** Services return DTOs. The DTOs are the API contract, so an entity can change without breaking the API.
-3. **Field rules are Bean Validation annotations** on request DTOs (`@NotBlank`, `@Size`, `@Positive`) and are checked with `@Valid` in the controller. Rules that need stored data or combine several fields belong in the service.
-4. **Access control is declared per endpoint** with `@PreAuthorize` on the controller method. Decisions that depend on data, such as "only your own orders", belong in the service.
-5. **Queries bind values as parameters.** Use derived query methods or `@Query` with named parameters. Never build a query by concatenating strings.
-6. **Flyway owns the schema.** Every schema change is a new migration in `src/main/resources/db/migration`, named `V<number>__<description>.sql`. A migration that has run is never edited.
-7. **No secrets in code or configuration.** `application.properties` holds placeholders. Local values go in `.env`, which is never committed.
-8. **Lombok removes boilerplate.** Do not use `@Data` on JPA entities, because its `equals` and `hashCode` break with lazy loading.
-9. **Share only what is shared.** Code moves out of a feature only when at least two features use it.
-10. **A new feature copies the shape of an existing one.**
+2. **Entities never cross the service boundary.** Services return DTOs, so an entity can change without breaking the API. Entities describe persisted state and relationships with JPA annotations. They do not run queries, save or delete themselves, or convert themselves to DTOs.
+3. **Request and response DTOs are separate records.** Request records in `presentation/dto/request/` define accepted input. Response records in `presentation/dto/response/` define returned fields and never expose passwords or password hashes.
+4. **Field rules are Bean Validation annotations** on request DTOs (`@NotBlank`, `@Size`, `@Positive`) and are checked with `@Valid` in the controller. Rules that need stored data or combine several fields belong in the service.
+5. **Access control is declared per endpoint** with `@PreAuthorize` on the controller method. Decisions that depend on data, such as "only your own orders", belong in the service.
+6. **Repositories own database access.** Extend `JpaRepository<Entity, IdType>` and use its methods for create, read, update and delete. Do not wrap them in a DAO, a generic CRUD wrapper or a service method that only copies a repository method. Add derived query methods such as `findByEmail`, or `@Query` methods with named parameters, and a custom repository implementation with `EntityManager` or `JdbcTemplate` only when those are not enough. Services and controllers contain no query code. Never build a query by concatenating strings.
+7. **Mappers only convert.** A mapper creates or updates entity fields from request DTOs and builds response DTOs from entities. It performs no database access, business decisions or password hashing.
+8. **Services own transactions.** Put `@Transactional` on a service method when an operation must succeed or fail as a whole, such as creating a user and profile together.
+9. **Flyway owns the schema.** Every schema change is a new migration in `src/main/resources/db/migration`, named `V<number>__<description>.sql`. A migration that has run is never edited. Hibernate validates the schema; it does not create or update it.
+10. **No secrets in code or configuration.** `application.properties` holds placeholders. Local values go in `.env`, which is never committed.
+11. **Lombok removes boilerplate.** Do not use `@Data` on JPA entities, because its `equals` and `hashCode` break with lazy loading.
+12. **Share only what is shared.** Code moves out of a feature only when at least two features use it.
+13. **A new feature copies the shape of an existing one.**
 
 ## Comments
 
@@ -178,7 +150,6 @@ Errors are returned as [`ProblemDetail`](https://docs.spring.io/spring-framework
 | ----------------------- | ------ | -------------------------------------------- |
 | `BadRequestException`   | 400    | Input is well-formed but breaks a rule       |
 | `UnauthorizedException` | 401    | Credentials or token are missing or invalid  |
-| `ForbiddenException`    | 403    | The user is authenticated but not allowed    |
 | `NotFoundException`     | 404    | The resource does not exist                  |
 | `ConflictException`     | 409    | The request conflicts with the current state |
 
@@ -196,39 +167,12 @@ Failed `@Valid` checks become `400` automatically. Any other exception becomes a
 
 1. Look up the status in the [MDN HTTP status reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status).
 2. Name the exception after the MDN status name in PascalCase with the `Exception` suffix: `422 Unprocessable Content` → `UnprocessableContentException`.
-3. Create it in `mtogo.exceptions`, extending `ApiException`, with two constructors.
+3. Create it in `mtogo.exceptions` as a copy of `ConflictException`: it extends `ApiException` with two constructors. `ApiException` extends Spring's `ErrorResponseException`, so the handler renders every subclass as a `ProblemDetail` without further code.
 4. Add it to the table above.
-
-`ApiException` extends Spring's `ErrorResponseException`, so the handler renders every subclass as a `ProblemDetail` without further code:
-
-```java
-public abstract class ApiException extends ErrorResponseException
-{
-    protected ApiException(HttpStatus status, String detail, Throwable cause)
-    {
-        super(status, ProblemDetail.forStatusAndDetail(status, detail), cause);
-    }
-}
-```
-
-```java
-public class UnprocessableContentException extends ApiException
-{
-    public UnprocessableContentException(String detail)
-    {
-        this(detail, null);
-    }
-
-    public UnprocessableContentException(String detail, Throwable cause)
-    {
-        super(HttpStatus.UNPROCESSABLE_CONTENT, detail, cause);
-    }
-}
-```
 
 ## Testing
 
-Every change ships with tests. The [Definition of Done](definition-of-done.md) requires that behaviour is covered. This section defines how.
+Every change to behaviour ships with tests. A change to documentation or configuration only does not need them. The [Definition of Done](definition-of-done.md) requires that behaviour is covered. This section defines how.
 
 ### Detroit school
 
@@ -250,11 +194,7 @@ Tests follow the Detroit (classical) school:
 
 ### Test case design
 
-Test cases are chosen systematically with three black-box techniques. They are derived from the acceptance criteria and the documented API rules, not from the implementation. If the code and the specification disagree, the test follows the specification and the disagreement is raised with the team.
-
-```text
-Acceptance criteria → test design (EP, BVA, decision table) → consolidated test cases → CSV test data → automated test
-```
+Test cases are chosen systematically with three black-box techniques. They are derived from the acceptance criteria and the documented API rules, not from the implementation. The steps are in [Designing test cases step by step](#designing-test-cases-step-by-step).
 
 | Technique                     | Use when                                                                     | Produces                                                      |
 | ----------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
@@ -308,12 +248,7 @@ Example: `GET /orders/{id}`, where customers may only see their own orders:
 
 ### Consolidation and implementation
 
-The techniques overlap. `0` can be both an invalid EP class and a boundary value. The techniques are used to find test cases, not to create three separate test suites.
-
-- Merge the test cases into one consolidated set per rule set, such as the status rules of `cancel` in `OrderService`.
-- Every EP class, boundary value and decision table rule appears in at least one row. Remove rows that cover nothing new.
-- Each row has a `reason` that names the techniques it represents and what it tests.
-- Implement the set as one data-driven `@ParameterizedTest` with `@CsvFileSource`.
+The techniques overlap. `0` can be both an invalid EP class and a boundary value. The techniques are used to find test cases, not to create three separate test suites: they are merged into one set per rule set, such as the status rules of `cancel` in `OrderService`.
 
 #### Test data files
 
@@ -372,8 +307,6 @@ void cancelIsAllowedOnlyBeforeDelivery(OrderStatus status, String expected, Stri
 }
 ```
 
-The service, its repository and the database are all real. The test checks the returned state, not the calls made.
-
 Tests that do not check an input or business rule, such as mapping or a single happy path, are ordinary `@Test` methods with a `@DisplayName`.
 
 ### Techniques per test level
@@ -392,7 +325,7 @@ Tests that do not check an input or business rule, such as mapping or a single h
 2. **Partition** every input with EP.
 3. **Find the boundaries** of every class with BVA.
 4. **Build a decision table** where two or more conditions combine.
-5. **Consolidate** into one CSV file per rule set, with `expected` and `reason`.
+5. **Consolidate** into one CSV file per rule set, with `expected` and `reason`. Every EP class, boundary value and decision table rule appears in at least one row. Remove rows that cover nothing new.
 6. **Implement** the rule set as one `@ParameterizedTest` that reads the CSV file. A case covered by a CSV row is not repeated as a separate `@Test`.
 7. **Treat a failing row as a bug or an unclear rule.** Never change `expected` to match the code. Fix the code, or raise the rule with the team.
 
@@ -403,8 +336,16 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 - Annotate each controller with `@Tag` and each endpoint with `@Operation(summary = "...")`.
 - Document error responses specific to an endpoint with `@ApiResponse`. Errors that every protected endpoint can return (`401`, `403`) are not repeated.
 - Add `@Schema(description = "...", example = "...")` to DTO fields whose meaning is not obvious from the name. Bean Validation rules appear in the specification automatically.
-- A change to the API is a change to the contract with the frontend. Create a linked issue in `MTOGO-Frontend` for the frontend change (see [Issues](../CONTRIBUTING.md#issues)).
-- The OpenAPI specification is the contract with the frontend. The frontend reads errors from the `ProblemDetail` responses described in [Error handling](#error-handling).
+- The OpenAPI specification is the contract with the frontend, which reads errors from the `ProblemDetail` responses described in [Error handling](#error-handling). A change to the API gets a [linked issue](../CONTRIBUTING.md#issues) in `MTOGO-Frontend`.
+
+## Feature flags
+
+[CONTRIBUTING](../CONTRIBUTING.md#feature-flags) says when a flag is needed and how it is tested. In the backend:
+
+- **Add:** declare the flag in `AppProperties` and `application.properties`, defaulting to false: `app.auth-enabled=${FEATURE_AUTH_ENABLED:false}`. In Java the flag takes the `is` prefix (`isAuthEnabled`). `@Name("auth-enabled")` in `AppProperties` and `@JsonProperty("authEnabled")` in `FeatureFlagsDTO` keep the property and the JSON field without it. Add the field to `FeatureFlagsDTO` and its mapping in `FeatureFlagService`, so `GET /v1/features` returns it. Add the environment variable to `.env.example` with `false`, set its value in each environment's `.env`, and make sure the startup configuration passes it to Spring Boot.
+- **Use:** keep the unfinished backend behaviour behind the flag.
+- **Test:** update the tests that build `AppProperties` or check `FeatureFlagsDTO`.
+- **Remove:** once the feature is fully released, remove the flag's configuration, its field in `FeatureFlagsDTO` and the mapping in `FeatureFlagService`, the conditional checks and the flag-specific tests, and update the tests that build `AppProperties` or check `FeatureFlagsDTO`.
 
 ## Changelog
 
@@ -418,3 +359,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 3.1     | 2026-11-12 | DTOs in the presentation layer                                                  | #33      |
 | 4.0     | 2026-11-12 | The tool configuration replaces `.editorconfig`                                 | #34      |
 | 5.0     | 2026-11-15 | Separate CRUD and DTO responsibilities; use service interfaces only when needed | #13      |
+| 6.0     | 2026-11-16 | Tests for changes to behaviour, feature flag steps, each rule stated once       | #39      |

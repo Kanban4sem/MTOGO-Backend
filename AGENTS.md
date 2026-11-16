@@ -1,22 +1,27 @@
 # Agent Instructions
 
-**Version:** 3.0 · **Date:** 2026-11-15
+**Version:** 4.0 · **Date:** 2026-11-16
 
-MTOGO is a food delivery platform built with Kanban and trunk-based development using TakT. This repository holds the backend (Spring Boot). The frontend (React) lives in `MTOGO-Frontend`, which has its own copy of the documents below.
+MTOGO is a food delivery platform built with Kanban and trunk-based development using TakT. This repository holds the backend (Spring Boot). The frontend (React) lives in `MTOGO-Frontend`.
 
 ## Source of truth
 
-Read these before you change anything. They override every skill, including the upstream skills in `.agents/skills/`:
+These documents override every skill, including the upstream skills in `.agents/skills/`. Read the section you need when you need it:
 
-- [CONTRIBUTING](CONTRIBUTING.md): how we work, deliver, write commit messages and record decisions
-- [Coding standards](docs/coding-standards.md): how code is structured, written and tested
-- [Definition of Done](docs/definition-of-done.md): when an issue is finished
+- [Coding standards](docs/coding-standards.md): when you write, test or review code
+- [Definition of Done](docs/definition-of-done.md): before you say an issue is finished
+- [CONTRIBUTING](CONTRIBUTING.md): for issues, commit messages, ADRs, feature flags and changing the documents
 
 When a skill and these documents disagree, follow the document and tell the developer which rule you followed.
 
-## Architecture examples
+## Commands
 
-The backend structures in `docs/coding-standards.md` and `docs/adr/004-backend-structure.md` illustrate the agreed architecture. They are examples, not an inventory of the finished product. Do not add concrete features, entities or helpers to those examples when implementing a feature, and do not amend ADRs merely to list new features. Change architecture documents only when the developer explicitly asks to change the architectural rules or decision. Record feature implementation details in its spec and update the domain model when relevant.
+Run everything inside the dev container. Tests need Docker for Testcontainers.
+
+- One test class: `./mvnw -q test -Dtest=<TestClass>`
+- Full build and tests: `./mvnw verify`
+- Fix formatting, Markdown and spelling: `gh insitu run fix-all`. Run it after editing files, since your edits bypass format-on-save.
+- The checks the pre-commit hook runs: `gh insitu run trunk-worthy`
 
 ## Git and TakT
 
@@ -26,11 +31,14 @@ The developer owns every commit. You work on the issue branch the developer crea
 - Commits carry the developer as author and committer, with no agent trailer such as `Co-Authored-By` and no `--author`.
 - `git commit`, `git push` and `gh tt deliver` are the developer's. Leave `main` untouched.
 - Rebase with `git pull --rebase origin main` when the developer asks for it.
-- Run `gh insitu run fix-all` after editing files, since your edits bypass format-on-save.
 
 ## Feature flags
 
-Unfinished behaviour that reaches `main` stays behind a feature flag that is off by default. Before you implement an issue, ask the developer whether it needs a flag, and record the answer in the spec. How a flag is built is not decided yet. Until an ADR decides it, agree the approach with the developer.
+Before you implement an issue that changes behaviour, ask the developer whether it needs a [feature flag](CONTRIBUTING.md#feature-flags), and record the answer in the spec.
+
+## Architecture examples
+
+The structures in the coding standards and ADR-004 illustrate the architecture. They are not an inventory: don't add features to them or amend ADRs to list features. Record those in the spec, and in the domain model when relevant. Change architecture documents only when the developer asks to change an architectural rule.
 
 ## Issue workflow
 
@@ -46,12 +54,12 @@ The developer's guide to the flow is [AI workflow](docs/ai-workflow.md).
 
 ## Where things live
 
-- **Issues:** GitHub issues in this repository, on the [project board](https://github.com/orgs/Kanban4sem/projects/1). Read them with `gh issue view <number>`. Create one with its work label (`development`, `ad hoc` or `bug`), its repository label and its Type, as in [Issues](CONTRIBUTING.md#issues). Work that also changes the frontend gets a linked issue in `MTOGO-Frontend`.
+- **Issues:** GitHub issues in this repository, on the [project board](https://github.com/orgs/Kanban4sem/projects/1). Read them with `gh issue view <number>`. Create them as described in [Issues](CONTRIBUTING.md#issues), then add them to the board with `gh project item-add 1 --owner Kanban4sem --url <issue-url>`.
 - **Specs:** `docs/specs/<issue>-<slug>.md`. Format and versioning: [SPEC-FORMAT.md](.agents/skills/mtogo-spec/SPEC-FORMAT.md).
-- **ADRs:** `docs/adr/<number>-<slug>.md` with a three-digit number, in the format from [Architecture decisions](CONTRIBUTING.md#architecture-decisions). This replaces `ADR-FORMAT.md` in the `domain-modeling` skill. An ADR lives in the repository that owns the decision. The backend owns the API contract.
+- **ADRs:** `docs/adr/<number>-<slug>.md` with a three-digit number, in the format from [Architecture decisions](CONTRIBUTING.md#architecture-decisions). This replaces `ADR-FORMAT.md` in the `domain-modeling` skill.
 - **Glossary:** `docs/glossary.md`. Wherever a skill names `GLOSSARY.md` or `CONTEXT.md`, use this file.
 - **Domain model:** `docs/domain-model.md`, a draft class diagram of the whole domain. Use it as a starting point when grilling and writing specs, not as decided. Where it disagrees with the glossary, a spec or the code, those win. Propose an update to the diagram when an issue settles part of the domain.
-- **Shared documents:** CONTRIBUTING, the Definition of Done, the AI workflow, the glossary, the minimum viable product and the general sections of the coding standards have a copy in `MTOGO-Frontend`. When you change one, propose a linked issue there, as described in [Changing the documents](CONTRIBUTING.md#changing-the-documents).
+- **Shared documents:** when you change a document shared with `MTOGO-Frontend`, propose a linked issue there, as described in [Changing the documents](CONTRIBUTING.md#changing-the-documents).
 
 ## Changelog
 
@@ -64,3 +72,4 @@ How to change this document is described in [CONTRIBUTING](CONTRIBUTING.md#chang
 | 2.1     | 2026-11-11 | The minimum viable product is a shared document                       | #19      |
 | 2.2     | 2026-11-12 | Issues get a work label, repository label and Type                    | #34      |
 | 3.0     | 2026-11-15 | Keep architecture examples illustrative when implementing features    | #13      |
+| 4.0     | 2026-11-16 | Commands, documents read by section, rules link to one place          | #39      |

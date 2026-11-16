@@ -1,6 +1,6 @@
 # AI Workflow
 
-**Version:** 3.0 · **Date:** 2026-11-12
+**Version:** 3.1 · **Date:** 2026-11-16
 
 How we use AI agents (Claude Code and Codex) to take an issue from the board to `main`. The flow is based on the skills in [mattpocock/skills](https://github.com/mattpocock/skills), adapted to TakT and to Kanban issues without tickets.
 
@@ -45,23 +45,9 @@ A spec carries a version and a changelog like our other documents. Its implement
 
 ## Git
 
-You own every commit. An agent never commits as itself.
-
-| Action                                           | You                     | Agent        |
-| ------------------------------------------------ | ----------------------- | ------------ |
-| `gh tt workon`                                   | Yes                     | No           |
-| `gh tt wrapup` (commits under your git identity) | Yes                     | Yes          |
-| `git pull --rebase origin main`                  | Yes                     | When you ask |
-| `gh tt deliver`                                  | Yes                     | No           |
-| `git commit`, `git push`, changes to `main`      | Not needed: use `gh tt` | No           |
-
-Commits carry no AI trailer such as `Co-Authored-By`. For Claude Code, `.claude/settings.json` turns off attribution, and a hook in `.claude/hooks/guard-git.mjs` blocks the commands in the last row. Codex relies on the rules in `AGENTS.md`.
+You own every commit. An agent saves work only with `gh tt wrapup`, under your git identity, and follows the git rules in [`AGENTS.md`](../AGENTS.md#git-and-takt). For Claude Code, `.claude/settings.json` turns off attribution, and a hook in `.claude/hooks/guard-git.mjs` blocks `git commit`, `git push`, `gh tt deliver` and changes to `main`. Codex relies on the rules alone.
 
 When an agent's work shapes a change, the spec and its implementation notes are the record. Link to the chat or summarise it on the issue only when it holds decisions the spec doesn't.
-
-## Four-eyes
-
-Under the [four-eyes principle](../CONTRIBUTING.md#four-eyes-principle), two people approve a `development` issue before it moves to Ready. Once you have picked it up, the code review is yours: `/mtogo-review` helps you review the change, and you decide which findings to fix.
 
 ## Other skills
 
@@ -94,3 +80,4 @@ How to change this document is described in [CONTRIBUTING](../CONTRIBUTING.md#ch
 | 1.1     | 2026-11-11 | Moved from `MTOGO`                                                       | #5       |
 | 2.0     | 2026-11-11 | Specs list behaviour in any readable format, and record the feature flag | #12      |
 | 3.0     | 2026-11-12 | The developer owns the code review                                       | #34      |
+| 3.1     | 2026-11-16 | Git and four-eyes rules link to `AGENTS.md` and CONTRIBUTING             | #39      |

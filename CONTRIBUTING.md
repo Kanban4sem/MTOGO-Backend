@@ -1,6 +1,6 @@
 # Contributing
 
-**Version:** 4.1 · **Date:** 2026-11-13
+**Version:** 4.2 · **Date:** 2026-11-16
 
 MTOGO is developed with Kanban and trunk-based development using [TakT](https://github.com/devx-cafe/gh-tt). Every change starts as an issue and ends as one commit on `main`.
 
@@ -21,16 +21,7 @@ Work is planned on the [project board](https://github.com/orgs/Kanban4sem/projec
 
 ## Language
 
-Everything written in the project is in English:
-
-- Issues: title, description and acceptance criteria
-- Comments on issues and the project board, including summaries of AI chats
-- Commit messages
-- ADRs, READMEs and other documentation
-- Code, code comments, test display names and the `reason` column in test data
-- Log messages, exception messages and API documentation
-
-The exception is text shown to end users in the app - user-facing text, such as the friendly error messages in the frontend, is written in Danish to give the user a better experience.
+Everything written in the project is in English: issues, comments, commit messages, documentation, code, test data, log and exception messages and API documentation. The exception is text shown to end users in the app, such as the friendly error messages in the frontend, which is written in Danish to give the user a better experience.
 
 When the text is about the domain, use domain language. Call a concept by the name the code uses for it (`order`, `restaurant`, `menu item`), and keep that name instead of inventing synonyms. Use technical terms only for technical concerns. The names are recorded in the [glossary](docs/glossary.md).
 
@@ -71,32 +62,20 @@ The messages you write with `gh tt wrapup` follow [Conventional Commits](https:/
 <type>[optional scope]: <description>
 ```
 
-| Type       | Use for                                              |
-| ---------- | ---------------------------------------------------- |
-| `feat`     | A new feature                                        |
-| `fix`      | A bug fix                                            |
-| `docs`     | Documentation only                                   |
-| `refactor` | A change that neither fixes a bug nor adds a feature |
-| `test`     | Adding or correcting tests                           |
-| `chore`    | Maintenance, build, dependencies, tooling            |
-
-`perf`, `style`, `build` and `ci` are also allowed.
-
+- Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `style`, `build` and `ci`.
 - English, imperative mood, lowercase, no trailing period, at most 72 characters.
-- One line only: no body. `deliver` writes the body of the commit on `main` from your `wrapup` messages.
+- One line only: no body. `deliver` writes the commit on `main` from the issue title and lists your `wrapup` messages in its body. Do not edit it.
 - The scope is the feature or area: `order`, `security`.
 - Mark a breaking change with `!`: `feat(api)!: remove v1 endpoints`.
 - Do not add the issue number. `wrapup` appends it.
 
 ```bash
-gh tt wrapup -m "feat: add CONTRIBUTING.md"
-# commits: feat: add definition-of-done.md - #11
+gh tt wrapup -m "docs: add definition of done"
+# commits: docs: add definition of done - #11
 
 gh tt wrapup -m "feat(order): add order entity"
 # commits: feat(order): add order entity - #12
 ```
-
-`deliver` generates the commit on `main` from the issue title and lists your `wrapup` messages in its body. Do not edit it.
 
 ## Four-eyes principle
 
@@ -134,67 +113,29 @@ An ADR lives in the repository that owns the decision, and the other repository 
 
 ## Feature flags
 
-### Add
+Unfinished behaviour that reaches `main` stays behind a feature flag that is off by default. Flags are environment variables read at startup, and the backend serves them to the frontend from `GET /v1/features`, as decided in [ADR-001](https://github.com/Kanban4sem/MTOGO-Backend/blob/main/docs/adr/001-feature-flags.md).
 
-Declare the flag in AppProperties and application.properties, defaulting to false. Add the field in `FeatureFlagsDTO` and its mapping in `FeatureFlagService`, so `GET /v1/features` returns it, and update the tests that build `AppProperties` or check `FeatureFlagsDTO`. In Java the flag takes the `is` prefix, as in `isAuthEnabled`. `@Name("auth-enabled")` in `AppProperties` and `@JsonProperty("authEnabled")` in `FeatureFlagsDTO` keep the property and the JSON field without it. Add its environment variable to .env.example with false, and set its value in each environment’s .env. Ensure the startup configuration passes it to Spring Boot. Never commit .env.
-
-Examples:
-
-```properties
-app.auth-enabled=${FEATURE_AUTH_ENABLED:false}
-```
-
-```dotenv
-FEATURE_AUTH_ENABLED=true
-```
-
-### Use
-
-Protect unfinished behaviour with the flag. Frontend flags are fetched from the backend. Backend behaviour must also be protected where applicable.
-
-### Test
-
-Verify the feature with the flag enabled, disabled and unset.
-
-### Remove
-
-Create a linked follow-up issue when adding a temporary flag. Once fully released, remove its configuration, the field in `FeatureFlagsDTO` and its mapping in `FeatureFlagService`, conditional checks and obsolete flag-specific tests, and update the tests that build `AppProperties` or check `FeatureFlagsDTO`.
-
-### Frontend Handle
-
-Frontend handles Feature Flags with conditional statements and fetches from our endpoint listed here.
-Flags are loaded once during start-up and saved in memory.
-
-Missing flags and failed requests are treated as false.
-
-```http
-GET /v1/features
-```
-
-```json
-{
-  "authEnabled": false
-}
-```
-
-```jsx
-{
-  flags.authEnabled && <LoginButton />;
-}
-```
+- Test the feature with its flag enabled, disabled and unset.
+- A temporary flag gets a linked follow-up issue to remove it once the feature is fully released.
+- How to add, use and remove a flag in the code is described in the [coding standards](docs/coding-standards.md#feature-flags).
 
 ## Working with AI
 
-- [AI workflow](docs/ai-workflow.md) describes how we take an issue from the board to `main` with AI agents.
-- `AGENTS.md` holds the rules AI agents follow.
-- When an AI chat shapes a change, the issue's spec records the decisions. Link to the chat or summarize it in a comment on the issue only when it holds decisions the spec doesn't.
-- Run `gh insitu run fix-all` after AI edits, since they bypass format-on-save.
+The [AI workflow](docs/ai-workflow.md) describes how we take an issue from the board to `main` with AI agents. `AGENTS.md` holds the rules the agents follow.
 
 ## Changing the documents
 
-This applies to this document, the Definition of Done, the coding standards, the AGENTS document, the AI workflow, the glossary and the minimum viable product.
+These rules apply to the documents below. A change to a document shared with [MTOGO-Frontend](https://github.com/Kanban4sem/MTOGO-Frontend) gets a linked issue in both repositories, so the copies stay the same.
 
-This document, the Definition of Done, the AI workflow, the glossary, the minimum viable product and the general sections of the coding standards are shared with [MTOGO-Frontend](https://github.com/Kanban4sem/MTOGO-Frontend), which keeps its own copy. A change to a shared document gets a linked issue in both repositories, so the copies stay the same.
+| Document               | Shared with the other repository           |
+| ---------------------- | ------------------------------------------ |
+| CONTRIBUTING           | Yes                                        |
+| Definition of Done     | Yes                                        |
+| AI workflow            | Yes                                        |
+| Glossary               | Yes                                        |
+| Minimum viable product | Yes                                        |
+| Coding standards       | The general sections named in its overview |
+| AGENTS.md              | No. Each repository has its own            |
 
 1. Create an issue that describes the change.
 2. Agree on it as a team.
@@ -215,5 +156,5 @@ This document, the Definition of Done, the AI workflow, the glossary, the minimu
 | 3.0     | 2026-11-12 | Feature flags are added to and removed from `FeatureFlagsDTO`             | #30      |
 | 3.1     | 2026-11-12 | Flag steps name the tests to update, one version bump per issue           | #33      |
 | 4.0     | 2026-11-12 | Four-eyes on the issue before Ready, time spent and week labels on issues | #34      |
-
-| 4.1 | 2026-11-13 | Use the shared authentication flag in feature flag examples | #35 |
+| 4.1     | 2026-11-13 | Use the shared authentication flag in feature flag examples               | #35      |
+| 4.2     | 2026-11-16 | Flag steps move to the coding standards, repeated rules link to one place | #39      |

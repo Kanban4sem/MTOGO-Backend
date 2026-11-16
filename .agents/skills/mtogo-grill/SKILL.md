@@ -17,11 +17,11 @@ Turn one issue into an implementation plan the developer agrees with. This is se
 
 ## 2. Read the context
 
-Read the three source documents named in `AGENTS.md`, the glossary and the ADRs in the area the issue touches. Explore the code the issue will change.
+Read the glossary, the ADRs in the area the issue touches and the sections of the source documents in `AGENTS.md` that apply to it. Explore the code the issue will change.
 
 ## 3. Grill
 
-Call the Skill tool with `grilling` and `domain-modeling`, and run both. Record glossary terms and ADRs where `AGENTS.md` says they live. A new ADR gets `Status: Proposed` with a link to this issue. It becomes `Accepted` when the team agrees, before delivery.
+Use the `grilling` and `domain-modeling` skills together. Record glossary terms and ADRs where `AGENTS.md` says they live. A new ADR gets `Status: Proposed` with a link to this issue. It becomes `Accepted` when the team agrees, before delivery.
 
 The design tree must cover these branches as well as the issue's own decisions:
 

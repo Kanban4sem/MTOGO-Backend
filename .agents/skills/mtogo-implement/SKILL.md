@@ -13,19 +13,19 @@ Build everything the spec asks for. This is session 2, started fresh: the spec i
 1. Take the spec path from the argument, or find `docs/specs/<issue>-*.md` from the branch's issue number. State the spec's title and version.
 2. The branch must start with the spec's issue number. If it doesn't, stop and ask the developer to run `gh tt workon -i <issue>`.
 3. Read the spec, the issue (`gh issue view <issue>`), the ADRs the spec names and the glossary.
-4. Read the three source documents named in `AGENTS.md` in full. In the coding standards, the sections that bind every line you write are Naming, Architecture, Comments, Error handling, Testing and API documentation.
+4. Read these sections of the [coding standards](../../../docs/coding-standards.md): Naming, Architecture, Comments, Error handling, Testing and API documentation, plus Feature flags if the spec names a flag.
 
 ## 2. Build
 
 Work through the spec's testing decisions one rule set at a time. Each rule set is one vertical slice.
 
-**Backend.** Call the Skill tool with `tdd` for the red-green loop at the seams the spec agreed. Where `tdd` and [Testing](../../../docs/coding-standards.md#testing) differ, the coding standards win:
+**Backend.** Use the `tdd` skill for the red-green loop at the seams the spec agreed. Where `tdd` and [Testing](../../../docs/coding-standards.md#testing) differ, the coding standards win:
 
 - Design the rule set's cases from the acceptance criteria with EP, BVA and decision tables, and consolidate them into the CSV file first. The CSV file plus its `@ParameterizedTest` is the failing test of the slice.
 - Test with real collaborators and a real PostgreSQL database through Testcontainers. Mock only systems outside our control.
 - When a CSV row fails, fix the code or raise the rule with the developer. `expected` follows the spec.
 
-From the repository root, run the test class you are working on after each change (`./mvnw -q test -Dtest=<TestClass>`) and the full `./mvnw verify` once at the end.
+Run the test class you are working on after each change and the full build once at the end, with the commands in `AGENTS.md`.
 
 **Frontend.** There is no test framework yet. Follow the frontend structure in the coding standards, run `npm run lint` from the repository root after each change, and list the manual checks from the spec for the developer to run against the API.
 
