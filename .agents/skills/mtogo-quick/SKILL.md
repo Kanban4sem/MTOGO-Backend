@@ -1,12 +1,12 @@
 ---
 name: mtogo-quick
-description: Implement a small MTOGO issue in one session without grill or spec, to the same standards, then wrapup. Intended for ad hoc and bug issues; stops and recommends the full workflow when the work needs it.
+description: Implement a small MTOGO issue in one session without grill or spec, to the same standards, then wrapup. Intended for ad hoc issues, including bug fixes; stops and recommends the full workflow when the work needs it.
 disable-model-invocation: true
 ---
 
 # MTOGO quick
 
-The light workflow: one session from issue to saved work, without `/mtogo-grill` or `/mtogo-spec`. The coding standards and the Definition of Done apply exactly as in the full workflow. The developer can start it on any issue, but it is meant for `ad hoc` and `bug` issues.
+The light workflow: one session from issue to saved work, without `/mtogo-grill` or `/mtogo-spec`. The coding standards and the Definition of Done apply exactly as in the full workflow. The developer can start it on any issue, but it is meant for `ad hoc` issues, including bug fixes.
 
 ## 1. Load
 

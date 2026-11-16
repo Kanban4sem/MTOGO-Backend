@@ -1,6 +1,6 @@
 # Contributing
 
-**Version:** 4.2 · **Date:** 2026-11-16
+**Version:** 5.0 · **Date:** 2026-11-16
 
 MTOGO is developed with Kanban and trunk-based development using [TakT](https://github.com/devx-cafe/gh-tt). Every change starts as an issue and ends as one commit on `main`.
 
@@ -31,7 +31,7 @@ Every change starts with an issue created from the issue template.
 
 - Create the issue in the repository whose code it changes and add it to the board. `gh tt workon` only finds issues in the current repository, and one issue ends as one commit on one `main`. Work that changes both repositories gets one linked issue in each.
 - Write the title in imperative mood without a type prefix: `Add order endpoint`. The title becomes the subject of the commit on `main`.
-- Give the issue one work label: `development` for planned work, `ad hoc` for a small change outside the plan, or `bug` for a hotfix. Only `development` issues need the [four-eyes](#four-eyes-principle) approval before Ready. Also set the Type field and the `backend` or `frontend` label.
+- Give the issue one of TakT's work labels: `development` for planned work, or `ad hoc` for a small change outside the plan. A bug fix is an `ad hoc` issue with the Type field set to Bug. Only `development` issues need the [four-eyes](#four-eyes-principle) approval before Ready. Also set the Type field and the `backend` or `frontend` label.
 - Fill in the acceptance criteria. The Definition of Done is checked against them.
 - Before `deliver`, fill in **Time spent** at the bottom of the issue: the total time everyone spent on it, rounded up to the nearest 30 minutes, in hours (2 h 12 min is `2.5 h`).
 - When the issue is done, add the label of the course week it was delivered in (`week 1`, `week 2`, …).
@@ -81,7 +81,7 @@ gh tt wrapup -m "feat(order): add order entity"
 
 At least two people agree on every feature before it is built. The check is on the issue, not on the code:
 
-- **Before work starts:** a `development` issue moves from Specification to Ready only when two people have read and approved its content. Each approval is an `Approved by: <name>` label. `ad hoc` and `bug` issues skip this.
+- **Before work starts:** a `development` issue moves from Specification to Ready only when two people have read and approved its content. Each approval is an `Approved by: <name>` label. `ad hoc` issues skip this.
 - **While the work is done:** once the issue is picked up with `gh tt workon`, the developer owns the code review and the decisions made while building, helped by the AI review in `/mtogo-review`. Nobody waits for a second person to review the code.
 - **When a change reaches further:** a change that breaks or reshapes something outside the issue gets a new issue, or a note to the developer responsible for it, who decides what to do.
 
@@ -158,3 +158,4 @@ These rules apply to the documents below. A change to a document shared with [MT
 | 4.0     | 2026-11-12 | Four-eyes on the issue before Ready, time spent and week labels on issues | #34      |
 | 4.1     | 2026-11-13 | Use the shared authentication flag in feature flag examples               | #35      |
 | 4.2     | 2026-11-16 | Flag steps move to the coding standards, repeated rules link to one place | #39      |
+| 5.0     | 2026-11-16 | TakT's work labels: a bug fix is `ad hoc` with Type Bug                   | #47      |

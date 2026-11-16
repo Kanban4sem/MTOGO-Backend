@@ -1,6 +1,6 @@
 # AI Workflow
 
-**Version:** 4.0 · **Date:** 2026-11-16
+**Version:** 5.0 · **Date:** 2026-11-16
 
 How we use AI agents (Claude Code and Codex) to take an issue from the board to `main`. The workflows are based on the skills in [mattpocock/skills](https://github.com/mattpocock/skills), adapted to TakT and to Kanban issues without tickets.
 
@@ -11,7 +11,7 @@ How we use AI agents (Claude Code and Codex) to take an issue from the board to 
 You create the issue yourself, alone or with AI, and pick the workflow when you start it:
 
 - The **full workflow** is for `development` issues. Grilling and a spec settle the decisions before any code is written.
-- The **light workflow** is for `ad hoc` and `bug` issues. One session implements the issue from its acceptance criteria, with no grilling and no spec.
+- The **light workflow** is for `ad hoc` issues, which include bug fixes. One session implements the issue from its acceptance criteria, with no grilling and no spec.
 
 You can start the light workflow on any issue. On a `development` issue, the agent recommends the full workflow first. In every case it stops and recommends the full workflow when the work needs:
 
@@ -107,3 +107,4 @@ How to change this document is described in [CONTRIBUTING](../CONTRIBUTING.md#ch
 | 3.0     | 2026-11-12 | The developer owns the code review                                       | #34      |
 | 3.1     | 2026-11-16 | Git and four-eyes rules link to `AGENTS.md` and CONTRIBUTING             | #39      |
 | 4.0     | 2026-11-16 | A light workflow for small issues with `/mtogo-quick`                    | #43      |
+| 5.0     | 2026-11-16 | The light workflow is for `ad hoc` issues, which include bug fixes       | #47      |
