@@ -1,6 +1,6 @@
 # Agent Instructions
 
-**Version:** 4.0 · **Date:** 2026-11-16
+**Version:** 5.0 · **Date:** 2026-11-16
 
 MTOGO is a food delivery platform built with Kanban and trunk-based development using TakT. This repository holds the backend (Spring Boot). The frontend (React) lives in `MTOGO-Frontend`.
 
@@ -34,7 +34,7 @@ The developer owns every commit. You work on the issue branch the developer crea
 
 ## Feature flags
 
-Before you implement an issue that changes behaviour, ask the developer whether it needs a [feature flag](CONTRIBUTING.md#feature-flags), and record the answer in the spec.
+Before you implement an issue that changes behaviour, ask the developer whether it needs a [feature flag](CONTRIBUTING.md#feature-flags), and record the answer in the spec if the issue has one.
 
 ## Architecture examples
 
@@ -42,15 +42,15 @@ The structures in the coding standards and ADR-004 illustrate the architecture. 
 
 ## Issue workflow
 
-One issue has one spec and no tickets. Each step is a user-invoked skill. The developer starts each session:
+Each step is a user-invoked skill, and the developer starts each session and picks the workflow. [Choosing a workflow](docs/ai-workflow.md#choosing-a-workflow) says when each one applies. In the full workflow, one issue has one spec and no tickets.
 
-| Session | Skills                                 | Produces                                   |
-| ------- | -------------------------------------- | ------------------------------------------ |
-| 1       | `/mtogo-grill`, then `/mtogo-spec`     | ADRs, glossary terms and the spec          |
-| 2       | `/mtogo-implement`                     | Code, tests and the implementation note    |
-| 3+      | `/mtogo-review`, one round per session | Review findings, fixes and an updated note |
-
-The developer's guide to the flow is [AI workflow](docs/ai-workflow.md).
+| Workflow | Session | Skills                                  | Produces                                   |
+| -------- | ------- | --------------------------------------- | ------------------------------------------ |
+| Full     | 1       | `/mtogo-grill`, then `/mtogo-spec`      | ADRs, glossary terms and the spec          |
+|          | 2       | `/mtogo-implement`                      | Code, tests and the implementation note    |
+|          | 3+      | `/mtogo-review`, one round per session  | Review findings, fixes and an updated note |
+| Light    | 1       | `/mtogo-quick`                          | Code and tests, without a spec             |
+|          | 2+      | `/mtogo-review`, when behaviour changed | Review findings and fixes                  |
 
 ## Where things live
 
@@ -73,3 +73,4 @@ How to change this document is described in [CONTRIBUTING](CONTRIBUTING.md#chang
 | 2.2     | 2026-11-12 | Issues get a work label, repository label and Type                    | #34      |
 | 3.0     | 2026-11-15 | Keep architecture examples illustrative when implementing features    | #13      |
 | 4.0     | 2026-11-16 | Commands, documents read by section, rules link to one place          | #39      |
+| 5.0     | 2026-11-16 | Light workflow with `/mtogo-quick`                                    | #43      |

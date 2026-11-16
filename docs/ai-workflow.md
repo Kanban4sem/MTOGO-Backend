@@ -1,14 +1,28 @@
 # AI Workflow
 
-**Version:** 3.1 · **Date:** 2026-11-16
+**Version:** 4.0 · **Date:** 2026-11-16
 
-How we use AI agents (Claude Code and Codex) to take an issue from the board to `main`. The flow is based on the skills in [mattpocock/skills](https://github.com/mattpocock/skills), adapted to TakT and to Kanban issues without tickets.
+How we use AI agents (Claude Code and Codex) to take an issue from the board to `main`. The workflows are based on the skills in [mattpocock/skills](https://github.com/mattpocock/skills), adapted to TakT and to Kanban issues without tickets.
 
-[CONTRIBUTING](../CONTRIBUTING.md), the [coding standards](coding-standards.md) and the [Definition of Done](definition-of-done.md) apply to AI work exactly as they do to your own. Where a skill and these documents disagree, the documents win. The rules agents follow are in [`AGENTS.md`](../AGENTS.md).
+[CONTRIBUTING](../CONTRIBUTING.md), the [coding standards](coding-standards.md) and the [Definition of Done](definition-of-done.md) apply to AI work exactly as they do to your own, in both workflows. Where a skill and these documents disagree, the documents win. The rules agents follow are in [`AGENTS.md`](../AGENTS.md).
 
-## The flow
+## Choosing a workflow
 
-Every issue goes through the same steps. You create the issue yourself, alone or with AI, before the flow starts.
+You create the issue yourself, alone or with AI, and pick the workflow when you start it:
+
+- The **full workflow** is for `development` issues. Grilling and a spec settle the decisions before any code is written.
+- The **light workflow** is for `ad hoc` and `bug` issues. One session implements the issue from its acceptance criteria, with no grilling and no spec.
+
+You can start the light workflow on any issue. On a `development` issue, the agent recommends the full workflow first. In every case it stops and recommends the full workflow when the work needs:
+
+- a change to the API contract: paths, DTOs or status codes
+- a new ADR or glossary term
+- a feature flag
+- more than one rule set, or more than one session
+
+You then relabel the issue `development` and start with `/mtogo-grill`, or split the issue on the board.
+
+## Full workflow
 
 | Step      | Who   | Command                                          | Result                                                        |
 | --------- | ----- | ------------------------------------------------ | ------------------------------------------------------------- |
@@ -28,9 +42,20 @@ Start each session fresh (`/clear` in Claude Code, a new chat in Codex):
 
 Before `deliver`, check the Definition of Done yourself. In particular, the team must have accepted the ADRs from session 1.
 
+## Light workflow
+
+| Step      | Who   | Command                                          | Result                                                |
+| --------- | ----- | ------------------------------------------------ | ----------------------------------------------------- |
+| Start     | You   | `gh tt workon -i <issue>`                        | Issue branch, issue moves to In Progress              |
+| Session 1 | Agent | `/mtogo-quick`                                   | A short plan you confirm, then code and tests, saved  |
+| Session 2 | Agent | `/mtogo-review`, when behaviour changed          | Review findings against the issue; the fixes you pick |
+| Deliver   | You   | `git pull --rebase origin main`, `gh tt deliver` | One commit on `main`                                  |
+
+A change to documentation, configuration or tooling only needs no tests and no review session: you review the diff yourself. A change to behaviour that an existing spec describes updates that spec and its version.
+
 ## One issue, one spec
 
-We use no tickets. Each issue has exactly one spec, so the board shows the whole picture:
+We use no tickets. Each issue in the full workflow has exactly one spec, so the board shows the whole picture:
 
 - A new behaviour gets a new spec, named after the issue that created it.
 - An issue that changes behaviour an existing spec describes amends that spec with a new version.
@@ -47,7 +72,7 @@ A spec carries a version and a changelog like our other documents. Its implement
 
 You own every commit. An agent saves work only with `gh tt wrapup`, under your git identity, and follows the git rules in [`AGENTS.md`](../AGENTS.md#git-and-takt). For Claude Code, `.claude/settings.json` turns off attribution, and a hook in `.claude/hooks/guard-git.mjs` blocks `git commit`, `git push`, `gh tt deliver` and changes to `main`. Codex relies on the rules alone.
 
-When an agent's work shapes a change, the spec and its implementation notes are the record. Link to the chat or summarise it on the issue only when it holds decisions the spec doesn't.
+When an agent's work shapes a change, the spec and its implementation notes are the record. Link to the chat or summarise it on the issue only when it holds decisions the spec doesn't, or when the issue has no spec.
 
 ## Other skills
 
@@ -81,3 +106,4 @@ How to change this document is described in [CONTRIBUTING](../CONTRIBUTING.md#ch
 | 2.0     | 2026-11-11 | Specs list behaviour in any readable format, and record the feature flag | #12      |
 | 3.0     | 2026-11-12 | The developer owns the code review                                       | #34      |
 | 3.1     | 2026-11-16 | Git and four-eyes rules link to `AGENTS.md` and CONTRIBUTING             | #39      |
+| 4.0     | 2026-11-16 | A light workflow for small issues with `/mtogo-quick`                    | #43      |

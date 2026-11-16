@@ -1,0 +1,5 @@
+interface:
+  display_name: "MTOGO Quick"
+  short_description: "Implement a small issue without grill or spec"
+policy:
+  allow_implicit_invocation: false
