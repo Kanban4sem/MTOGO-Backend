@@ -1,0 +1,96 @@
+package mtogo.feature.order.domain;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import mtogo.exceptions.ConflictException;
+import mtogo.feature.address.domain.Address;
+import mtogo.feature.restaurant.domain.Restaurant;
+import mtogo.feature.user.domain.User;
+
+@Entity
+@Table(name = "orders")
+@Getter
+@NoArgsConstructor
+public class Order
+{
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Setter
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private User customer;
+    @Setter
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id", nullable = false)
+    private Restaurant restaurant;
+    @Setter
+    @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "delivery_address_id", nullable = false, unique = true)
+    private Address deliveryAddress;
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OrderChannel channel;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal total = BigDecimal.ZERO;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OrderStatus status;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id")
+    private List<OrderLine> lines = new ArrayList<>();
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id")
+    private List<OrderStatusChange> statusChanges = new ArrayList<>();
+
+    public void addLine(OrderLine line)
+    {
+        line.setOrder(this);
+        lines.add(line);
+        total = total.add(line.getSubtotal());
+    }
+
+    /**
+     * Moves the order along the lifecycle from the MVP and records when the new
+     * status was set. A new order can only move to Placed.
+     *
+     * @throws ConflictException
+     *             when the lifecycle does not allow the move
+     */
+    public void moveTo(OrderStatus next)
+    {
+        if (status == null)
+        {
+            requireMove(next == OrderStatus.PLACED, "no status", next);
+        } else
+        {
+            requireMove(status.canMoveTo(next), status.name(), next);
+        }
+        status = next;
+        // PostgreSQL keeps microseconds, so the time returned now matches the time
+        // read back later.
+        statusChanges.add(new OrderStatusChange(this, next, Instant.now().truncatedTo(ChronoUnit.MICROS)));
+    }
+
+    private static void requireMove(boolean isAllowed, String from, OrderStatus next)
+    {
+        if (!isAllowed)
+        {
+            throw new ConflictException("An order cannot move from " + from + " to " + next);
+        }
+    }
+
+    public Instant getPlacedAt()
+    {
+        return statusChanges.stream().filter(change -> change.getStatus() == OrderStatus.PLACED).findFirst()
+                .map(OrderStatusChange::getChangedAt).orElse(null);
+    }
+}

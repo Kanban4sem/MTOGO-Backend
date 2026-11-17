@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 6.0 · **Date:** 2026-11-16
+**Version:** 6.1 · **Date:** 2026-11-17
 
 ## Overview
 
@@ -146,12 +146,13 @@ Errors are returned as [`ProblemDetail`](https://docs.spring.io/spring-framework
 | **`GlobalExceptionHandler`** | Extends `ResponseEntityExceptionHandler`. Handles unexpected exceptions, adds `errorId` to 5xx responses and logs. |
 | **`SecurityConfig`**         | Returns `ProblemDetail` for `401` and `403`, which are raised before a controller is reached.                      |
 
-| Exception               | Status | Use when                                     |
-| ----------------------- | ------ | -------------------------------------------- |
-| `BadRequestException`   | 400    | Input is well-formed but breaks a rule       |
-| `UnauthorizedException` | 401    | Credentials or token are missing or invalid  |
-| `NotFoundException`     | 404    | The resource does not exist                  |
-| `ConflictException`     | 409    | The request conflicts with the current state |
+| Exception                  | Status | Use when                                     |
+| -------------------------- | ------ | -------------------------------------------- |
+| `BadRequestException`      | 400    | Input is well-formed but breaks a rule       |
+| `UnauthorizedException`    | 401    | Credentials or token are missing or invalid  |
+| `PaymentRequiredException` | 402    | A payment was declined                       |
+| `NotFoundException`        | 404    | The resource does not exist                  |
+| `ConflictException`        | 409    | The request conflicts with the current state |
 
 Failed `@Valid` checks become `400` automatically. Any other exception becomes a generic `500`.
 
@@ -343,20 +344,21 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 [CONTRIBUTING](../CONTRIBUTING.md#feature-flags) says when a flag is needed and how it is tested. In the backend:
 
 - **Add:** declare the flag in `AppProperties` and `application.properties`, defaulting to false: `app.auth-enabled=${FEATURE_AUTH_ENABLED:false}`. In Java the flag takes the `is` prefix (`isAuthEnabled`). `@Name("auth-enabled")` in `AppProperties` and `@JsonProperty("authEnabled")` in `FeatureFlagsDTO` keep the property and the JSON field without it. Add the field to `FeatureFlagsDTO` and its mapping in `FeatureFlagService`, so `GET /v1/features` returns it. Add the environment variable to `.env.example` with `false`, set its value in each environment's `.env`, and make sure the startup configuration passes it to Spring Boot.
-- **Use:** keep the unfinished backend behaviour behind the flag.
+- **Use:** keep the unfinished backend behaviour behind the flag. To hide a feature's endpoints, declare a `FeatureGate` bean for their path in the feature, as `OrderGateConfig` does; `FeatureGateFilter` then answers `404` while the flag is off.
 - **Test:** update the tests that build `AppProperties` or check `FeatureFlagsDTO`.
 - **Remove:** once the feature is fully released, remove the flag's configuration, its field in `FeatureFlagsDTO` and the mapping in `FeatureFlagService`, the conditional checks and the flag-specific tests, and update the tests that build `AppProperties` or check `FeatureFlagsDTO`.
 
 ## Changelog
 
-| Version | Date       | Change                                                                          | Issue    |
-| ------- | ---------- | ------------------------------------------------------------------------------- | -------- |
-| 1.0     | 2026-11-10 | First version                                                                   | -        |
-| 1.1     | 2026-11-10 | API changes get a linked frontend issue                                         | MTOGO#32 |
-| 1.2     | 2026-11-10 | Fixes to Frontend Architecture                                                  | MTOGO#33 |
-| 2.0     | 2026-11-11 | Moved from `MTOGO`, backend rules only                                          | #5       |
-| 3.0     | 2026-11-12 | Configuration tests                                                             | #30      |
-| 3.1     | 2026-11-12 | DTOs in the presentation layer                                                  | #33      |
-| 4.0     | 2026-11-12 | The tool configuration replaces `.editorconfig`                                 | #34      |
-| 5.0     | 2026-11-15 | Separate CRUD and DTO responsibilities; use service interfaces only when needed | #13      |
-| 6.0     | 2026-11-16 | Tests for changes to behaviour, feature flag steps, each rule stated once       | #39      |
+| Version | Date       | Change                                                                           | Issue    |
+| ------- | ---------- | -------------------------------------------------------------------------------- | -------- |
+| 1.0     | 2026-11-10 | First version                                                                    | -        |
+| 1.1     | 2026-11-10 | API changes get a linked frontend issue                                          | MTOGO#32 |
+| 1.2     | 2026-11-10 | Fixes to Frontend Architecture                                                   | MTOGO#33 |
+| 2.0     | 2026-11-11 | Moved from `MTOGO`, backend rules only                                           | #5       |
+| 3.0     | 2026-11-12 | Configuration tests                                                              | #30      |
+| 3.1     | 2026-11-12 | DTOs in the presentation layer                                                   | #33      |
+| 4.0     | 2026-11-12 | The tool configuration replaces `.editorconfig`                                  | #34      |
+| 5.0     | 2026-11-15 | Separate CRUD and DTO responsibilities; use service interfaces only when needed  | #13      |
+| 6.0     | 2026-11-16 | Tests for changes to behaviour, feature flag steps, each rule stated once        | #39      |
+| 6.1     | 2026-11-17 | A declined payment is a 402 from PaymentRequiredException; FeatureGate for flags | #15      |

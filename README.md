@@ -121,6 +121,8 @@ Send the token as `Authorization: Bearer <accessToken>`. It expires after 15 min
 
 The API contract is documented in Swagger and the [account spec](docs/specs/13-add-customer-accounts.md); the authentication decision is [ADR-005](docs/adr/005-account-authentication.md). Frontend integration remains in frontend issue #6.
 
+Placing orders is behind `FEATURE_ORDERING_ENABLED`, off by default, and also needs `FEATURE_AUTH_ENABLED`. A logged-in customer places and pays for an order with `POST /v1/orders`. Payment is mocked: the payment token `decline` is declined and any other token is confirmed. The contract is in Swagger and the [order spec](docs/specs/15-place-and-pay-for-an-order.md).
+
 ## Build and test
 
 ```bash

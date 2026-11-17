@@ -14,15 +14,20 @@ class FeatureFlagServiceTest
     @DisplayName("Get all - returns each flag with the value it has in the configuration")
     void getAllReturnsEachFlagFromConfiguration()
     {
-        assertThat(getAllWithAuthEnabled(true).isAuthEnabled(), is(true));
-        assertThat(getAllWithAuthEnabled(false).isAuthEnabled(), is(false));
+        FeatureFlagsDTO authOnly = getAllWith(true, false);
+        assertThat(authOnly.isAuthEnabled(), is(true));
+        assertThat(authOnly.isOrderingEnabled(), is(false));
+        FeatureFlagsDTO orderingOnly = getAllWith(false, true);
+        assertThat(orderingOnly.isAuthEnabled(), is(false));
+        assertThat(orderingOnly.isOrderingEnabled(), is(true));
     }
 
     // The only place that builds AppProperties, so a new flag changes one line
     // here.
-    private static FeatureFlagsDTO getAllWithAuthEnabled(boolean isAuthEnabled)
+    private static FeatureFlagsDTO getAllWith(boolean isAuthEnabled, boolean isOrderingEnabled)
     {
-        AppProperties appProperties = new AppProperties(new AppProperties.Cors("http://localhost:5173"), isAuthEnabled);
+        AppProperties appProperties = new AppProperties(new AppProperties.Cors("http://localhost:5173"), isAuthEnabled,
+                isOrderingEnabled);
         return new FeatureFlagService(appProperties).getAll();
     }
 }

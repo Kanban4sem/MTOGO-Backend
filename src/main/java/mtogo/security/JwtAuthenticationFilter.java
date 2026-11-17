@@ -33,12 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException
     {
-        String path = request.getServletPath();
-        if (!properties.isAuthEnabled() && (path.equals("/v1/users") || path.startsWith("/v1/users/")))
-        {
-            problems.write(request, response, HttpStatus.NOT_FOUND, "Authentication is not available");
-            return;
-        }
         String authorization = request.getHeader("Authorization");
         if (properties.isAuthEnabled() && authorization != null)
         {

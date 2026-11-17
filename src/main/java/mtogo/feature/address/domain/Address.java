@@ -15,6 +15,9 @@ public class Address
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    // Profile addresses have no street; delivery addresses always have one.
+    @Column(length = 100)
+    private String street;
     @ManyToOne(optional = false, fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "postal_code_id", nullable = false)
     private PostalCode postalCode;

@@ -29,4 +29,14 @@ public class MenuItem
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "menu_id", nullable = false)
     private Menu menu;
+
+    public Restaurant getRestaurant()
+    {
+        return menu.getRestaurant();
+    }
+
+    public boolean isOnActiveMenu()
+    {
+        return menu.isActive();
+    }
 }

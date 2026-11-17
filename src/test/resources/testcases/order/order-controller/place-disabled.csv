@@ -1,0 +1,6 @@
+role,validBody,expected,reason
+ANONYMOUS,true,404,"Decision table: with ordering off, an anonymous user finds no endpoint"
+RESTAURANT,true,404,"Decision table: with ordering off, a restaurant finds no endpoint"
+DELIVERY_AGENT,true,404,"Decision table: with ordering off, a delivery agent finds no endpoint"
+CUSTOMER,false,404,"Decision table: with ordering off, an invalid body finds no endpoint"
+CUSTOMER,true,404,"Decision table: with ordering off, a customer finds no endpoint"

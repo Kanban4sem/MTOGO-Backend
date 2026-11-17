@@ -5,7 +5,7 @@
 
 The draft was made by Jonas and Jesper. Daniel and Dino have not approved it yet. It was moved here from `MTOGO/docs/brainstorm/domainmodel.md`. An online copy is on [mermaid.ai](https://mermaid.ai/d/4f7b7a63-16a6-4759-bc76-0d6c9b800673).
 
-The account model is split into user (User and UserProfile), address (Address and PostalCode) and role (Role) features. The account portion is now implemented for [issue #13](specs/13-add-customer-accounts.md), with five entities and one optional profile address. The restaurant feature implements Restaurant, Menu and MenuItem for [issue #14](specs/14-show-restaurants-and-their-menus.md). The remaining domains are still drafts. PostalCode stores city, code and country; Role uses CUSTOMER, RESTAURANT or DELIVERY_AGENT. Restaurant addresses remain a draft relationship.
+The account model is split into user (User and UserProfile), address (Address and PostalCode) and role (Role) features. The account portion is now implemented for [issue #13](specs/13-add-customer-accounts.md), with five entities and one optional profile address. The restaurant feature implements Restaurant, Menu and MenuItem for [issue #14](specs/14-show-restaurants-and-their-menus.md). The order feature implements Order, OrderLine, the OrderStatus enum and the status history for [issue #15](specs/15-place-and-pay-for-an-order.md). An order line copies the menu item's name and unit price when the order is placed. Payment is mocked and not stored. The remaining domains are still drafts. PostalCode stores city, code and country; Role uses CUSTOMER, RESTAURANT or DELIVERY_AGENT. Restaurant addresses remain a draft relationship.
 
 ```mermaid
 classDiagram
@@ -36,6 +36,7 @@ class UserProfile {
 
 class Address {
     +Long id
+    +String street
     +PostalCode postalCode
     +boolean isDefault
 }
@@ -88,30 +89,49 @@ class MenuItem {
 
 class Order {
     +Long id
-    +BigDecimal totalAmount
-    +String orderChannel
-    +Long address
-    +placeOrder()
-    +cancelOrder()
-    +updateStatus()
+    +User customer
+    +Restaurant restaurant
+    +Address deliveryAddress
+    +BigDecimal total
+    +OrderChannel channel
+    +OrderStatus status
+    +moveTo(OrderStatus)
 }
 
-class OrderItem {
+class OrderLine {
     +Long id
-    +String itemName
+    +MenuItem menuItem
+    +String name
     +Integer quantity
     +BigDecimal unitPrice
-    +calculateSubtotal()
+    +subtotal()
+}
+
+class OrderStatusChange {
+    +Long id
+    +OrderStatus status
+    +Instant changedAt
 }
 
 class OrderStatus {
-    +Long id
-    +String code
-    +String nameDa
-    +String nameEn
+    <<enumeration>>
+    PLACED
+    ACCEPTED
+    REJECTED
+    READY
+    PICKED_UP
+    DELIVERED
+}
+
+class OrderChannel {
+    <<enumeration>>
+    WEBSITE
+    APP
+    TELEPHONE
 }
 
 class Payment {
+    <<not stored>>
     +Long id
     +BigDecimal amount
     +String paymentStatus
@@ -189,9 +209,11 @@ Menu "1" *-- "0..*" MenuItem : contains
 
 %% Orders
 Restaurant "1" --> "0..*" Order : receives
-Order "1" *-- "1..*" OrderItem : contains
-OrderItem "0..*" --> "1" MenuItem : references
+Order "1" *-- "1..*" OrderLine : contains
+OrderLine "0..*" --> "1" MenuItem : references
 Order "0..*" --> "1" OrderStatus : hasStatus
+Order "1" *-- "1..*" OrderStatusChange : history
+Order "0..*" --> "1" OrderChannel : arrivedThrough
 
 %% Payments
 Order "1" --> "0..1" Payment : hasPayment
@@ -212,7 +234,7 @@ DeliveryAgent "1" --> "0..*" Bonus : receives
 Order "1" --> "0..1" Commission : generates
 
 %% Address
-Order "1" --> "0..1" Address : hasA
+Order "1" --> "1" Address : deliveredTo
 Restaurant "1" --> "0..1" Address : hasA
 UserProfile "1" --> "0..1" Address : hasA
 Address "0..*" --> "1" PostalCode : hasA

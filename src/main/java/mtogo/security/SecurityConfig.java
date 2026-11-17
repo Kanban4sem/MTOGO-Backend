@@ -1,6 +1,9 @@
 package mtogo.security;
 
+import java.util.List;
 import mtogo.config.AppProperties;
+import mtogo.featureflag.presentation.FeatureGate;
+import mtogo.featureflag.presentation.FeatureGateFilter;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import mtogo.feature.user.domain.UserService;
@@ -30,7 +33,7 @@ public class SecurityConfig
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, UserService users, AppProperties properties,
-            SecurityProblemHandler problems) throws Exception
+            SecurityProblemHandler problems, List<FeatureGate> gates) throws Exception
     {
         // Credentials are accepted only as explicit Bearer headers; no cookie or
         // session authentication is enabled.
@@ -43,6 +46,7 @@ public class SecurityConfig
                         .requestMatchers(HttpMethod.GET, "/v1/restaurants", "/v1/restaurants/*/menus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
                         .permitAll().requestMatchers(HttpMethod.POST, "/v1/users", "/v1/users/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/orders").hasRole("CUSTOMER")
                         .requestMatchers("/v1/customer/**").hasRole("CUSTOMER").requestMatchers("/v1/restaurant/**")
                         .hasRole("RESTAURANT").requestMatchers("/v1/delivery-agent/**").hasRole("DELIVERY_AGENT")
                         .anyRequest().authenticated())
@@ -53,6 +57,6 @@ public class SecurityConfig
                                 HttpStatus.FORBIDDEN, "Access is denied")))
                 .addFilterBefore(new JwtAuthenticationFilter(users, properties, problems),
                         UsernamePasswordAuthenticationFilter.class)
-                .build();
+                .addFilterBefore(new FeatureGateFilter(gates, problems), JwtAuthenticationFilter.class).build();
     }
 }

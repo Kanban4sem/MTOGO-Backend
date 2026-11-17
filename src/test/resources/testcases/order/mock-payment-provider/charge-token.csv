@@ -1,0 +1,6 @@
+paymentToken,expected,reason
+decline,false,"EP: the decline token is declined"
+tok_visa,true,"EP: any other token is confirmed"
+NULL,false,"EP: a missing token is declined"
+"",false,"EP: an empty token is declined"
+"   ",false,"EP: a whitespace-only token is declined"

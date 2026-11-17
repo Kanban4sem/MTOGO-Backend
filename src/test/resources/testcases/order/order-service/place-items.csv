@@ -1,0 +1,8 @@
+menuItems,expected,reason
+valid,ACCEPT,"EP: available items on an active menu of a restaurant that accepts orders"
+unknown,BadRequestException,"EP: a menu item that does not exist"
+repeated,BadRequestException,"EP: the same menu item on two order lines"
+twoRestaurants,BadRequestException,"EP: menu items from two restaurants"
+unavailable,ConflictException,"EP: a menu item that is unavailable"
+inactiveMenu,ConflictException,"EP: a menu item on an inactive menu"
+notAcceptingOrders,ConflictException,"EP: a menu item from a restaurant that does not accept orders"

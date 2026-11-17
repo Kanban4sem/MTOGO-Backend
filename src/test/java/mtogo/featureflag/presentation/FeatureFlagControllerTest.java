@@ -13,8 +13,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
-// The flag is pinned so a developer's local .env cannot change the result. AppPropertiesTest covers the unset default.
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "FEATURE_AUTH_ENABLED=false")
+// The flags are pinned so a developer's local .env cannot change the result. AppPropertiesTest covers the unset default.
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=false",
+        "FEATURE_ORDERING_ENABLED=false"})
 @Testcontainers
 class FeatureFlagControllerTest
 {
@@ -30,6 +31,7 @@ class FeatureFlagControllerTest
     void getAllReturnsEveryFlagUncached()
     {
         given().port(port).when().get("/v1/features").then().statusCode(200).header("Cache-Control", "no-store")
-                .body("authEnabled", is(false)).body("keySet()", containsInAnyOrder("authEnabled"));
+                .body("authEnabled", is(false)).body("orderingEnabled", is(false))
+                .body("keySet()", containsInAnyOrder("authEnabled", "orderingEnabled"));
     }
 }

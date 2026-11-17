@@ -1,0 +1,3 @@
+paymentToken,expected,reason
+tok_visa,ACCEPT,"EP: a confirmed payment places the order"
+decline,PaymentRequiredException,"EP: a declined payment leaves no order"

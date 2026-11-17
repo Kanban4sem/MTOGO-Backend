@@ -50,6 +50,27 @@ class AppPropertiesTest
         });
     }
 
+    @ParameterizedTest(name = "[{index}] {2}")
+    @CsvFileSource(resources = "/testcases/config/app-properties/bind-ordering-enabled.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Ordering enabled - binds only boolean values of FEATURE_ORDERING_ENABLED")
+    void orderingEnabledBindsOnlyBooleanValues(String featureOrderingEnabled, String expected, String reason)
+    {
+        ApplicationContextRunner runner = featureOrderingEnabled == null
+                ? contextRunner
+                : contextRunner.withPropertyValues("FEATURE_ORDERING_ENABLED=" + featureOrderingEnabled);
+
+        runner.run(context -> {
+            if (expected.equals("true") || expected.equals("false"))
+            {
+                assertThat(context.getBean(AppProperties.class).isOrderingEnabled(),
+                        is(Boolean.parseBoolean(expected)));
+            } else
+            {
+                assertThat(causeNames(context.getStartupFailure()), hasItem(expected));
+            }
+        });
+    }
+
     // The binding failure is wrapped by the bean creation failure, so look through
     // the whole chain.
     private static List<String> causeNames(Throwable startupFailure)

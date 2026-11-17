@@ -1,0 +1,5 @@
+role,expected,reason
+ANONYMOUS,401,"Decision table: an anonymous user cannot place an order"
+RESTAURANT,403,"Decision table: a restaurant cannot place an order"
+DELIVERY_AGENT,403,"Decision table: a delivery agent cannot place an order"
+CUSTOMER,201,"Decision table: a customer places an order"
