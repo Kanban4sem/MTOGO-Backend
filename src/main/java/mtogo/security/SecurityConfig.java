@@ -2,8 +2,6 @@ package mtogo.security;
 
 import java.util.List;
 import mtogo.config.AppProperties;
-import mtogo.featureflag.presentation.FeatureGate;
-import mtogo.featureflag.presentation.FeatureGateFilter;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import mtogo.feature.user.domain.UserService;

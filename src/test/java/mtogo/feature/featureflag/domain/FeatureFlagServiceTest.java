@@ -1,10 +1,10 @@
-package mtogo.featureflag.domain;
+package mtogo.feature.featureflag.domain;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import mtogo.config.AppProperties;
-import mtogo.featureflag.presentation.dto.FeatureFlagsDTO;
+import mtogo.feature.featureflag.presentation.dto.response.FeatureFlagsDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

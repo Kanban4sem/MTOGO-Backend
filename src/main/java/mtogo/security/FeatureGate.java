@@ -1,4 +1,4 @@
-package mtogo.featureflag.presentation;
+package mtogo.security;
 
 import java.util.function.BooleanSupplier;
 

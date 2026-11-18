@@ -1,9 +1,9 @@
-package mtogo.featureflag.presentation;
+package mtogo.feature.featureflag.presentation;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import mtogo.featureflag.domain.IFeatureFlagService;
-import mtogo.featureflag.presentation.dto.FeatureFlagsDTO;
+import mtogo.feature.featureflag.domain.FeatureFlagService;
+import mtogo.feature.featureflag.presentation.dto.response.FeatureFlagsDTO;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Feature flags", description = "Which unfinished features are turned on")
 public class FeatureFlagController
 {
-    private final IFeatureFlagService featureFlagService;
+    private final FeatureFlagService featureFlagService;
 
-    public FeatureFlagController(IFeatureFlagService featureFlagService)
+    public FeatureFlagController(FeatureFlagService featureFlagService)
     {
         this.featureFlagService = featureFlagService;
     }

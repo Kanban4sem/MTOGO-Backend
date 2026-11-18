@@ -1,4 +1,4 @@
-package mtogo.featureflag.presentation;
+package mtogo.security;
 
 import java.io.IOException;
 import java.util.List;
@@ -6,7 +6,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mtogo.security.SecurityProblemHandler;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 

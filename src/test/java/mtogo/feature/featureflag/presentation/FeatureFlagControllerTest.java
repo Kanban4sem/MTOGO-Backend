@@ -1,4 +1,4 @@
-package mtogo.featureflag.presentation;
+package mtogo.feature.featureflag.presentation;
 
 import mtogo.testsupport.SharedDatabase;
 import static io.restassured.RestAssured.given;

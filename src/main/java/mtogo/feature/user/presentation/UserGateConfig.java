@@ -1,7 +1,7 @@
 package mtogo.feature.user.presentation;
 
 import mtogo.config.AppProperties;
-import mtogo.featureflag.presentation.FeatureGate;
+import mtogo.security.FeatureGate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
