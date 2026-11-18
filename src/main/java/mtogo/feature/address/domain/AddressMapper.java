@@ -1,7 +1,5 @@
-package mtogo.feature.address.data;
+package mtogo.feature.address.domain;
 
-import mtogo.feature.address.domain.Address;
-import mtogo.feature.address.domain.PostalCode;
 import mtogo.feature.address.presentation.dto.response.AddressDTO;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;

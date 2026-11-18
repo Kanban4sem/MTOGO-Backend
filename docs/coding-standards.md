@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 7.0 · **Date:** 2026-11-18
+**Version:** 7.1 · **Date:** 2026-11-18
 
 ## Overview
 
@@ -86,10 +86,10 @@ MTOGO-Backend/
         │       ├── domain/
         │       │   ├── <Entity>.java       JPA entity, fields and relationships
         │       │   ├── I<Feature>Service.java  optional, only when a concrete need exists
-        │       │   └── <Feature>Service.java
+        │       │   ├── <Feature>Service.java
+        │       │   └── <Entity>Mapper.java
         │       └── data/
-        │           ├── <Entity>Repository.java
-        │           └── <Entity>Mapper.java
+        │           └── <Entity>Repository.java
         ├── config/                         application configuration
         ├── exceptions/                     ApiException hierarchy and GlobalExceptionHandler
         ├── security/                       authentication, JWT and SecurityConfig
@@ -100,11 +100,11 @@ MTOGO-Backend/
 
 Each feature owns its controllers, DTOs, entities, services, repositories and mappers. Add classes when the feature needs them; the tree shows responsibilities, not files that every feature must have.
 
-| Layer            | Responsible for                                                                                                 | Must not                                   |
-| ---------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Presentation** | Reading the request, validating its shape, calling one service method, returning the response                   | Contain business rules or use repositories |
-| **Domain**       | Entities, business rules, authorization decisions that depend on data, orchestration and transaction boundaries | Know about HTTP requests or responses      |
-| **Data**         | Repositories and queries, entity ↔ DTO mapping                                                                  | Contain business rules                     |
+| Layer            | Responsible for                                                                                                                       | Must not                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Presentation** | Reading the request, validating its shape, calling one service method, returning the response                                         | Contain business rules or use repositories |
+| **Domain**       | Entities, business rules, authorization decisions that depend on data, orchestration and transaction boundaries, entity ↔ DTO mapping | Know about HTTP requests or responses      |
+| **Data**         | Repositories and queries                                                                                                              | Contain business rules                     |
 
 Dependencies point one way: presentation → domain → data. DTOs are the exception: they are the API contract, so they live in the presentation layer, and services accept request DTOs and return response DTOs.
 
@@ -114,7 +114,7 @@ Dependencies point one way: presentation → domain → data. DTOs are the excep
 4. **Field rules are Bean Validation annotations** on request DTOs (`@NotBlank`, `@Size`, `@Positive`) and are checked with `@Valid` in the controller. Rules that need stored data or combine several fields belong in the service.
 5. **Access control is declared per endpoint** with `@PreAuthorize` on the controller method. Decisions that depend on data, such as "only your own orders", belong in the service.
 6. **Repositories own database access.** Extend `JpaRepository<Entity, IdType>` and use its methods for create, read, update and delete. Do not wrap them in a DAO, a generic CRUD wrapper or a service method that only copies a repository method. Add derived query methods such as `findByEmail`, or `@Query` methods with named parameters, and a custom repository implementation with `EntityManager` or `JdbcTemplate` only when those are not enough. Services and controllers contain no query code. Never build a query by concatenating strings.
-7. **Mappers only convert.** A mapper creates or updates entity fields from request DTOs and builds response DTOs from entities. It performs no database access, business decisions or password hashing.
+7. **Mappers only convert.** A mapper lives in its feature's `domain` layer, next to the services that use it. It creates or updates entity fields from request DTOs and builds response DTOs from entities. It performs no database access, business decisions or password hashing.
 8. **Services own transactions.** Put `@Transactional` on a service method when an operation must succeed or fail as a whole, such as creating a user and profile together.
 9. **Flyway owns the schema.** Every schema change is a new migration in `src/main/resources/db/migration`, named `V<number>__<description>.sql`. A migration that has run is never edited. Hibernate validates the schema; it does not create or update it.
 10. **No secrets in code or configuration.** `application.properties` holds placeholders. Local values go in `.env`, which is never committed.
@@ -373,3 +373,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 6.0     | 2026-11-16 | Tests for changes to behaviour, feature flag steps, each rule stated once        | #39      |
 | 6.1     | 2026-11-17 | A declined payment is a 402 from PaymentRequiredException; FeatureGate for flags | #15      |
 | 7.0     | 2026-11-18 | Tests share one PostgreSQL container, with a database per test class             | #48      |
+| 7.1     | 2026-11-18 | Entity ↔ DTO mappers live in the `domain` layer                                  | #40      |

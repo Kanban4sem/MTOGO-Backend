@@ -1,9 +1,7 @@
-package mtogo.feature.order.data;
+package mtogo.feature.order.domain;
 
 import mtogo.feature.address.domain.Address;
 import mtogo.feature.address.domain.PostalCode;
-import mtogo.feature.order.domain.Order;
-import mtogo.feature.order.domain.OrderLine;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.response.DeliveryAddressDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;

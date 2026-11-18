@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted — [#13](https://github.com/Kanban4sem/MTOGO-Backend/issues/13)
+Accepted — [#13](https://github.com/Kanban4sem/MTOGO-Backend/issues/13). Amended — [#40](https://github.com/Kanban4sem/MTOGO-Backend/issues/40)
 
 ## Context
 
@@ -10,7 +10,7 @@ The backend needs a consistent package structure as features are added. We want 
 
 ## Decision
 
-Group features under `mtogo.feature.<feature>`. Each feature has `presentation` for controllers and separate `dto/request` and `dto/response` records, `domain` for JPA entities and services, and `data` for repositories and entity/DTO mappers. Shared infrastructure stays outside `feature`.
+Group features under `mtogo.feature.<feature>`. Each feature has `presentation` for controllers and separate `dto/request` and `dto/response` records, `domain` for JPA entities, services and entity/DTO mappers, and `data` for repositories. Mappers sit next to the services that use them, because services return DTOs and entities never cross the service boundary; this keeps `data` free of any dependency on `presentation`. Shared infrastructure stays outside `feature`.
 
 Use Spring Data JPA repositories for CRUD and custom queries, with no additional DAO layer. Services own business rules and transactions; entities do not access the database. Use concrete service classes by default and introduce interfaces only for a concrete need. Flyway owns schema changes.
 

@@ -1,8 +1,6 @@
-package mtogo.feature.user.data;
+package mtogo.feature.user.domain;
 
-import mtogo.feature.address.data.AddressMapper;
-import mtogo.feature.user.domain.User;
-import mtogo.feature.user.domain.UserProfile;
+import mtogo.feature.address.domain.AddressMapper;
 import mtogo.feature.user.presentation.dto.request.RegisterUserDTO;
 import mtogo.feature.user.presentation.dto.response.UserDTO;
 import mtogo.feature.user.presentation.dto.response.UserProfileDTO;

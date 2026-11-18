@@ -1,7 +1,6 @@
-package mtogo.feature.restaurant.data;
+package mtogo.feature.restaurant.domain;
 
 import java.util.List;
-import mtogo.feature.restaurant.domain.*;
 import mtogo.feature.restaurant.presentation.dto.response.*;
 import org.springframework.stereotype.Component;
 
