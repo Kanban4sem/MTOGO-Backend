@@ -1,5 +1,6 @@
 package mtogo.feature.user.presentation;
 
+import mtogo.testsupport.SharedDatabase;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,22 +19,14 @@ import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
         "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef"})
-@Testcontainers
+@SharedDatabase
 class UserControllerTest
 {
-    @Container
-    @ServiceConnection
-    static org.testcontainers.postgresql.PostgreSQLContainer postgres = new org.testcontainers.postgresql.PostgreSQLContainer(
-            "postgres:17-alpine");
-
     @LocalServerPort
     int port;
     @Autowired

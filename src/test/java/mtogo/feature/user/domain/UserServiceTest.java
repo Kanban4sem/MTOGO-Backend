@@ -1,5 +1,6 @@
 package mtogo.feature.user.domain;
 
+import mtogo.testsupport.SharedDatabase;
 import static org.junit.jupiter.api.Assertions.*;
 
 import mtogo.exceptions.ApiException;
@@ -13,22 +14,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @SpringBootTest(properties = {"FEATURE_AUTH_ENABLED=true",
         "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef"})
-@Testcontainers
+@SharedDatabase
 class UserServiceTest
 {
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
-
     @Autowired
     UserService users;
     @Autowired

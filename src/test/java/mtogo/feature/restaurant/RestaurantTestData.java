@@ -1,21 +1,14 @@
 package mtogo.feature.restaurant;
 
+import mtogo.testsupport.SharedDatabase;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
-@Testcontainers
+@SharedDatabase
 public abstract class RestaurantTestData
 {
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
-
     @Autowired
     protected JdbcTemplate jdbc;
 

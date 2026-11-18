@@ -1,6 +1,6 @@
 # Place and pay for an order
 
-**Version:** 1.0 · **Date:** 2026-11-16 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
+**Version:** 1.1 · **Date:** 2026-11-18 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
 
 ## Acceptance criteria
 
@@ -48,9 +48,9 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 
 - **OrderTest** (plain JUnit): `moveTo` as a decision table over the current and the requested order status; `move-to-transitions`. The six allowed moves succeed and record a status change; the rest are refused.
 - **MockPaymentProviderTest** (plain JUnit): `charge` with EP over the payment token, `decline`, blank and any other; `charge-token`.
-- **OrderServiceTest** (`@SpringBootTest`, Testcontainers): `place` with EP over the menu items: unknown, repeated, unavailable, inactive menu, restaurant not accepting orders, items from two restaurants and a valid order; `place-items`. `place` with EP over the payment outcome, where a declined payment leaves no order, order line or address; `place-payment`. Ordinary `@Test` methods cover the copied name and unit price, the order total over several order lines, the channel WEBSITE, the Placed entry and its time, the owning customer and restaurant, and that a later menu price change leaves the order unchanged.
-- **OrderControllerTest** (REST Assured, Testcontainers): EP and BVA on PlaceOrderDTO, with 0/1/2/19/20/21 lines and quantities, a menu item ID of 0 and -1, street and city blank, 100 and 101 characters, postal code `123`, `1234`, `12345` and `12a4`, and a blank payment token; `place-fields`. Access as a decision table, with anonymous 401, restaurant and delivery agent 403, customer 201 and the flag off 404; `place-access`. One case each proves the 400, 402 and 409 error mapping. Copy the setup from UserControllerTest and RestaurantControllerTest.
-- **OrderSchemaTest** (`@DataJpaTest`, Testcontainers): deleting a menu item that an order line references is refused. Copy RestaurantSchemaTest.
+- **OrderServiceTest** (`@SpringBootTest`, `@SharedDatabase`): `place` with EP over the menu items: unknown, repeated, unavailable, inactive menu, restaurant not accepting orders, items from two restaurants and a valid order; `place-items`. `place` with EP over the payment outcome, where a declined payment leaves no order, order line or address; `place-payment`. Ordinary `@Test` methods cover the copied name and unit price, the order total over several order lines, the channel WEBSITE, the Placed entry and its time, the owning customer and restaurant, and that a later menu price change leaves the order unchanged.
+- **OrderControllerTest** (REST Assured, `@SharedDatabase`): EP and BVA on PlaceOrderDTO, with 0/1/2/19/20/21 lines and quantities, a menu item ID of 0 and -1, street and city blank, 100 and 101 characters, postal code `123`, `1234`, `12345` and `12a4`, and a blank payment token; `place-fields`. Access as a decision table, with anonymous 401, restaurant and delivery agent 403, customer 201 and the flag off 404; `place-access`. One case each proves the 400, 402 and 409 error mapping. Copy the setup from UserControllerTest and RestaurantControllerTest.
+- **OrderSchemaTest** (`@DataJpaTest`, `@SharedDatabase`): deleting a menu item that an order line references is refused. Copy RestaurantSchemaTest.
 - **AppPropertiesTest**: EP over `app.ordering-enabled`, unset, true, false and invalid; `bind-ordering-enabled`.
 - **FeatureGateTest** (plain JUnit): `isClosedFor` as a decision table over the flag and the request path; `is-closed-for`.
 - **FeatureFlagControllerTest** and **FeatureFlagServiceTest**: update them so `GET /v1/features` reports `orderingEnabled`.
@@ -81,8 +81,16 @@ Status names stay English in the backend. #18's criterion "Each status has a Dan
 - **Tests:** FeatureGateTest (`is-closed-for`), OrderTest (`move-to-transitions`), MockPaymentProviderTest (`charge-token`), OrderServiceTest (`place-items`, `place-payment`, plus the copied name and unit price, the order total, a later price change, channel, Placed time, owners and delivery address). OrderControllerTest (`place-fields`, including a menu item ID of 0 and -1, `place-access`, the 400, 402 and 409 mapping, the response contract, and the flag off for every role and an invalid body in `WhenOrderingIsDisabled`, `place-disabled`). OrderSchemaTest (an ordered menu item can't be deleted, an unordered one can). AppPropertiesTest (`bind-ordering-enabled`), FeatureFlagServiceTest and FeatureFlagControllerTest.
 - **Follow-up:** None.
 
+### Spec 1.1 - 2026-11-18 - #48
+
+- **Built:** nothing new. The tests now get their database from the shared PostgreSQL test container through `@SharedDatabase`, one database per test class, as described under Test database in the coding standards.
+- **Deviations:** None.
+- **Tests:** the test classes above moved to `@SharedDatabase`. The nested `WhenOrderingIsDisabled` class uses OrderControllerTest's database, so its check that no order was saved looks at the database the endpoint writes to. Earlier notes that mention a container per test class or isolated Testcontainers describe the setup at that time and are historical.
+- **Follow-up:** None.
+
 ## Changelog
 
-| Version | Date       | Change        | Issue |
-| ------- | ---------- | ------------- | ----- |
-| 1.0     | 2026-11-16 | First version | #15   |
+| Version | Date       | Change                                                          | Issue |
+| ------- | ---------- | --------------------------------------------------------------- | ----- |
+| 1.0     | 2026-11-16 | First version                                                   | #15   |
+| 1.1     | 2026-11-18 | Tests use the shared test container, older notes are historical | #48   |

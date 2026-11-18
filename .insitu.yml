@@ -56,9 +56,15 @@ inventory:
       npm install -g prettier markdownlint-cli2 cspell @cspell/dict-da-dk
 
   # Separate from install-npm-tools, which the GitHub runner also runs.
+  # Set MTOGO_SKIP_CLAUDE=1 or MTOGO_SKIP_CODEX=1 on your own machine to skip
+  # an agent you don't use. Both are installed by default.
+  - id: install-claude-code
+    name: Install Claude Code
+    command: '[ "${MTOGO_SKIP_CLAUDE:-}" = "1" ] || npm install -g @anthropic-ai/claude-code'
+
   - id: install-codex
     name: Install the Codex CLI
-    command: npm install -g @openai/codex
+    command: '[ "${MTOGO_SKIP_CODEX:-}" = "1" ] || npm install -g @openai/codex'
 
   # Docker creates new named volumes owned by root. These hold each
   # developer's Claude Code and Codex login (see mounts in devcontainer.json).
@@ -111,8 +117,16 @@ waves:
       - safe-repo
       - repo-gitconfig
       - claude-skills-symlink
-      - install-codex
       - agent-config-owner
+
+  # After post-create and one at a time: concurrent global npm installs can
+  # collide with install-npm-tools and with each other.
+  - id: install-agents
+    name: Install the AI agents
+    parallel: false
+    checks:
+      - install-claude-code
+      - install-codex
 
   - id: prep-runner
     name: Run to prepare GitHub runner

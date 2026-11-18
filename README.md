@@ -39,6 +39,8 @@ Restart your terminal and VS Code afterwards.
 3. The first build takes a few minutes. It installs Java 25, Node, the GitHub CLI, TakT, InSitu, our linters, and Claude Code and Codex as extensions and on the command line. It also checks `.claude/skills` out as a symlink so Claude Code finds the repository's skills, also in a clone made on Windows. If your dev container already exists, rebuild it.
 4. Log in to the AI agents once: run `claude` and `codex` in the terminal and follow the prompts. Your login lives in the Docker volumes `mtogo-claude` and `mtogo-codex`, so it survives rebuilds and also works in the MTOGO-Frontend dev container. The first rebuild that adds these volumes starts logged out.
 
+   Both agents are installed by default. If you don't use one, set `MTOGO_SKIP_CLAUDE=1` or `MTOGO_SKIP_CODEX=1` as an environment variable on your own machine, restart VS Code and rebuild the dev container. The container then skips that command-line install. The VS Code extensions stay installed. Disable them for yourself in VS Code.
+
 All commands below are run in the terminal **inside** the dev container.
 
 ### 4. Check that everything works

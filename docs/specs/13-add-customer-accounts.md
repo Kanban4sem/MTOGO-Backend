@@ -1,6 +1,6 @@
 # Add customer accounts
 
-**Version:** 1.0 · **Date:** 2026-11-15 · **Issue:** #13 · **Feature flag:** `authEnabled`, off by default
+**Version:** 1.1 · **Date:** 2026-11-18 · **Issue:** #13 · **Feature flag:** `authEnabled`, off by default
 
 ## Acceptance criteria
 
@@ -34,7 +34,7 @@ Copied from #13. The issue is the source: change the issue first, then this copy
 
 ## Testing decisions
 
-- Real HTTP tests with REST Assured, Spring Boot and PostgreSQL through Testcontainers, following SecurityConfigTest. No mocks or shared databases.
+- Real HTTP tests with REST Assured, Spring Boot and PostgreSQL through the shared test container with `@SharedDatabase`, following SecurityConfigTest. No mocks, and each test class has its own database.
 - Register: EP for required fields and language, BVA for password character and UTF-8 byte limits, decision tables for confirmation and optional address groups; register-fields.
 - Login: EP and decision table for unknown, incorrect and inactive credentials; login-credentials.
 - Authorization: role by requested scope decision table; role-access. A permitted but unimplemented scope returns 404; other roles receive 403.
@@ -66,8 +66,16 @@ JWT authentication is proposed for developer review. No deployed server or exist
 - **Validation:** On 2026-11-16, the full backend suite passed in the dev container against isolated PostgreSQL Testcontainers: 161 tests, no failures, errors or skipped tests. The fix-all and trunk-worthy checks passed, including clean verify, Java formatting, Markdown, spelling and Prettier. JaCoCo was inspected for remaining gaps in scoped behaviour; the SonarQube Cloud quality gate has not been run in this session.
 - **Follow-up:** frontend integration remains in frontend issue #6; flag removal remains #31. ADR-005 awaits developer approval.
 
+### Spec 1.1 - 2026-11-18 - #48
+
+- **Built:** nothing new. The tests now get their database from the shared PostgreSQL test container through `@SharedDatabase`, one database per test class, as described under Test database in the coding standards.
+- **Deviations:** None.
+- **Tests:** the test classes above moved to `@SharedDatabase`. Earlier notes that mention a container per test class or isolated Testcontainers describe the setup at that time and are historical.
+- **Follow-up:** None.
+
 ## Changelog
 
-| Version | Date       | Change        | Issue |
-| ------- | ---------- | ------------- | ----- |
-| 1.0     | 2026-11-15 | First version | #13   |
+| Version | Date       | Change                                                          | Issue |
+| ------- | ---------- | --------------------------------------------------------------- | ----- |
+| 1.0     | 2026-11-15 | First version                                                   | #13   |
+| 1.1     | 2026-11-18 | Tests use the shared test container, older notes are historical | #48   |

@@ -22,7 +22,7 @@ Work through the spec's testing decisions one rule set at a time. Each rule set 
 **Backend.** Use the `tdd` skill for the red-green loop at the seams the spec agreed. Where `tdd` and [Testing](../../../docs/coding-standards.md#testing) differ, the coding standards win:
 
 - Design the rule set's cases from the acceptance criteria with EP, BVA and decision tables, and consolidate them into the CSV file first. The CSV file plus its `@ParameterizedTest` is the failing test of the slice.
-- Test with real collaborators and a real PostgreSQL database through Testcontainers. Mock only systems outside our control.
+- Test with real collaborators and a real PostgreSQL database through the shared test container, with `@SharedDatabase` on the test class (see Test database in the coding standards). Mock only systems outside our control.
 - When a CSV row fails, fix the code or raise the rule with the developer. `expected` follows the spec.
 
 Run the test class you are working on after each change and the full build once at the end, with the commands in `AGENTS.md`.

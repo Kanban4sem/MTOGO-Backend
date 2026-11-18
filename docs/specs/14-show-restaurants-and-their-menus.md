@@ -1,6 +1,6 @@
 # Show restaurants and their menus
 
-**Version:** 1.0 · **Date:** 2026-11-15 · **Issue:** #14 · **Feature flag:** None, confirmed by the developer
+**Version:** 1.1 · **Date:** 2026-11-18 · **Issue:** #14 · **Feature flag:** None, confirmed by the developer
 
 ## Acceptance criteria
 
@@ -50,8 +50,16 @@ The domain-model draft provides the relationship structure. Only fields needed f
 - **Validation:** On 2026-11-16, the full backend suite passed in the dev container: 161 tests, no failures, errors or skipped tests. The fix-all and trunk-worthy checks passed, including clean verify and formatting. JaCoCo was inspected; the SonarQube Cloud quality gate has not been run in this session.
 - **Follow-up:** Frontend integration remains MTOGO-Frontend#7.
 
+### Spec 1.1 - 2026-11-18 - #48
+
+- **Built:** nothing new. The tests now get their database from the shared PostgreSQL test container through `@SharedDatabase`, one database per test class, as described under Test database in the coding standards.
+- **Deviations:** None.
+- **Tests:** the test classes above moved to `@SharedDatabase`. Earlier notes that mention a container per test class or isolated Testcontainers describe the setup at that time and are historical.
+- **Follow-up:** None.
+
 ## Changelog
 
-| Version | Date       | Change        | Issue |
-| ------- | ---------- | ------------- | ----- |
-| 1.0     | 2026-11-15 | First version | #14   |
+| Version | Date       | Change                                                          | Issue |
+| ------- | ---------- | --------------------------------------------------------------- | ----- |
+| 1.0     | 2026-11-15 | First version                                                   | #14   |
+| 1.1     | 2026-11-18 | Tests use the shared test container, older notes are historical | #48   |

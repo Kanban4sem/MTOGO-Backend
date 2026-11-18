@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 6.1 · **Date:** 2026-11-17
+**Version:** 7.0 · **Date:** 2026-11-18
 
 ## Overview
 
@@ -181,7 +181,7 @@ Tests follow the Detroit (classical) school:
 
 - Test behaviour through public methods, with real collaborators.
 - Verify the resulting state, not which methods were called.
-- Use a real PostgreSQL database through Testcontainers, never an in-memory replacement.
+- Use a real PostgreSQL database through Testcontainers, never an in-memory replacement. See [Test database](#test-database).
 - Mock only systems outside our control, such as external APIs or email. Never mock our own classes.
 
 ### General rules
@@ -190,8 +190,18 @@ Tests follow the Detroit (classical) school:
 - Tests mirror the main package structure under `src/test/java`.
 - Describe behaviour, not implementation: `@DisplayName("Cancel - should reject an order that is in delivery")`.
 - Tests are independent of each other and of execution order. Each test creates the data it needs, and the database is cleaned between tests.
-- Tests never touch a shared or production database.
+- Tests never touch a shared or production database. A database that only the test run uses, such as the one in [Test database](#test-database), is not shared in this sense.
 - Coverage is measured with JaCoCo and reported to SonarQube Cloud. It shows what is untested. It is not a goal in itself.
+
+### Test database
+
+All tests that need a database use one PostgreSQL container for the whole test run, started once by `SharedPostgres` and removed by Testcontainers when the JVM exits. Never declare a `@Container` or `@Testcontainers` in a test class: a container that stops after its class while Spring keeps the cached context open makes the test run fail at exit.
+
+- Put `@SharedDatabase` on the test class, or on a base class. Each test class then gets its own empty database in the container, migrated by Flyway, so classes never see each other's data. A `@Nested` class uses the database of its top-level class.
+- Shared test infrastructure such as `SharedPostgres` lives in `mtogo.testsupport`, which has no counterpart in the main code.
+- Test-only Spring properties go in `src/test/resources/config/application.properties`. It sets `server.shutdown=immediate`, so no test web server waits for requests when the JVM exits.
+- Clean the data the test class changes before each test, as described under [General rules](#general-rules).
+- Configuration tests with `ApplicationContextRunner` use no database and no `@SharedDatabase`.
 
 ### Test case design
 
@@ -315,9 +325,9 @@ Tests that do not check an input or business rule, such as mapping or a single h
 | Level         | Setup                                                                               | Apply                                                                                                                                                                               |
 | ------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Domain        | Plain JUnit, no Spring                                                              | EP, BVA and decision tables for logic in entities and other classes that need no database                                                                                           |
-| Service       | `@SpringBootTest`, Testcontainers                                                   | The main place. EP, BVA and decision tables for business rules and data-dependent authorization                                                                                     |
-| Endpoint      | `@SpringBootTest` with a random port, REST Assured, Testcontainers                  | EP and BVA for Bean Validation rules on request DTOs. A decision table for access (`401` / `403` / `404` / `2xx`). One invalid case per service rule set to prove the error mapping |
-| Repository    | `@DataJpaTest`, Testcontainers                                                      | Only for custom queries                                                                                                                                                             |
+| Service       | `@SpringBootTest`, `@SharedDatabase`                                                | The main place. EP, BVA and decision tables for business rules and data-dependent authorization                                                                                     |
+| Endpoint      | `@SpringBootTest` with a random port, REST Assured, `@SharedDatabase`               | EP and BVA for Bean Validation rules on request DTOs. A decision table for access (`401` / `403` / `404` / `2xx`). One invalid case per service rule set to prove the error mapping |
+| Repository    | `@DataJpaTest`, `@SharedDatabase`                                                   | Only for custom queries                                                                                                                                                             |
 | Configuration | `ApplicationContextRunner` with `withPropertyValues`, no database and no web server | EP over each property value, including an invalid value that stops the backend at startup                                                                                           |
 
 ### Designing test cases step by step
@@ -362,3 +372,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 5.0     | 2026-11-15 | Separate CRUD and DTO responsibilities; use service interfaces only when needed  | #13      |
 | 6.0     | 2026-11-16 | Tests for changes to behaviour, feature flag steps, each rule stated once        | #39      |
 | 6.1     | 2026-11-17 | A declined payment is a 402 from PaymentRequiredException; FeatureGate for flags | #15      |
+| 7.0     | 2026-11-18 | Tests share one PostgreSQL container, with a database per test class             | #48      |

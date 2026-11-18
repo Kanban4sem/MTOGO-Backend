@@ -1,6 +1,6 @@
 # Expose feature flags to the frontend
 
-**Version:** 2.0 · **Date:** 2026-11-13 · **Issue:** #30 · **Feature flag:** None
+**Version:** 2.1 · **Date:** 2026-11-18 · **Issue:** #30 · **Feature flag:** None
 
 ## Acceptance criteria
 
@@ -42,7 +42,7 @@ The module structure below records the implementation delivered for this issue. 
 ## Testing decisions
 
 - **Binding of `app.auth-enabled`:** `ApplicationContextRunner` with `withPropertyValues`, with no database and no web server. EP over the flag value: unset → off, `true` → on, `false` → off, `banana` → the context fails to start with `ConfigurationPropertiesBindException`. The rule set is `bind-auth-enabled` under `testcases/config/app-properties/`. This is the Configuration level in the coding standards. It was chosen so the four values don't need four full Spring contexts.
-- **Endpoint access:** `endpoint-access.csv` in `SecurityConfigTest` gains a `method` column, so the table covers method × path. New rows: `GET /v1/features` → `200`, `POST /v1/features` → `401`, and GET on the OpenAPI specification, `/swagger-ui.html` and Swagger UI → `200`. That class is the prior art for endpoint tests with REST Assured and Testcontainers.
+- **Endpoint access:** `endpoint-access.csv` in `SecurityConfigTest` gains a `method` column, so the table covers method × path. New rows: `GET /v1/features` → `200`, `POST /v1/features` → `401`, and GET on the OpenAPI specification, `/swagger-ui.html` and Swagger UI → `200`. That class is the prior art for endpoint tests with REST Assured and `@SharedDatabase`.
 - **Endpoint response:** one `@SpringBootTest` endpoint test with `FEATURE_AUTH_ENABLED=false`. It checks that the body holds exactly the flags in `FeatureFlagsDTO` with their values, and that the response has `Cache-Control: no-store`. The unset default is covered by the binding test.
 - **Mapping:** one plain JUnit test of `FeatureFlagService`, with `authEnabled` both on and off in the DTO.
 
@@ -102,6 +102,13 @@ This issue has no feature flag of its own, since it adds no unfinished behaviour
 - **Tests:** Windows Maven cannot compile with release 25; running tests in the development container was not approved. Run trunk-worthy in the backend development container before delivery.
 - **Follow-up:** proposed linked frontend consumer and shared document update described above.
 
+### Spec 2.1 - 2026-11-18 - #48
+
+- **Built:** nothing new. The tests now get their database from the shared PostgreSQL test container through `@SharedDatabase`, one database per test class, as described under Test database in the coding standards.
+- **Deviations:** None.
+- **Tests:** the test classes above moved to `@SharedDatabase`. Earlier notes that mention a container per test class or isolated Testcontainers describe the setup at that time and are historical.
+- **Follow-up:** None.
+
 ## Changelog
 
 | Version | Date       | Change                                                                     | Issue |
@@ -111,5 +118,5 @@ This issue has no feature flag of its own, since it adds no unfinished behaviour
 | 1.2     | 2026-11-12 | The API documentation is public                                            | #30   |
 | 1.3     | 2026-11-12 | Endpoint access tests non-GET, configuration tests in the coding standards | #30   |
 | 1.4     | 2026-11-12 | Decisions match the code, rule set renamed after the review of #30         | #33   |
-
-| 2.0 | 2026-11-13 | Replace the login flag with the shared authentication flag | #35 |
+| 2.0     | 2026-11-13 | Replace the login flag with the shared authentication flag                 | #35   |
+| 2.1     | 2026-11-18 | Tests use the shared test container, older notes are historical            | #48   |
