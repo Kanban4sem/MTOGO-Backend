@@ -9,7 +9,7 @@ public class RestaurantMapper
 {
     public RestaurantDTO toDTO(Restaurant restaurant)
     {
-        return new RestaurantDTO(restaurant.getId(), restaurant.getName(), restaurant.isAcceptsOrders());
+        return new RestaurantDTO(restaurant.getId(), restaurant.getName(), restaurant.isAcceptingOrders());
     }
 
     public MenuDTO toDTO(Menu menu, List<MenuItem> items)

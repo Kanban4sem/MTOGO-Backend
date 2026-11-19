@@ -1,4 +1,4 @@
-active,available,expected,reason
+isActive,isAvailable,expected,reason
 false,true,ACCEPT,"Decision table: inactive menu is hidden regardless of item availability"
 true,false,ACCEPT,"Decision table: active menu remains visible with an empty items list"
 true,true,ACCEPT,"Decision table: active menu exposes its available item"

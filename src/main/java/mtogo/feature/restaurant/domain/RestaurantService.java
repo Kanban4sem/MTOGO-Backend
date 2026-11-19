@@ -27,13 +27,13 @@ public class RestaurantService
     @Transactional(readOnly = true)
     public List<RestaurantDTO> getAll()
     {
-        return restaurants.findByAcceptsOrdersTrueOrderByIdAsc().stream().map(mapper::toDTO).toList();
+        return restaurants.findByIsAcceptingOrdersTrueOrderByIdAsc().stream().map(mapper::toDTO).toList();
     }
 
     @Transactional(readOnly = true)
     public List<MenuDTO> getMenus(Long restaurantId)
     {
-        restaurants.findByIdAndAcceptsOrdersTrue(restaurantId)
+        restaurants.findByIdAndIsAcceptingOrdersTrue(restaurantId)
                 .orElseThrow(() -> new NotFoundException("Restaurant not found with id: " + restaurantId));
         return menus.findByRestaurantIdAndIsActiveTrueOrderByIdAsc(restaurantId).stream()
                 .map(menu -> mapper.toDTO(menu, items.findByMenuIdAndIsAvailableTrueOrderByIdAsc(menu.getId())))

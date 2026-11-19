@@ -1,6 +1,6 @@
 # Add customer accounts
 
-**Version:** 1.1 · **Date:** 2026-11-18 · **Issue:** #13 · **Feature flag:** `authEnabled`, off by default
+**Version:** 1.2 · **Date:** 2026-11-19 · **Issue:** #13 · **Feature flag:** `authEnabled`, off by default
 
 ## Acceptance criteria
 
@@ -73,9 +73,17 @@ JWT authentication is proposed for developer review. No deployed server or exist
 - **Tests:** the test classes above moved to `@SharedDatabase`. Earlier notes that mention a container per test class or isolated Testcontainers describe the setup at that time and are historical.
 - **Follow-up:** None.
 
+### Spec 1.2 - 2026-11-19 - #53
+
+- **Built:** nothing new. The account endpoints' `404` comes only from the `FeatureGate` in `UserGateConfig`, and `UserService` no longer checks the auth flag. `JwtAuthenticationFilter` still reads the flag so that tokens do not authenticate while it is off, and `JwtService` reads it for its startup secret check. Email normalization moved from the user feature's util package into its domain package.
+- **Deviations:** None.
+- **Tests:** the disabled-auth rows in endpoint-access, run by SecurityConfigTest, cover the `404` from the gate. The 1.0 note's mention of the util package is historical.
+- **Follow-up:** None.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
 | ------- | ---------- | --------------------------------------------------------------- | ----- |
 | 1.0     | 2026-11-15 | First version                                                   | #13   |
 | 1.1     | 2026-11-18 | Tests use the shared test container, older notes are historical | #48   |
+| 1.2     | 2026-11-19 | Auth flag checked only by the gate, email helper in the domain  | #53   |

@@ -1,4 +1,4 @@
-package mtogo.feature.user.util;
+package mtogo.feature.user.domain;
 
 import java.util.Locale;
 

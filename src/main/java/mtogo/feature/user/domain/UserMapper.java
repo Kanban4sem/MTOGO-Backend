@@ -4,7 +4,6 @@ import mtogo.feature.address.domain.AddressMapper;
 import mtogo.feature.user.presentation.dto.request.RegisterUserDTO;
 import mtogo.feature.user.presentation.dto.response.UserDTO;
 import mtogo.feature.user.presentation.dto.response.UserProfileDTO;
-import mtogo.feature.user.util.EmailUtil;
 import org.springframework.stereotype.Component;
 
 @Component

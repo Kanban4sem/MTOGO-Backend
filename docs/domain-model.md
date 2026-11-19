@@ -56,13 +56,13 @@ class PaymentService {
     +Long id
     +String companyName
     +String registrationNumber
-    +boolean active
+    +boolean isActive
 }
 
 class Restaurant {
     +Long id
     +String name
-    +boolean acceptsOrders
+    +boolean isAcceptingOrders
 }
 
 class Menu {
@@ -160,7 +160,7 @@ class DeliveryAgent {
     +Long id
     +String employeeNumber
     +String vehicleType
-    +boolean available
+    +boolean isAvailable
 }
 
 class Delivery {

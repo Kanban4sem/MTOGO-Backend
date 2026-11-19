@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long>
 {
-    List<Restaurant> findByAcceptsOrdersTrueOrderByIdAsc();
+    List<Restaurant> findByIsAcceptingOrdersTrueOrderByIdAsc();
 
-    Optional<Restaurant> findByIdAndAcceptsOrdersTrue(Long id);
+    Optional<Restaurant> findByIdAndIsAcceptingOrdersTrue(Long id);
 }

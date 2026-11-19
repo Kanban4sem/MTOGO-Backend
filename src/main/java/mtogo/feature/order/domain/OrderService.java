@@ -104,7 +104,7 @@ public class OrderService
 
     private static void requireOrderable(MenuItem item)
     {
-        if (!item.getRestaurant().isAcceptsOrders())
+        if (!item.getRestaurant().isAcceptingOrders())
         {
             throw new ConflictException("The restaurant does not accept orders");
         }

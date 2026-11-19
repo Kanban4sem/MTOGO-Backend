@@ -1,3 +1,3 @@
-acceptsOrders,expected,reason
+isAcceptingOrders,expected,reason
 true,ACCEPT,"EP: accepting restaurant is listed in ID order"
 false,ACCEPT,"EP: closed restaurant is omitted while an accepting neighbour remains"

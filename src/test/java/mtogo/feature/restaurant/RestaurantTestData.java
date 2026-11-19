@@ -20,23 +20,23 @@ public abstract class RestaurantTestData
         jdbc.update("DELETE FROM restaurants");
     }
 
-    protected long restaurant(String name, boolean acceptsOrders)
+    protected long restaurant(String name, boolean isAcceptingOrders)
     {
         return jdbc.queryForObject("INSERT INTO restaurants (name, accepts_orders) VALUES (?, ?) RETURNING id",
-                Long.class, name, acceptsOrders);
+                Long.class, name, isAcceptingOrders);
     }
 
-    protected long menu(long restaurantId, String name, boolean active)
+    protected long menu(long restaurantId, String name, boolean isActive)
     {
         return jdbc.queryForObject(
                 "INSERT INTO menus (restaurant_id, name, description, is_active) VALUES (?, ?, ?, ?) RETURNING id",
-                Long.class, restaurantId, name, "Menu description", active);
+                Long.class, restaurantId, name, "Menu description", isActive);
     }
 
-    protected long item(long menuId, String name, boolean available)
+    protected long item(long menuId, String name, boolean isAvailable)
     {
         return jdbc.queryForObject(
                 "INSERT INTO menu_items (menu_id, name, description, price, image_url, is_available) VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
-                Long.class, menuId, name, "Item description", new BigDecimal("89.95"), "/images/meal.jpg", available);
+                Long.class, menuId, name, "Item description", new BigDecimal("89.95"), "/images/meal.jpg", isAvailable);
     }
 }

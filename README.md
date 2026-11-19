@@ -100,7 +100,7 @@ docker compose --env-file .env -f .devcontainer/compose.yml stop
 
 ## Customer accounts
 
-The account model is split between `mtogo.feature.user`, `mtogo.feature.address` and `mtogo.feature.role`. Address owns its mapping and validation; password handling and token validation are centralized in security. User-specific email normalization lives in `user/util/`.
+The account model is split between `mtogo.feature.user`, `mtogo.feature.address` and `mtogo.feature.role`. Address owns its mapping and validation; password handling and token validation are centralized in security. User-specific email normalization lives in `user/domain/`.
 
 ### Start from VS Code
 

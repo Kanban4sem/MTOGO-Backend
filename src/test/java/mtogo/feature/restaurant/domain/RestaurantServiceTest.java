@@ -23,24 +23,24 @@ class RestaurantServiceTest extends RestaurantTestData
     @ParameterizedTest(name = "[{index}] {2}")
     @CsvFileSource(resources = "/testcases/restaurant/restaurant-service/get-all-acceptance.csv", numLinesToSkip = 1)
     @DisplayName("Get all - returns only restaurants accepting orders in ID order")
-    void getAllAcceptance(boolean acceptsOrders, String expected, String reason)
+    void getAllAcceptance(boolean isAcceptingOrders, String expected, String reason)
     {
-        long first = restaurant("First", acceptsOrders);
+        long first = restaurant("First", isAcceptingOrders);
         long second = restaurant("Second", true);
         var result = restaurants.getAll();
-        assertEquals(acceptsOrders ? java.util.List.of(first, second) : java.util.List.of(second),
+        assertEquals(isAcceptingOrders ? java.util.List.of(first, second) : java.util.List.of(second),
                 result.stream().map(r -> r.id()).toList());
-        assertTrue(result.stream().allMatch(r -> r.acceptsOrders()));
+        assertTrue(result.stream().allMatch(r -> r.isAcceptingOrders()));
         assertEquals("Second", result.getLast().name());
     }
 
     @ParameterizedTest(name = "[{index}] {3}")
     @CsvFileSource(resources = "/testcases/restaurant/restaurant-service/get-menus-restaurant.csv", numLinesToSkip = 1)
     @DisplayName("Get menus - requires an existing restaurant accepting orders")
-    void getMenusRestaurant(boolean exists, boolean acceptsOrders, String expected, String reason)
+    void getMenusRestaurant(boolean isExisting, boolean isAcceptingOrders, String expected, String reason)
     {
-        long id = restaurant("Requested", acceptsOrders);
-        if (!exists)
+        long id = restaurant("Requested", isAcceptingOrders);
+        if (!isExisting)
         {
             jdbc.update("DELETE FROM restaurants WHERE id = ?", id);
         }
@@ -56,18 +56,18 @@ class RestaurantServiceTest extends RestaurantTestData
     @ParameterizedTest(name = "[{index}] {3}")
     @CsvFileSource(resources = "/testcases/restaurant/restaurant-service/get-menus-visibility.csv", numLinesToSkip = 1)
     @DisplayName("Get menus - includes only active menus and their available items")
-    void getMenusVisibility(boolean active, boolean available, String expected, String reason)
+    void getMenusVisibility(boolean isActive, boolean isAvailable, String expected, String reason)
     {
         long id = restaurant("Requested", true);
-        long menuId = menu(id, "Lunch", active);
-        long itemId = item(menuId, "Meal", available);
+        long menuId = menu(id, "Lunch", isActive);
+        long itemId = item(menuId, "Meal", isAvailable);
         var result = restaurants.getMenus(id);
-        assertEquals(active ? 1 : 0, result.size());
-        if (active)
+        assertEquals(isActive ? 1 : 0, result.size());
+        if (isActive)
         {
             MenuDTO actual = result.getFirst();
             assertEquals(menuId, actual.id());
-            assertEquals(available ? java.util.List.of(itemId) : java.util.List.of(),
+            assertEquals(isAvailable ? java.util.List.of(itemId) : java.util.List.of(),
                     actual.items().stream().map(MenuItemDTO::id).toList());
         }
     }
@@ -99,7 +99,7 @@ class RestaurantServiceTest extends RestaurantTestData
         assertEquals("Item description", meal.description());
         assertEquals(new BigDecimal("89.95"), meal.price());
         assertEquals("/images/meal.jpg", meal.imageUrl());
-        assertTrue(meal.available());
+        assertTrue(meal.isAvailable());
     }
 
     @Test

@@ -2,15 +2,14 @@ package mtogo.feature.user.domain;
 
 import mtogo.feature.role.domain.RoleName;
 import mtogo.feature.role.data.RoleRepository;
-import mtogo.config.AppProperties;
 import mtogo.exceptions.*;
 import mtogo.feature.user.data.*;
+import mtogo.feature.user.presentation.dto.request.LoginUserDTO;
 import mtogo.feature.user.presentation.dto.request.RegisterUserDTO;
 import mtogo.feature.user.presentation.dto.response.UserDTO;
 import mtogo.feature.user.presentation.dto.response.AuthenticatedUserDTO;
 import mtogo.security.JwtService;
 import mtogo.security.PasswordService;
-import mtogo.feature.user.util.EmailUtil;
 import mtogo.feature.address.domain.AddressValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +23,9 @@ public class UserService
     private final PasswordService passwords;
     private final AddressValidator addressValidator;
     private final JwtService tokens;
-    private final AppProperties properties;
 
     public UserService(UserRepository users, RoleRepository roles, UserMapper mapper, PasswordService passwords,
-            AddressValidator addressValidator, JwtService tokens, AppProperties properties)
+            AddressValidator addressValidator, JwtService tokens)
     {
         this.users = users;
         this.roles = roles;
@@ -35,13 +33,11 @@ public class UserService
         this.passwords = passwords;
         this.addressValidator = addressValidator;
         this.tokens = tokens;
-        this.properties = properties;
     }
 
     @Transactional
     public UserDTO register(RegisterUserDTO request)
     {
-        requireEnabled();
         if (!request.password().equals(request.confirmPassword()))
         {
             throw new BadRequestException("Passwords must match");
@@ -60,9 +56,8 @@ public class UserService
     }
 
     @Transactional(readOnly = true)
-    public AuthenticatedUserDTO login(mtogo.feature.user.presentation.dto.request.LoginUserDTO request)
+    public AuthenticatedUserDTO login(LoginUserDTO request)
     {
-        requireEnabled();
         User user = users.findByEmail(EmailUtil.normalize(request.email())).orElse(null);
         boolean matches = passwords.matches(request.password(), user == null ? null : user.getPasswordHash());
         if (user == null || !matches || !user.isActive())
@@ -76,7 +71,6 @@ public class UserService
     @Transactional(readOnly = true)
     public UserDTO authenticate(String token)
     {
-        requireEnabled();
         JwtService.VerifiedToken verified = tokens.verify(token);
         User user = requireActiveUser(verified.userId());
         if (user.getSessionVersion() != verified.sessionVersion())
@@ -89,14 +83,12 @@ public class UserService
     @Transactional(readOnly = true)
     public UserDTO getCurrent(Long userId)
     {
-        requireEnabled();
         return mapper.toDTO(requireActiveUser(userId));
     }
 
     @Transactional
     public void logout(Long userId)
     {
-        requireEnabled();
         users.revokeSessions(userId);
     }
 
@@ -108,14 +100,6 @@ public class UserService
             throw new UnauthorizedException("Invalid access token");
         }
         return user;
-    }
-
-    private void requireEnabled()
-    {
-        if (!properties.isAuthEnabled())
-        {
-            throw new NotFoundException("Authentication is not available");
-        }
     }
 
 }

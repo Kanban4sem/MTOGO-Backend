@@ -1,4 +1,4 @@
-exists,acceptsOrders,expected,reason
+isExisting,isAcceptingOrders,expected,reason
 false,false,NotFoundException,"Decision table: unknown restaurant has no public menus regardless of acceptance"
 true,false,NotFoundException,"Decision table: closed restaurant has no public menus"
 true,true,ACCEPT,"Decision table: accepting restaurant without menus returns an empty list"

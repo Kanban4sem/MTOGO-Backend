@@ -18,5 +18,5 @@ public class Restaurant
     @Column(nullable = false, length = 100)
     private String name;
     @Column(name = "accepts_orders", nullable = false)
-    private boolean acceptsOrders;
+    private boolean isAcceptingOrders;
 }
