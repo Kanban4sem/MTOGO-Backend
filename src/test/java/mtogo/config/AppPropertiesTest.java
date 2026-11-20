@@ -3,11 +3,12 @@ package mtogo.config;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.hasItem;
+import static mtogo.testsupport.CauseUtil.causeNames;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import mtogo.feature.role.domain.RoleName;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
@@ -16,6 +17,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.boot.validation.autoconfigure.ValidationAutoConfiguration;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.support.ResourcePropertySource;
@@ -71,16 +73,20 @@ class AppPropertiesTest
         });
     }
 
-    // The binding failure is wrapped by the bean creation failure, so look through
-    // the whole chain.
-    private static List<String> causeNames(Throwable startupFailure)
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/config/app-properties/bind-seed-passwords.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Seed passwords - bind each role's seed password, empty when unset")
+    void seedPasswordsBind(RoleName roleName, String value, String expected, String reason)
     {
-        List<String> names = new ArrayList<>();
-        for (Throwable cause = startupFailure; cause != null; cause = cause.getCause())
-        {
-            names.add(cause.getClass().getSimpleName());
-        }
-        return names;
+        String variable = "SEED_" + roleName + "_PASSWORD";
+        // withPropertyValues trims values, which would hide the blank password.
+        ApplicationContextRunner runner = value == null
+                ? contextRunner
+                : contextRunner.withInitializer(context -> context.getEnvironment().getPropertySources()
+                        .addFirst(new MapPropertySource("seed", Map.of(variable, value))));
+
+        runner.run(
+                context -> assertThat(context.getBean(AppProperties.class).seed().passwordFor(roleName), is(expected)));
     }
 
     private static void isolateFromEnvironment(MutablePropertySources propertySources)

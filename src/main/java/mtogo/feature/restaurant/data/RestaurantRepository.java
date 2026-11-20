@@ -10,4 +10,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long>
     List<Restaurant> findByIsAcceptingOrdersTrueOrderByIdAsc();
 
     Optional<Restaurant> findByIdAndIsAcceptingOrdersTrue(Long id);
+
+    List<Restaurant> findAllByName(String name);
 }

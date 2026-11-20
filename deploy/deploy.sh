@@ -19,6 +19,11 @@ exec 9>/opt/mtogo/deploy.lock
 flock 9
 
 cd "/opt/mtogo/$ENV_NAME"
+# A seed password on prod would give an account whose email is public (ADR-006)
+if [[ "$ENV_NAME" == prod ]] && grep -Eq '^[[:space:]]*SEED_[A-Z_]+_PASSWORD=[^[:space:]]' backend.env; then
+  echo "prod must not set a SEED_*_PASSWORD in backend.env"
+  exit 1
+fi
 VAR="${SERVICE^^}_TAG"
 OLD="$(grep "^$VAR=" .env | cut -d= -f2- || true)"
 

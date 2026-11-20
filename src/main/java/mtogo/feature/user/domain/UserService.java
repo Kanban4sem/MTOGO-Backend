@@ -49,9 +49,7 @@ public class UserService
             throw new ConflictException("An account with this email already exists");
         }
         User user = mapper.toEntity(request);
-        user.setPasswordHash(passwords.hash(request.password()));
-        user.setActive(true);
-        user.setRole(roles.findByName(RoleName.CUSTOMER).orElseThrow());
+        user.activate(passwords.hash(request.password()), roles.findByName(RoleName.CUSTOMER).orElseThrow(), null);
         return mapper.toDTO(users.saveAndFlush(user));
     }
 

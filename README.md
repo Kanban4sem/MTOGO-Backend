@@ -125,6 +125,23 @@ The API contract is documented in Swagger and the [account spec](docs/specs/13-a
 
 Placing orders is behind `FEATURE_ORDERING_ENABLED`, off by default, and also needs `FEATURE_AUTH_ENABLED`. A logged-in customer places and pays for an order with `POST /v1/orders`. Payment is mocked: the payment token `decline` is declined and any other token is confirmed. The contract is in Swagger and the [order spec](docs/specs/15-place-and-pay-for-an-order.md).
 
+### Seeded users
+
+On every startup the backend creates these users for each role whose seed password is set, as decided in [ADR-006](docs/adr/006-seeded-user-credentials.md). Their passwords are never in the repository.
+
+| Email                    | Role           | Restaurant   | Name           | Seed password                  |
+| ------------------------ | -------------- | ------------ | -------------- | ------------------------------ |
+| `customer@mtogo.example` | CUSTOMER       | None         | Test Customer  | `SEED_CUSTOMER_PASSWORD`       |
+| `kebab@mtogo.example`    | RESTAURANT     | MTOGO Kebab  | MTOGO Kebab    | `SEED_RESTAURANT_PASSWORD`     |
+| `bakery@mtogo.example`   | RESTAURANT     | MTOGO Bakery | MTOGO Bakery   | `SEED_RESTAURANT_PASSWORD`     |
+| `agent@mtogo.example`    | DELIVERY_AGENT | None         | Delivery Agent | `SEED_DELIVERY_AGENT_PASSWORD` |
+
+- **Locally:** set the variables in your `.env` and restart. Each user logs in with their email and their role's password. An unset or blank variable skips that role. A password shorter than 8 characters or longer than 72 UTF-8 bytes stops the startup. Logging in needs `FEATURE_AUTH_ENABLED`; seeding does not.
+- **On stage:** the passwords are in the droplet's `backend.env`. The team has no shared secret store yet, so ask a team member with access to the droplet.
+- **On prod:** the variables stay unset, so prod has no seeded users. `deploy.sh` refuses to deploy to prod while one is set.
+- **Existing users:** seeding never changes a user whose email already exists, including a customer who registered with a seeded email. It logs a warning and skips that user.
+- **Rotating a password:** delete the user, change the variable and restart.
+
 ## Build and test
 
 ```bash

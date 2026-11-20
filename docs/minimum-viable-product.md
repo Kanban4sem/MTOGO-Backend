@@ -1,6 +1,6 @@
 # Minimum Viable Product
 
-**Version:** 1.0 · **Date:** 2026-11-11
+**Version:** 1.1 · **Date:** 2026-11-20
 
 The MVP is the first version of MTOGO that is deployed and used end to end: a customer places and pays for an order, the restaurant prepares it, a delivery agent delivers it, and the customer follows it the whole way. Everything else in the case builds on the data this flow creates. The case itself is the project description from the course.
 
@@ -21,7 +21,7 @@ Slices 1 and 2 can be built in parallel. Slice 3 needs both. Slices 4–6 need s
 
 ## Decisions
 
-- **Accounts.** Customers create their own accounts. Restaurants, their menus and delivery agents are seeded through Flyway. Every user has exactly one role: customer, restaurant or delivery agent.
+- **Accounts.** Customers create their own accounts. Restaurants and their menus are seeded through Flyway. Restaurant users and delivery agents are seeded on startup, with passwords from the environment ([backend ADR-006](https://github.com/Kanban4sem/MTOGO-Backend/blob/main/docs/adr/006-seeded-user-credentials.md)). Every user has exactly one role: customer, restaurant or delivery agent.
 - **Payment.** The payment provider is mocked behind an interface, so a real provider can replace it without changing the order flow. An order is placed only when the payment is confirmed. A declined payment creates no order.
 - **Order channel.** The case lists website, app and telephone. The MVP orders through the website only, but every order records its channel, so the dashboard can report on channels later.
 - **Deployment.** The MVP is done when it runs on stage, not when it runs locally. The server is set up in backend #11, and `main` is deployed to it by the deploy pipeline (backend #20, frontend #13). Both are in the MVP milestone.
@@ -73,6 +73,7 @@ Also on the board after the MVP: customer details such as name, phone number and
 
 How to change this document is described in [CONTRIBUTING](../CONTRIBUTING.md#changing-the-documents).
 
-| Version | Date       | Change        | Issue |
-| ------- | ---------- | ------------- | ----- |
-| 1.0     | 2026-11-11 | First version | #19   |
+| Version | Date       | Change                                                                    | Issue |
+| ------- | ---------- | ------------------------------------------------------------------------- | ----- |
+| 1.0     | 2026-11-11 | First version                                                             | #19   |
+| 1.1     | 2026-11-20 | Restaurant users and delivery agents are seeded on startup, not by Flyway | #52   |

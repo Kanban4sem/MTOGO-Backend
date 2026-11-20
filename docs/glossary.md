@@ -4,6 +4,20 @@ The domain language of MTOGO. Code, issues, specs and documentation call each co
 
 ## Language
 
+### Accounts
+
+**Customer**:
+A user with the customer role, who orders food from restaurants.
+_Avoid_: Client, buyer, consumer
+
+**Restaurant user**:
+A user with the restaurant role, who handles orders for exactly one restaurant.
+_Avoid_: Restaurant staff, restaurant owner, restaurant account
+
+**Delivery agent**:
+A user with the delivery-agent role, who collects ready orders and delivers them.
+_Avoid_: Courier, driver, rider
+
 ### Ordering
 
 **Order**:
