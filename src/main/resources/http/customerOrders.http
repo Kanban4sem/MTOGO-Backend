@@ -1,0 +1,64 @@
+@baseUrl = http://localhost:8080
+
+# Enable FEATURE_AUTH_ENABLED and FEATURE_ORDERING_ENABLED in the local profile.
+# Set SEED_CUSTOMER_PASSWORD before startup. In JetBrains HTTP Client, select
+# an environment with seedCustomerPassword and availableMenuItemId defined.
+# Find an available menu item in Swagger with GET /v1/restaurants/{id}/menus.
+
+### Log in as the seeded customer (200)
+< {%
+    request.variables.set("loginPasswordJson", JSON.stringify(request.environment.get("seedCustomerPassword")));
+%}
+POST {{baseUrl}}/v1/users/login
+Content-Type: application/json
+
+{
+  "email": "customer@mtogo.example",
+  "password": {{loginPasswordJson}}
+}
+
+> {%
+    if (response.status === 200 && response.body.accessToken) {
+        client.global.set("CUSTOMER_ORDERS_TOKEN", response.body.accessToken);
+    } else {
+        client.global.clear("CUSTOMER_ORDERS_TOKEN");
+    }
+%}
+
+### Place an order to read back (201)
+POST {{baseUrl}}/v1/orders
+Authorization: Bearer {{CUSTOMER_ORDERS_TOKEN}}
+Content-Type: application/json
+
+{
+  "lines": [{"menuItemId": {{availableMenuItemId}}, "quantity": 2}],
+  "deliveryAddress": {
+    "street": "Test Street 10",
+    "postalCode": "1165",
+    "city": "Copenhagen"
+  },
+  "paymentToken": "tok_visa"
+}
+
+> {%
+    if (response.status === 201 && response.body.id) {
+        client.global.set("CUSTOMER_ORDER_ID", response.body.id);
+    } else {
+        client.global.clear("CUSTOMER_ORDER_ID");
+    }
+%}
+
+### List own orders (200, newest first, with statusName)
+GET {{baseUrl}}/v1/customer/orders
+Authorization: Bearer {{CUSTOMER_ORDERS_TOKEN}}
+
+### Read own order (200, with lines, total and statusName)
+GET {{baseUrl}}/v1/customer/orders/{{CUSTOMER_ORDER_ID}}
+Authorization: Bearer {{CUSTOMER_ORDERS_TOKEN}}
+
+### Read an order that does not exist (404)
+GET {{baseUrl}}/v1/customer/orders/0
+Authorization: Bearer {{CUSTOMER_ORDERS_TOKEN}}
+
+### List orders without an access token (401)
+GET {{baseUrl}}/v1/customer/orders

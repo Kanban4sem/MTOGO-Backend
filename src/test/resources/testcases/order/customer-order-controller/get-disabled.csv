@@ -1,0 +1,3 @@
+path,expected,reason
+/v1/customer/orders,404,"Decision table: ordering is disabled for the list"
+/v1/customer/orders/1,404,"Decision table: ordering is disabled for order details"

@@ -10,6 +10,8 @@ import mtogo.feature.address.domain.Address;
 import mtogo.exceptions.*;
 import mtogo.feature.order.data.OrderRepository;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
+import mtogo.feature.order.presentation.dto.response.CustomerOrderDTO;
+import mtogo.feature.order.presentation.dto.response.CustomerOrderSummaryDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.feature.restaurant.data.MenuItemRepository;
 import mtogo.feature.restaurant.domain.MenuItem;
@@ -64,6 +66,20 @@ public class OrderService
         }
         order.moveTo(OrderStatus.PLACED);
         return mapper.toDTO(orders.save(order));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CustomerOrderSummaryDTO> getCustomerOrders(Long customerId)
+    {
+        return orders.findAllByCustomerIdOrderByIdDesc(customerId).stream().map(mapper::toCustomerOrderSummaryDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public CustomerOrderDTO getCustomerOrder(Long customerId, Long orderId)
+    {
+        return orders.findByIdAndCustomerId(orderId, customerId).map(mapper::toCustomerOrderDTO)
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
     }
 
     private Address deliveryAddress(PlaceOrderDTO.DeliveryAddress request)

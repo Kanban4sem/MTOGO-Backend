@@ -13,4 +13,10 @@ public class OrderGateConfig
     {
         return new FeatureGate("/v1/orders", properties::isOrderingEnabled, "Ordering is not available");
     }
+
+    @Bean
+    public FeatureGate customerOrdersGate(AppProperties properties)
+    {
+        return new FeatureGate("/v1/customer/orders", properties::isOrderingEnabled, "Ordering is not available");
+    }
 }

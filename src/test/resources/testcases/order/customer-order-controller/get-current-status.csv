@@ -1,0 +1,7 @@
+status,expected,reason
+PLACED,Bestilt,"EP: a placed order is Bestilt"
+ACCEPTED,Accepteret,"EP: an accepted order is Accepteret"
+REJECTED,Afvist,"EP: a rejected order is Afvist"
+READY,Klar til afhentning,"EP: a ready order is Klar til afhentning"
+PICKED_UP,Afhentet,"EP: a picked-up order is Afhentet"
+DELIVERED,Leveret,"EP: a delivered order is Leveret"

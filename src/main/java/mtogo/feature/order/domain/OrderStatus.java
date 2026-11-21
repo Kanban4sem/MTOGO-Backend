@@ -1,9 +1,21 @@
 package mtogo.feature.order.domain;
 
-// The lifecycle from the MVP. The frontend translates the codes.
 public enum OrderStatus
 {
-    PLACED, ACCEPTED, REJECTED, READY, PICKED_UP, DELIVERED;
+    PLACED("Bestilt"), ACCEPTED("Accepteret"), REJECTED("Afvist"), READY("Klar til afhentning"), PICKED_UP(
+            "Afhentet"), DELIVERED("Leveret");
+
+    private final String danishName;
+
+    OrderStatus(String danishName)
+    {
+        this.danishName = danishName;
+    }
+
+    public String getDanishName()
+    {
+        return danishName;
+    }
 
     public boolean canMoveTo(OrderStatus next)
     {

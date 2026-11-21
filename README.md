@@ -125,6 +125,8 @@ The API contract is documented in Swagger and the [account spec](docs/specs/13-a
 
 Placing orders is behind `FEATURE_ORDERING_ENABLED`, off by default, and also needs `FEATURE_AUTH_ENABLED`. A logged-in customer places and pays for an order with `POST /v1/orders`. Payment is mocked: the payment token `decline` is declined and any other token is confirmed. The contract is in Swagger and the [order spec](docs/specs/15-place-and-pay-for-an-order.md).
 
+With the same flags enabled, a customer can list their own orders at `GET /v1/customer/orders` and read order lines and the total at `GET /v1/customer/orders/{id}`. Both endpoints include the current status code and its Danish name in `statusName`. Try the flow with [customerOrders.http](src/main/resources/http/customerOrders.http) in JetBrains HTTP Client.
+
 ### Seeded users
 
 On every startup the backend creates these users for each role whose seed password is set, as decided in [ADR-006](docs/adr/006-seeded-user-credentials.md). Their passwords are never in the repository.

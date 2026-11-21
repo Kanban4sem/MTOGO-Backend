@@ -3,6 +3,8 @@ package mtogo.feature.order.domain;
 import mtogo.feature.address.domain.Address;
 import mtogo.feature.address.domain.PostalCode;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
+import mtogo.feature.order.presentation.dto.response.CustomerOrderDTO;
+import mtogo.feature.order.presentation.dto.response.CustomerOrderSummaryDTO;
 import mtogo.feature.order.presentation.dto.response.DeliveryAddressDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderLineDTO;
@@ -30,6 +32,20 @@ public class OrderMapper
                 order.getPlacedAt(), order.getTotal(), new DeliveryAddressDTO(address.getStreet(), postalCode.getCode(),
                         postalCode.getCity(), postalCode.getCountry()),
                 order.getLines().stream().map(this::toDTO).toList());
+    }
+
+    public CustomerOrderSummaryDTO toCustomerOrderSummaryDTO(Order order)
+    {
+        OrderStatus status = order.getStatus();
+        return new CustomerOrderSummaryDTO(order.getId(), order.getRestaurant().getId(), status, status.getDanishName(),
+                order.getTotal());
+    }
+
+    public CustomerOrderDTO toCustomerOrderDTO(Order order)
+    {
+        OrderStatus status = order.getStatus();
+        return new CustomerOrderDTO(order.getId(), order.getRestaurant().getId(), status, status.getDanishName(),
+                order.getPlacedAt(), order.getTotal(), order.getLines().stream().map(this::toDTO).toList());
     }
 
     private OrderLineDTO toDTO(OrderLine line)

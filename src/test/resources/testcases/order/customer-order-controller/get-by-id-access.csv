@@ -1,0 +1,10 @@
+role,order,expected,reason
+ANONYMOUS,OTHER,401,"Decision table: authentication is required"
+RESTAURANT,OTHER,403,"Decision table: a restaurant cannot read customer orders"
+DELIVERY_AGENT,OTHER,403,"Decision table: a delivery agent cannot read customer orders"
+CUSTOMER,OWN,200,"Decision table: a customer can read their own order"
+CUSTOMER,OTHER,404,"Decision table: another customer's order is hidden"
+CUSTOMER,UNKNOWN,404,"EP: a missing order returns the same error as another customer's order"
+CUSTOMER,not-a-number,400,"EP: a non-numeric order id is invalid"
+CUSTOMER,0,404,"EP: zero identifies no order"
+CUSTOMER,-1,404,"EP: a negative id identifies no order"

@@ -1,0 +1,5 @@
+role,expected,reason
+ANONYMOUS,401,"Decision table: authentication is required"
+RESTAURANT,403,"Decision table: a restaurant cannot list customer orders"
+DELIVERY_AGENT,403,"Decision table: a delivery agent cannot list customer orders"
+CUSTOMER,200,"Decision table: a customer with no orders sees an empty list"

@@ -1,6 +1,6 @@
 # Place and pay for an order
 
-**Version:** 1.1 · **Date:** 2026-11-18 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
+**Version:** 1.2 · **Date:** 2026-11-21 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
 
 ## Acceptance criteria
 
@@ -35,7 +35,7 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 - **Feature:** a new order feature following [ADR-004](../adr/004-backend-structure.md). It owns Order, OrderLine, the status history (OrderStatusChange), the OrderStatus and OrderChannel enums, the order service, controller, mapper and DTOs. Delivery addresses reuse the address feature's Address and PostalCode. The order service reads menu items through the restaurant feature's repositories.
 - **Payment:** an IPaymentProvider interface in the order feature with one implementation, MockPaymentProvider. This is the concrete need ADR-004 asks for before adding an interface: a real provider replaces the implementation without changing the order flow, as the MVP decides. `charge(total, paymentToken)` returns confirmed with a made-up reference, or declined. The reference and the payment are not stored; an order exists only for a confirmed payment.
 - **Flow:** one request validates the input, loads the menu items, checks unknown and repeated menu items, then that all items come from one restaurant, then that every item is orderable, calculates the order total, charges the IPaymentProvider and saves the order in one transaction. A declined payment throws before anything is saved.
-- **Order status:** OrderStatus is an enum with English codes PLACED, ACCEPTED, REJECTED, READY, PICKED_UP and DELIVERED. The frontend translates them; the backend stores no Danish names. Order has the current status and a `moveTo(status)` method that applies the lifecycle and appends an OrderStatusChange with the time it was set. Placing an order records the PLACED entry, which is the time the order was placed. No endpoint moves an order in this issue; #16 and #17 call `moveTo`.
+- **Order status:** OrderStatus is an enum with English codes PLACED, ACCEPTED, REJECTED, READY, PICKED_UP and DELIVERED. The database and the place-order response use these codes. Order has the current status and a `moveTo(status)` method that applies the lifecycle and appends an OrderStatusChange with the time it was set. Placing an order records the PLACED entry, which is the time the order was placed. No endpoint moves an order in this issue; #16 and #17 call `moveTo`.
 - **Channel:** OrderChannel is an enum with WEBSITE, APP and TELEPHONE. The backend sets WEBSITE; the client does not send it.
 - **API:** `POST /v1/orders` with PlaceOrderDTO: `lines` (array of `menuItemId`, `quantity`), `deliveryAddress` (`street`, `postalCode`, `city`) and `paymentToken`. Bean Validation: 1–20 lines, a positive menu item ID, quantity 1–20, street and city not blank and at most 100 characters, postal code matching exactly four digits, payment token not blank. It returns `201` with OrderDTO: `id`, `restaurantId`, `status`, `channel`, `placedAt`, `total`, `deliveryAddress` (`street`, `postalCode`, `city`, `country`) and `lines` (`menuItemId`, `name`, `unitPrice`, `quantity`, `subtotal`). No `Location` header until #46.
 - **Errors:** ProblemDetail through the existing GlobalExceptionHandler. `400` for invalid input, unknown or repeated menu items and menu items from more than one restaurant. `401` without a valid token. `402` for a declined payment, from a new PaymentRequiredException with the detail "The payment was declined". `403` for users who are not customers. `404` when `orderingEnabled` is off. `409` for an unavailable item, an inactive menu or a restaurant that does not accept orders.
@@ -68,7 +68,7 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 
 ## Further notes
 
-Status names stay English in the backend. #18's criterion "Each status has a Danish and an English name" is met by the frontend translating the status codes. The domain model was updated for orders during the grilling.
+Issue #18 exposes a Danish `statusName` alongside the status code on customer order reads. The domain model was updated for orders during the grilling.
 
 ## Implementation notes
 
@@ -88,9 +88,17 @@ Status names stay English in the backend. #18's criterion "Each status has a Dan
 - **Tests:** the test classes above moved to `@SharedDatabase`. The nested `WhenOrderingIsDisabled` class uses OrderControllerTest's database, so its check that no order was saved looks at the database the endpoint writes to. Earlier notes that mention a container per test class or isolated Testcontainers describe the setup at that time and are historical.
 - **Follow-up:** None.
 
+### Spec 1.2 - 2026-11-21 - #18
+
+- **Built:** Customer order reads use the existing order status codes and add a Danish display name. The order placement contract still returns the status code.
+- **Deviations:** The earlier note anticipated frontend translations. #18 supplies the Danish names in the read API.
+- **Tests:** `CustomerOrderControllerTest` covers customer reads and the Danish name for each status.
+- **Follow-up:** Kanban4sem/MTOGO-Frontend#11 uses the read API. #46 adds the `Location` header to order placement.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
 | ------- | ---------- | --------------------------------------------------------------- | ----- |
 | 1.0     | 2026-11-16 | First version                                                   | #15   |
 | 1.1     | 2026-11-18 | Tests use the shared test container, older notes are historical | #48   |
+| 1.2     | 2026-11-21 | Clarify where Danish status names are returned                  | #18   |
