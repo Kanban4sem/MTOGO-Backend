@@ -6,6 +6,7 @@ import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.response.CustomerOrderDTO;
 import mtogo.feature.order.presentation.dto.response.CustomerOrderSummaryDTO;
 import mtogo.feature.order.presentation.dto.response.DeliveryAddressDTO;
+import mtogo.feature.order.presentation.dto.response.DeliveryAgentOrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderLineDTO;
 import mtogo.feature.order.presentation.dto.response.RestaurantOrderDTO;
@@ -54,6 +55,20 @@ public class OrderMapper
         OrderStatus status = order.getStatus();
         return new RestaurantOrderDTO(order.getId(), status, status.getDanishName(), order.getPlacedAt(),
                 order.getTotal(), order.getLines().stream().map(this::toDTO).toList());
+    }
+
+    public DeliveryAgentOrderDTO toDeliveryAgentOrderDTO(Order order, Long agentId)
+    {
+        Address address = order.getDeliveryAddress();
+        PostalCode postalCode = address.getPostalCode();
+        boolean assignedToMe = order.isAssignedTo(agentId);
+        DeliveryAddressDTO deliveryAddress = assignedToMe
+                ? new DeliveryAddressDTO(address.getStreet(), postalCode.getCode(), postalCode.getCity(),
+                        postalCode.getCountry())
+                : null;
+        OrderStatus status = order.getStatus();
+        return new DeliveryAgentOrderDTO(order.getId(), order.getRestaurant().getId(), order.getRestaurant().getName(),
+                status, status.getDanishName(), assignedToMe, postalCode.getCity(), deliveryAddress);
     }
 
     private OrderLineDTO toDTO(OrderLine line)

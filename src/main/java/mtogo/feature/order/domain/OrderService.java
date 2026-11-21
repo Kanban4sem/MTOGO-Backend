@@ -10,9 +10,11 @@ import mtogo.feature.address.domain.Address;
 import mtogo.exceptions.*;
 import mtogo.feature.order.data.OrderRepository;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
+import mtogo.feature.order.presentation.dto.request.UpdateDeliveryAgentOrderDTO;
 import mtogo.feature.order.presentation.dto.request.UpdateRestaurantOrderStatusDTO;
 import mtogo.feature.order.presentation.dto.response.CustomerOrderDTO;
 import mtogo.feature.order.presentation.dto.response.CustomerOrderSummaryDTO;
+import mtogo.feature.order.presentation.dto.response.DeliveryAgentOrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.feature.order.presentation.dto.response.RestaurantOrderDTO;
 import mtogo.feature.restaurant.data.MenuItemRepository;
@@ -108,6 +110,38 @@ public class OrderService
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
         order.moveTo(status);
         return mapper.toRestaurantOrderDTO(order);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DeliveryAgentOrderDTO> getDeliveryAgentOrders(Long agentId)
+    {
+        return orders.findAllByDeliveryAgentIdOrStatusAndDeliveryAgentIsNullOrderByIdDesc(agentId, OrderStatus.READY)
+                .stream().map(order -> mapper.toDeliveryAgentOrderDTO(order, agentId)).toList();
+    }
+
+    @Transactional
+    public DeliveryAgentOrderDTO updateDeliveryAgentOrder(Long agentId, Long orderId,
+            UpdateDeliveryAgentOrderDTO request)
+    {
+        Order order = orders.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+        switch (request.action())
+        {
+            case "TAKE" -> order.assignDeliveryAgent(users.getReferenceById(agentId));
+            case "PICK_UP" -> moveDeliveryOrder(order, agentId, OrderStatus.PICKED_UP);
+            case "DELIVER" -> moveDeliveryOrder(order, agentId, OrderStatus.DELIVERED);
+            case null, default -> throw new BadRequestException("Invalid delivery action");
+        }
+        return mapper.toDeliveryAgentOrderDTO(order, agentId);
+    }
+
+    private static void moveDeliveryOrder(Order order, Long agentId, OrderStatus status)
+    {
+        if (!order.isAssignedTo(agentId))
+        {
+            throw new NotFoundException("Order not found with id: " + order.getId());
+        }
+        order.moveTo(status);
     }
 
     private Long requireRestaurantId(Long userId)

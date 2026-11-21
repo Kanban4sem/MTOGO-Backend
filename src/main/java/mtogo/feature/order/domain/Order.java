@@ -31,6 +31,9 @@ public class Order
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_agent_id")
+    private User deliveryAgent;
     @Setter
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "delivery_address_id", nullable = false, unique = true)
@@ -56,6 +59,20 @@ public class Order
         line.setOrder(this);
         lines.add(line);
         total = total.add(line.getSubtotal());
+    }
+
+    public void assignDeliveryAgent(User agent)
+    {
+        if (status != OrderStatus.READY || deliveryAgent != null)
+        {
+            throw new ConflictException("The order is not available for delivery");
+        }
+        deliveryAgent = agent;
+    }
+
+    public boolean isAssignedTo(Long agentId)
+    {
+        return deliveryAgent != null && agentId.equals(deliveryAgent.getId());
     }
 
     /**

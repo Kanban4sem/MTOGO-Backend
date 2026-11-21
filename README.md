@@ -129,6 +129,10 @@ With the same flags enabled, a customer can list their own orders at `GET /v1/cu
 
 With the same flags enabled, a restaurant can list its orders with `GET /v1/restaurant/orders`. To update one, send `PATCH /v1/restaurant/orders/{id}` with a JSON `status` of `ACCEPTED` or `REJECTED` for a placed order, or `READY` for an accepted order. The response includes the updated order. A transition that the current status does not allow returns `409`. The restaurant is determined by the authenticated account.
 
+With the same flags enabled, a delivery agent can list unassigned ready orders and their own orders, including completed ones, with `GET /v1/delivery-agent/orders`. The response includes `status`, `statusName` and `assignedToMe` for grouping orders. The full delivery address is available to the assigned agent.
+
+Send `PATCH /v1/delivery-agent/orders/{id}` with a JSON `action` of `TAKE`, `PICK_UP` or `DELIVER`. `TAKE` assigns the agent and leaves the order `READY`. The assigned agent can then move it to `PICKED_UP` and `DELIVERED`. An unavailable assignment or an out-of-order transition returns `409`.
+
 ### Seeded users
 
 On every startup the backend creates these users for each role whose seed password is set, as decided in [ADR-006](docs/adr/006-seeded-user-credentials.md). Their passwords are never in the repository.
