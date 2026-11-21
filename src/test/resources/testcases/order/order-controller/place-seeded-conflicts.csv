@@ -1,0 +1,3 @@
+itemName,detail,expected,reason
+Sold-out kebab,Menu item is not available: Sold-out kebab,409,"EP: the seeded menu item is unavailable"
+Closed restaurant meal,The restaurant does not accept orders,409,"EP: the seeded restaurant does not accept orders"

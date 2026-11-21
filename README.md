@@ -142,6 +142,33 @@ On every startup the backend creates these users for each role whose seed passwo
 - **Existing users:** seeding never changes a user whose email already exists, including a customer who registered with a seeded email. It logs a warning and skips that user.
 - **Rotating a password:** delete the user, change the variable and restart.
 
+### Try an order conflict locally
+
+Start the backend with the `local` Spring profile against your development database:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+The profile seeds **Sold-out kebab** in the MTOGO Kebab menu and **Closed restaurant meal** at MTOGO Closed Restaurant. To try both `409` responses, enable authentication and ordering, seed a customer, and open [orderConflicts.http](src/main/resources/http/orderConflicts.http) in JetBrains HTTP Client.
+
+In the repository root's `http-client.private.env.json`, create an `order-conflicts` environment with `seedCustomerPassword` set to the seeded customer's password and the numeric `unavailableItemId` and `closedRestaurantItemId` set from the SQL query in the HTTP file. Select **Run with → order-conflicts** and send the login request first. It saves the access token for both order requests.
+
+For the frontend checkout check, put **Kebabmenu** from **MTOGO Kebab** in the basket. Open the Query Tool in pgAdmin against your local database and run:
+
+```sql
+UPDATE menu_items AS item
+SET is_available = FALSE
+FROM menus AS menu JOIN restaurants AS restaurant ON restaurant.id = menu.restaurant_id
+WHERE item.menu_id = menu.id
+  AND restaurant.name = 'MTOGO Kebab'
+  AND menu.name = 'Menu'
+  AND item.name = 'Kebabmenu'
+RETURNING item.id, item.is_available;
+```
+
+Submit checkout with the item still in the basket to trigger the conflict. Run the same statement with `TRUE` in place of `FALSE` to restore availability. The update takes effect immediately.
+
 ## Build and test
 
 ```bash

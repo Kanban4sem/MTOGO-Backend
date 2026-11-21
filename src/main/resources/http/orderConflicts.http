@@ -1,0 +1,65 @@
+@baseUrl = http://localhost:8080
+
+# Run against the local Spring profile with FEATURE_AUTH_ENABLED and
+# FEATURE_ORDERING_ENABLED set to true. Set SEED_CUSTOMER_PASSWORD before startup.
+# In JetBrains HTTP Client, select the order-conflicts environment and log in first.
+# Define seedCustomerPassword, unavailableItemId and closedRestaurantItemId
+# under order-conflicts in the repository root's http-client.private.env.json.
+#
+# Run this query in pgAdmin to get the two item IDs:
+# SELECT id, name FROM menu_items
+# WHERE name IN ('Sold-out kebab', 'Closed restaurant meal');
+
+### Log in as the seeded customer (200)
+< {%
+    request.variables.set("loginPasswordJson", JSON.stringify(request.environment.get("seedCustomerPassword")));
+%}
+POST {{baseUrl}}/v1/users/login
+Content-Type: application/json
+
+{
+  "email": "customer@mtogo.example",
+  "password": {{loginPasswordJson}}
+}
+
+> {%
+    if (response.status === 200 && response.body.accessToken) {
+        client.global.set("ACCESS_TOKEN", response.body.accessToken);
+    } else {
+        client.global.clear("ACCESS_TOKEN");
+    }
+%}
+
+### Order the unavailable item (409)
+# Expected detail: Menu item is not available: Sold-out kebab
+POST {{baseUrl}}/v1/orders
+Authorization: Bearer {{ACCESS_TOKEN}}
+Content-Type: application/json
+
+{
+  "lines": [{"menuItemId": {{unavailableItemId}}, "quantity": 1}],
+  "deliveryAddress": {
+    "street": "Test Street 10",
+    "postalCode": "1165",
+    "city": "Copenhagen",
+    "country": "Denmark"
+  },
+  "paymentToken": "tok_visa"
+}
+
+### Order from the closed restaurant (409)
+# Expected detail: The restaurant does not accept orders
+POST {{baseUrl}}/v1/orders
+Authorization: Bearer {{ACCESS_TOKEN}}
+Content-Type: application/json
+
+{
+  "lines": [{"menuItemId": {{closedRestaurantItemId}}, "quantity": 1}],
+  "deliveryAddress": {
+    "street": "Test Street 10",
+    "postalCode": "1165",
+    "city": "Copenhagen",
+    "country": "Denmark"
+  },
+  "paymentToken": "tok_visa"
+}
