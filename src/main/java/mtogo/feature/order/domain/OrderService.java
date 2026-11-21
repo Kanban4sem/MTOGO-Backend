@@ -10,13 +10,16 @@ import mtogo.feature.address.domain.Address;
 import mtogo.exceptions.*;
 import mtogo.feature.order.data.OrderRepository;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
+import mtogo.feature.order.presentation.dto.request.UpdateRestaurantOrderStatusDTO;
 import mtogo.feature.order.presentation.dto.response.CustomerOrderDTO;
 import mtogo.feature.order.presentation.dto.response.CustomerOrderSummaryDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
+import mtogo.feature.order.presentation.dto.response.RestaurantOrderDTO;
 import mtogo.feature.restaurant.data.MenuItemRepository;
 import mtogo.feature.restaurant.domain.MenuItem;
 import mtogo.feature.restaurant.domain.Restaurant;
 import mtogo.feature.user.data.UserRepository;
+import mtogo.feature.user.domain.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,6 +83,37 @@ public class OrderService
     {
         return orders.findByIdAndCustomerId(orderId, customerId).map(mapper::toCustomerOrderDTO)
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<RestaurantOrderDTO> getRestaurantOrders(Long userId)
+    {
+        return orders.findAllByRestaurantIdOrderByIdDesc(requireRestaurantId(userId)).stream()
+                .map(mapper::toRestaurantOrderDTO).toList();
+    }
+
+    @Transactional
+    public RestaurantOrderDTO updateRestaurantOrderStatus(Long userId, Long orderId,
+            UpdateRestaurantOrderStatusDTO request)
+    {
+        OrderStatus status = switch (request.status())
+        {
+            case "ACCEPTED" -> OrderStatus.ACCEPTED;
+            case "REJECTED" -> OrderStatus.REJECTED;
+            case "READY" -> OrderStatus.READY;
+            case null, default ->
+                throw new BadRequestException("A restaurant can only set an order to ACCEPTED, REJECTED or READY");
+        };
+        Order order = orders.findByIdAndRestaurantId(orderId, requireRestaurantId(userId))
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+        order.moveTo(status);
+        return mapper.toRestaurantOrderDTO(order);
+    }
+
+    private Long requireRestaurantId(Long userId)
+    {
+        return users.findById(userId).map(User::getRestaurant).map(Restaurant::getId)
+                .orElseThrow(() -> new NotFoundException("No restaurant is assigned to this account"));
     }
 
     private Address deliveryAddress(PlaceOrderDTO.DeliveryAddress request)

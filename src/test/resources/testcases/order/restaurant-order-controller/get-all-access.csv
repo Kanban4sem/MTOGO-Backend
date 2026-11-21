@@ -1,0 +1,5 @@
+role,expected,reason
+ANONYMOUS,401,"DT: authentication is required"
+CUSTOMER,403,"EP: a customer cannot list restaurant orders"
+DELIVERY_AGENT,403,"EP: a delivery agent cannot list restaurant orders"
+RESTAURANT,200,"DT: a restaurant can list its own orders even when there are none"

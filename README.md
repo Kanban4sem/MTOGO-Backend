@@ -127,6 +127,8 @@ Placing orders is behind `FEATURE_ORDERING_ENABLED`, off by default, and also ne
 
 With the same flags enabled, a customer can list their own orders at `GET /v1/customer/orders` and read order lines and the total at `GET /v1/customer/orders/{id}`. Both endpoints include the current status code and its Danish name in `statusName`. Try the flow with [customerOrders.http](src/main/resources/http/customerOrders.http) in JetBrains HTTP Client.
 
+With the same flags enabled, a restaurant can list its orders with `GET /v1/restaurant/orders`. To update one, send `PATCH /v1/restaurant/orders/{id}` with a JSON `status` of `ACCEPTED` or `REJECTED` for a placed order, or `READY` for an accepted order. The response includes the updated order. A transition that the current status does not allow returns `409`. The restaurant is determined by the authenticated account.
+
 ### Seeded users
 
 On every startup the backend creates these users for each role whose seed password is set, as decided in [ADR-006](docs/adr/006-seeded-user-credentials.md). Their passwords are never in the repository.

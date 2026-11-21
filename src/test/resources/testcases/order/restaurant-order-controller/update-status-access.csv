@@ -1,0 +1,7 @@
+role,order,expected,reason
+ANONYMOUS,OWN,401,"DT: authentication is required"
+CUSTOMER,OWN,403,"EP: a customer cannot update a restaurant order"
+DELIVERY_AGENT,OWN,403,"EP: a delivery agent cannot update a restaurant order"
+RESTAURANT,OTHER,404,"DT: another restaurant's order is unavailable"
+RESTAURANT,UNKNOWN,404,"DT: an unknown order is unavailable"
+RESTAURANT,INVALID,400,"EP: the order ID must be numeric"

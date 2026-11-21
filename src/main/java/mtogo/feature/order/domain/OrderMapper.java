@@ -8,6 +8,7 @@ import mtogo.feature.order.presentation.dto.response.CustomerOrderSummaryDTO;
 import mtogo.feature.order.presentation.dto.response.DeliveryAddressDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderLineDTO;
+import mtogo.feature.order.presentation.dto.response.RestaurantOrderDTO;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -46,6 +47,13 @@ public class OrderMapper
         OrderStatus status = order.getStatus();
         return new CustomerOrderDTO(order.getId(), order.getRestaurant().getId(), status, status.getDanishName(),
                 order.getPlacedAt(), order.getTotal(), order.getLines().stream().map(this::toDTO).toList());
+    }
+
+    public RestaurantOrderDTO toRestaurantOrderDTO(Order order)
+    {
+        OrderStatus status = order.getStatus();
+        return new RestaurantOrderDTO(order.getId(), status, status.getDanishName(), order.getPlacedAt(),
+                order.getTotal(), order.getLines().stream().map(this::toDTO).toList());
     }
 
     private OrderLineDTO toDTO(OrderLine line)
