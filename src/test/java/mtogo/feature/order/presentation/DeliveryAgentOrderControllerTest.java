@@ -56,7 +56,9 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
         request(agent).get(PATH).then().statusCode(200).body("id", contains((int) orderId))
                 .body("[0].status", is("READY")).body("[0].assignedToMe", is(false))
                 .body("[0].restaurantName", is("Bakery")).body("[0].deliveryCity", is("Copenhagen"))
-                .body("[0].deliveryAddress", nullValue());
+                .body("[0].deliveryAddress.street", is("Test Street 10"))
+                .body("[0].deliveryAddress.postalCode", is("1165")).body("[0].deliveryAddress.city", is("Copenhagen"))
+                .body("[0].deliveryAddress.country", is("Denmark"));
 
         patch(request(agent), orderId, "TAKE").then().statusCode(200).body("status", is("READY"))
                 .body("assignedToMe", is(true)).body("deliveryAddress.street", is("Test Street 10"));

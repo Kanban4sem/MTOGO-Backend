@@ -1,0 +1,13 @@
+profileAddress,hasNewAddress,useDefaultAddress,saveAsDefault,paymentToken,expected,reason
+complete,true,false,false,tok_visa,ACCEPT,"DT: a one-time address leaves the default intact"
+none,true,false,true,tok_visa,ACCEPT,"DT: the first default can be saved for a profile without an address"
+areaOnly,true,false,true,tok_visa,ACCEPT,"DT: a saved street completes a legacy or seeded profile address"
+complete,true,false,true,tok_visa,ACCEPT,"DT: a newly saved address replaces a complete default"
+complete,false,true,false,tok_visa,ACCEPT,"DT: the customer's default is used without address input"
+none,false,true,false,tok_visa,BadRequestException,"DT: a default cannot be used when the profile has no address"
+areaOnly,false,true,false,tok_visa,BadRequestException,"DT: a profile with only a postal area cannot be used for delivery"
+complete,true,true,false,tok_visa,BadRequestException,"DT: selecting both address sources is rejected"
+complete,false,true,true,tok_visa,BadRequestException,"DT: saving the address requires a newly entered address"
+complete,false,false,false,tok_visa,BadRequestException,"DT: the customer must select an address source"
+complete,true,false,true,decline,PaymentRequiredException,"DT: a declined payment leaves the existing default intact"
+none,true,false,true,decline,PaymentRequiredException,"DT: a declined payment does not create the first default"

@@ -34,7 +34,7 @@ public class OrderController
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Place an order and pay for it with the mocked payment")
     @ApiResponse(responseCode = "201", description = "Payment confirmed and order placed", content = @Content(schema = @Schema(implementation = OrderDTO.class)))
-    @ApiResponse(responseCode = "400", description = "Invalid fields, unknown or repeated menu items, or menu items from more than one restaurant")
+    @ApiResponse(responseCode = "400", description = "Invalid fields or delivery address selection, missing complete default address, unknown or repeated menu items, or menu items from more than one restaurant")
     @ApiResponse(responseCode = "402", description = "The payment was declined. No order was placed")
     @ApiResponse(responseCode = "404", description = "Ordering is disabled")
     @ApiResponse(responseCode = "409", description = "A menu item is unavailable, on an inactive menu or from a restaurant that does not accept orders")

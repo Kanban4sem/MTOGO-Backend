@@ -62,10 +62,8 @@ public class OrderMapper
         Address address = order.getDeliveryAddress();
         PostalCode postalCode = address.getPostalCode();
         boolean assignedToMe = order.isAssignedTo(agentId);
-        DeliveryAddressDTO deliveryAddress = assignedToMe
-                ? new DeliveryAddressDTO(address.getStreet(), postalCode.getCode(), postalCode.getCity(),
-                        postalCode.getCountry())
-                : null;
+        DeliveryAddressDTO deliveryAddress = new DeliveryAddressDTO(address.getStreet(), postalCode.getCode(),
+                postalCode.getCity(), postalCode.getCountry());
         OrderStatus status = order.getStatus();
         return new DeliveryAgentOrderDTO(order.getId(), order.getRestaurant().getId(), order.getRestaurant().getName(),
                 status, status.getDanishName(), assignedToMe, postalCode.getCity(), deliveryAddress);

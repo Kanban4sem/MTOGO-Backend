@@ -15,7 +15,7 @@ public class Address
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    // Profile addresses have no street; delivery addresses always have one.
+    // Registration can store a postal area without a street.
     @Column(length = 100)
     private String street;
     @ManyToOne(optional = false, fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)

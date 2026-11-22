@@ -1,6 +1,6 @@
 # Place and pay for an order
 
-**Version:** 1.2 · **Date:** 2026-11-21 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
+**Version:** 2.0 · **Date:** 2026-11-22 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
 
 ## Acceptance criteria
 
@@ -13,7 +13,7 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 
 ## Behaviour
 
-1. A logged-in customer can place an order with order lines, a delivery address and a payment token.
+1. A logged-in customer can place an order with order lines, a payment token and either a newly entered delivery address or their complete default delivery address.
 2. An order has menu items from exactly one restaurant. An order with menu items from more than one restaurant is refused.
 3. An order has 1–20 order lines. Each order line has one menu item and a quantity of 1–20. A menu item appears on at most one order line in the same order.
 4. A customer can only order available menu items on an active menu of a restaurant that accepts orders. An unknown menu item is refused, and so is an unavailable item, an item on an inactive menu or an item from a restaurant that does not accept orders.
@@ -29,6 +29,10 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 14. Only customers can place orders. Anonymous users, restaurants and delivery agents cannot.
 15. A menu item that has been ordered cannot be deleted. It is taken off the menu by making it unavailable.
 16. When `orderingEnabled` is off, orders cannot be placed and the endpoint does not exist.
+17. A customer can save a newly entered delivery address as their profile default after successful payment. A one-time address or a declined payment leaves the profile as it was.
+18. A customer can reuse their complete default without entering any address fields. A profile without a street, including a registration or seeded address with only a postal area, requires the customer to enter a delivery address.
+19. Each order keeps its own delivery address when the customer changes the profile default.
+20. A delivery agent sees the complete delivery address for every ready, unassigned order and every order assigned to them. Taking an order removes it from other agents' lists.
 
 ## Implementation decisions
 
@@ -38,10 +42,13 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 - **Order status:** OrderStatus is an enum with English codes PLACED, ACCEPTED, REJECTED, READY, PICKED_UP and DELIVERED. The database and the place-order response use these codes. Order has the current status and a `moveTo(status)` method that applies the lifecycle and appends an OrderStatusChange with the time it was set. Placing an order records the PLACED entry, which is the time the order was placed. No endpoint moves an order in this issue; #16 and #17 call `moveTo`.
 - **Channel:** OrderChannel is an enum with WEBSITE, APP and TELEPHONE. The backend sets WEBSITE; the client does not send it.
 - **API:** `POST /v1/orders` with PlaceOrderDTO: `lines` (array of `menuItemId`, `quantity`), `deliveryAddress` (`street`, `postalCode`, `city`) and `paymentToken`. Bean Validation: 1–20 lines, a positive menu item ID, quantity 1–20, street and city not blank and at most 100 characters, postal code matching exactly four digits, payment token not blank. It returns `201` with OrderDTO: `id`, `restaurantId`, `status`, `channel`, `placedAt`, `total`, `deliveryAddress` (`street`, `postalCode`, `city`, `country`) and `lines` (`menuItemId`, `name`, `unitPrice`, `quantity`, `subtotal`). No `Location` header until #46.
+- **Address selection:** `deliveryAddress` is required for manual entry. Send `useDefaultAddress: true` and omit `deliveryAddress` to reuse the saved address. Send `saveAsDefault: true` with a newly entered address to save it. Both flags default to false. Invalid combinations and a missing complete default return `400`.
 - **Errors:** ProblemDetail through the existing GlobalExceptionHandler. `400` for invalid input, unknown or repeated menu items and menu items from more than one restaurant. `401` without a valid token. `402` for a declined payment, from a new PaymentRequiredException with the detail "The payment was declined". `403` for users who are not customers. `404` when `orderingEnabled` is off. `409` for an unavailable item, an inactive menu or a restaurant that does not accept orders.
 - **Access:** SecurityConfig restricts `POST /v1/orders` to CUSTOMER users, and the controller declares the same with `@PreAuthorize`. The order's customer is the authenticated user, never a request field.
 - **Schema:** one Flyway migration adds a nullable `street` column to addresses (existing profile addresses have none) and creates orders, order lines and order status changes. Orders reference the customer, the restaurant and their own delivery address row, and store the order total as NUMERIC(10, 2), the channel and the current status. Order lines reference the order and the menu item with a restricting foreign key, and copy the name and the unit price as NUMERIC(10, 2), with a check that quantity is 1–20 and the unit price is not negative. Order status changes reference the order and store the status and when it was set. The delivery address stores the country as `Denmark`.
 - **Flag:** a new `orderingEnabled` flag (`FEATURE_ORDERING_ENABLED`, property `app.ordering-enabled`), off by default, in AppProperties, `application.properties`, `.env.example` and FeatureFlagsDTO, as described in the [coding standards](../coding-standards.md#feature-flags). `GET /v1/features` reports it. Placing an order also needs `authEnabled`, since it requires a customer token. The order feature declares a FeatureGate for `/v1/orders`, so FeatureGateFilter answers `404` before authentication while the flag is off. #44 removes the flag.
+- **Default address:** checkout stores the default in the existing profile address and stores the delivery address separately on each order. Saving the default and placing the order share one transaction. #61 adds no feature flag.
+- **Delivery agent list:** `GET /v1/delivery-agent/orders` returns the order's `deliveryAddress` with street, postal code, city and country for every item in the existing agent-scoped list.
 - **ADRs:** [ADR-001](../adr/001-feature-flags.md), [ADR-004](../adr/004-backend-structure.md) and [ADR-005](../adr/005-account-authentication.md) apply. No new ADR: the mocked payment behind an interface is decided in the MVP.
 
 ## Testing decisions
@@ -51,6 +58,7 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 - **OrderServiceTest** (`@SpringBootTest`, `@SharedDatabase`): `place` with EP over the menu items: unknown, repeated, unavailable, inactive menu, restaurant not accepting orders, items from two restaurants and a valid order; `place-items`. `place` with EP over the payment outcome, where a declined payment leaves no order, order line or address; `place-payment`. Ordinary `@Test` methods cover the copied name and unit price, the order total over several order lines, the channel WEBSITE, the Placed entry and its time, the owning customer and restaurant, and that a later menu price change leaves the order unchanged.
 - **OrderControllerTest** (REST Assured, `@SharedDatabase`): EP and BVA on PlaceOrderDTO, with 0/1/2/19/20/21 lines and quantities, a menu item ID of 0 and -1, street and city blank, 100 and 101 characters, postal code `123`, `1234`, `12345` and `12a4`, and a blank payment token; `place-fields`. Access as a decision table, with anonymous 401, restaurant and delivery agent 403, customer 201 and the flag off 404; `place-access`. One case each proves the 400, 402 and 409 error mapping. Copy the setup from UserControllerTest and RestaurantControllerTest.
 - **OrderSchemaTest** (`@DataJpaTest`, `@SharedDatabase`): deleting a menu item that an order line references is refused. Copy RestaurantSchemaTest.
+- **OrderServiceTest** covers the checkout address decision table in `place-delivery-address`. **OrderControllerTest** verifies that a seeded customer can save, read, reuse and replace a default while earlier orders retain their addresses.
 - **AppPropertiesTest**: EP over `app.ordering-enabled`, unset, true, false and invalid; `bind-ordering-enabled`.
 - **FeatureGateTest** (plain JUnit): `isClosedFor` as a decision table over the flag and the request path; `is-closed-for`.
 - **FeatureFlagControllerTest** and **FeatureFlagServiceTest**: update them so `GET /v1/features` reports `orderingEnabled`.
@@ -95,6 +103,13 @@ Issue #18 exposes a Danish `statusName` alongside the status code on customer or
 - **Tests:** `CustomerOrderControllerTest` covers customer reads and the Danish name for each status.
 - **Follow-up:** Kanban4sem/MTOGO-Frontend#11 uses the read API. #46 adds the `Location` header to order placement.
 
+### Spec 2.0 - 2026-11-22 - #61
+
+- **Built:** checkout accepts a one-time address or the authenticated customer's saved default and can save an entered address after successful payment. Profile and order addresses use the existing schema. Delivery agents see the complete delivery address on ready, unassigned orders and on their own orders.
+- **Deviations:** None.
+- **Tests:** `OrderServiceTest` (`place-delivery-address`) and the checkout flow in `OrderControllerTest`. `DeliveryAgentOrderControllerTest` checks the full address before assignment and that another agent loses access after assignment. Test execution is left to the developer.
+- **Follow-up:** frontend checkout integration.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -102,3 +117,4 @@ Issue #18 exposes a Danish `statusName` alongside the status code on customer or
 | 1.0     | 2026-11-16 | First version                                                   | #15   |
 | 1.1     | 2026-11-18 | Tests use the shared test container, older notes are historical | #48   |
 | 1.2     | 2026-11-21 | Clarify where Danish status names are returned                  | #18   |
+| 2.0     | 2026-11-22 | Save, reuse and display delivery addresses                      | #61   |

@@ -1,6 +1,6 @@
 # Add customer accounts
 
-**Version:** 1.2 · **Date:** 2026-11-19 · **Issue:** #13 · **Feature flag:** `authEnabled`, off by default
+**Version:** 2.0 · **Date:** 2026-11-22 · **Issue:** #13 · **Feature flag:** `authEnabled`, off by default
 
 ## Acceptance criteria
 
@@ -22,6 +22,7 @@ Copied from #13. The issue is the source: change the issue first, then this copy
 9. Invalid, altered, expired or revoked tokens and inactive accounts cannot authenticate.
 10. Customer, restaurant and delivery-agent API scopes reject other roles with 403. Account endpoints require authentication except registration and login.
 11. When authEnabled is false, account endpoints return 404 and tokens do not authenticate. The existing flags endpoint remains public.
+12. The address in the profile response includes a nullable `street`. Checkout can save a complete default delivery address as described in the [order spec](15-place-and-pay-for-an-order.md).
 
 ## Implementation decisions
 
@@ -48,7 +49,7 @@ Copied from #13. The issue is the source: change the issue first, then this copy
 - Creating or seeding restaurant and delivery-agent accounts. Removed from issue #13 by the developer. Role authorization tests use fixtures only.
 
 - Frontend changes, including storing tokens and wiring the forms (Kanban4sem/MTOGO-Frontend#6).
-- Password reset, email verification, refresh tokens, profile editing, account deletion, multiple addresses and street-level delivery information.
+- Password reset, email verification, refresh tokens, general profile editing, account deletion and multiple addresses.
 - Migrating the existing feature flag package to the new structure.
 - Restaurant, order and delivery business endpoints. Their ownership rules must be implemented with those features.
 
@@ -80,6 +81,13 @@ JWT authentication is proposed for developer review. No deployed server or exist
 - **Tests:** the disabled-auth rows in endpoint-access, run by SecurityConfigTest, cover the `404` from the gate. The 1.0 note's mention of the util package is historical.
 - **Follow-up:** None.
 
+### Spec 2.0 - 2026-11-22 - #61
+
+- **Built:** profile address responses expose the street saved at checkout. Newly registered and seeded profiles can still contain a postal area without a street.
+- **Deviations:** None.
+- **Tests:** the checkout flow in `OrderControllerTest` reads the saved address from `GET /v1/users/me`. Test execution is left to the developer.
+- **Follow-up:** frontend checkout integration.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -87,3 +95,4 @@ JWT authentication is proposed for developer review. No deployed server or exist
 | 1.0     | 2026-11-15 | First version                                                   | #13   |
 | 1.1     | 2026-11-18 | Tests use the shared test container, older notes are historical | #48   |
 | 1.2     | 2026-11-19 | Auth flag checked only by the gate, email helper in the domain  | #53   |
+| 2.0     | 2026-11-22 | Expose the saved delivery street in the profile address         | #61   |

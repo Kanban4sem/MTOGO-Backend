@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Map;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+import mtogo.config.AppProperties;
 import mtogo.feature.order.OrderTestData;
+import mtogo.feature.user.domain.UserSeedService;
 import mtogo.security.JwtService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,6 +32,8 @@ class OrderControllerTest extends OrderTestData
     int port;
     @Autowired
     JwtService tokens;
+    @Autowired
+    UserSeedService seedUsers;
 
     @Test
     @DisplayName("Place - a customer receives the placed order with prices, total, channel and delivery address")
@@ -52,6 +56,54 @@ class OrderControllerTest extends OrderTestData
                 .body("lines[0].menuItemId", equalTo((int) kebabId)).body("lines[0].name", equalTo("Kebab"))
                 .body("lines[0].unitPrice", equalTo(89.95f)).body("lines[0].quantity", is(2))
                 .body("lines[0].subtotal", equalTo(179.90f)).body("lines[1].menuItemId", equalTo((int) breadId));
+    }
+
+    @Test
+    @DisplayName("Place - a seeded customer can save, reuse and replace a default without changing earlier orders")
+    void seededCustomerCanSaveAndReuseDefault()
+    {
+        AppProperties.Seed seed = new AppProperties.Seed("SeedCustomer123!", null, null);
+        seedUsers.seed(seed);
+        long customerId = jdbc.queryForObject("SELECT id FROM users WHERE email = 'customer@mtogo.example'",
+                Long.class);
+        String accessToken = token(customerId);
+        long itemId = item(menu(restaurant("Requested", true), "Lunch", true), "Meal", true);
+        Map<String, Object> reuse = Map.of("lines", List.of(line(itemId, 1)), "paymentToken", "tok_visa",
+                "useDefaultAddress", true);
+
+        given().port(port).auth().oauth2(accessToken).contentType(ContentType.JSON).body(reuse).post("/v1/orders")
+                .then().statusCode(400)
+                .body("detail", equalTo("Your profile has no complete default delivery address"));
+
+        Map<String, Object> save = placeOrder(List.of(line(itemId, 1)));
+        save.put("deliveryAddress", Map.of("street", "Testvej 67", "postalCode", "2900", "city", "Hellerup"));
+        save.put("saveAsDefault", true);
+        long firstOrderId = given().port(port).auth().oauth2(accessToken).contentType(ContentType.JSON).body(save)
+                .post("/v1/orders").then().statusCode(201).body("deliveryAddress.street", equalTo("Testvej 67"))
+                .extract().jsonPath().getLong("id");
+
+        seedUsers.seed(seed);
+        given().port(port).auth().oauth2(accessToken).get("/v1/users/me").then().statusCode(200)
+                .body("profile.address.street", equalTo("Testvej 67"))
+                .body("profile.address.postalCode", equalTo("2900")).body("profile.address.city", equalTo("Hellerup"))
+                .body("profile.address.country", equalTo("Denmark"));
+
+        long reusedOrderId = given().port(port).auth().oauth2(accessToken).contentType(ContentType.JSON).body(reuse)
+                .post("/v1/orders").then().statusCode(201).body("deliveryAddress.street", equalTo("Testvej 67"))
+                .body("deliveryAddress.postalCode", equalTo("2900")).extract().jsonPath().getLong("id");
+
+        save.put("deliveryAddress",
+                Map.of("street", "Second Street 2", "postalCode", "2800", "city", "Kongens Lyngby"));
+        given().port(port).auth().oauth2(accessToken).contentType(ContentType.JSON).body(save).post("/v1/orders").then()
+                .statusCode(201);
+        given().port(port).auth().oauth2(accessToken).contentType(ContentType.JSON).body(reuse).post("/v1/orders")
+                .then().statusCode(201).body("deliveryAddress.street", equalTo("Second Street 2"))
+                .body("deliveryAddress.postalCode", equalTo("2800"));
+        assertThat(jdbc.queryForList("""
+                SELECT a.street || ', ' || p.code FROM orders o
+                JOIN addresses a ON a.id = o.delivery_address_id JOIN postal_codes p ON p.id = a.postal_code_id
+                WHERE o.id IN (?, ?)
+                """, String.class, firstOrderId, reusedOrderId), contains("Testvej 67, 2900", "Testvej 67, 2900"));
     }
 
     @ParameterizedTest(name = "[{index}] {3}")

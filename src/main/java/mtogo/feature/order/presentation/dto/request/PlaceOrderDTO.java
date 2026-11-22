@@ -8,9 +8,21 @@ import jakarta.validation.constraints.*;
 // The customer never sends prices, a channel or who they are: the backend takes
 // those from the menu, the API and the access token.
 public record PlaceOrderDTO(@NotNull @Size(min = 1, max = 20) List<@NotNull @Valid OrderLine> lines,
-        @NotNull @Valid DeliveryAddress deliveryAddress,
-        @NotBlank @Schema(description = "Token from the payment form. The mocked payment declines the token \"decline\" and confirms any other.", example = "tok_visa") String paymentToken)
+        @Valid @Schema(description = "Required when useDefaultAddress is false. Omit when using the saved address.") DeliveryAddress deliveryAddress,
+        @NotBlank @Schema(description = "Token from the payment form. The mocked payment declines the token \"decline\" and confirms any other.", example = "tok_visa") String paymentToken,
+        @Schema(description = "Use the complete delivery address saved on the customer's profile.", defaultValue = "false") Boolean useDefaultAddress,
+        @Schema(description = "Save the entered deliveryAddress as the profile default after successful payment.", defaultValue = "false") Boolean saveAsDefault)
 {
+    public PlaceOrderDTO {
+        useDefaultAddress = Boolean.TRUE.equals(useDefaultAddress);
+        saveAsDefault = Boolean.TRUE.equals(saveAsDefault);
+    }
+
+    public PlaceOrderDTO(List<OrderLine> lines, DeliveryAddress deliveryAddress, String paymentToken)
+    {
+        this(lines, deliveryAddress, paymentToken, false, false);
+    }
+
     public record OrderLine(@NotNull @Positive Long menuItemId,
             @NotNull @Min(1) @Max(20) @Schema(example = "2") Integer quantity)
     {

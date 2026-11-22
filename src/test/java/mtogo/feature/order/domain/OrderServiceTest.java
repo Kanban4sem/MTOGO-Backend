@@ -11,6 +11,7 @@ import java.util.List;
 import mtogo.exceptions.ApiException;
 import mtogo.feature.order.OrderTestData;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
+import mtogo.feature.order.presentation.dto.response.DeliveryAddressDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderLineDTO;
 import org.junit.jupiter.api.DisplayName;
@@ -83,6 +84,59 @@ class OrderServiceTest extends OrderTestData
             assertThat(exception.getBody().getDetail(), is("The payment was declined"));
             assertThat(orderRows(), is(0L));
         }
+    }
+
+    @ParameterizedTest(name = "[{index}] {6}")
+    @CsvFileSource(resources = "/testcases/order/order-service/place-delivery-address.csv", numLinesToSkip = 1)
+    @DisplayName("Place - selects and saves the delivery address according to the customer's choice")
+    void placeSelectsDeliveryAddress(String profileAddress, boolean hasNewAddress, boolean useDefaultAddress,
+            boolean saveAsDefault, String paymentToken, String expected, String reason)
+    {
+        long customerId = customer();
+        String originalStreet = profileAddress.equals("complete") ? "Old Street 1" : null;
+        if (!profileAddress.equals("none"))
+        {
+            long postalCodeId = jdbc.queryForObject("""
+                    INSERT INTO postal_codes (code, city, country) VALUES ('2800', 'Kongens Lyngby', 'Denmark')
+                    RETURNING id
+                    """, Long.class);
+            long addressId = jdbc.queryForObject(
+                    "INSERT INTO addresses (street, postal_code_id) VALUES (?, ?) RETURNING id", Long.class,
+                    originalStreet, postalCodeId);
+            jdbc.update(
+                    "UPDATE user_profiles SET address_id = ? WHERE id = (SELECT profile_id FROM users WHERE id = ?)",
+                    addressId, customerId);
+        }
+        long rowsBefore = orderRows();
+        long itemId = item(menu(restaurant("Requested", true), "Lunch", true), "Meal", true);
+        PlaceOrderDTO.DeliveryAddress newAddress = hasNewAddress
+                ? new PlaceOrderDTO.DeliveryAddress(" Testvej 67 ", "2900", " Hellerup ")
+                : null;
+        PlaceOrderDTO request = new PlaceOrderDTO(List.of(new PlaceOrderDTO.OrderLine(itemId, 1)), newAddress,
+                paymentToken, useDefaultAddress, saveAsDefault);
+
+        String expectedProfileStreet = originalStreet;
+        if (expected.equals("ACCEPT"))
+        {
+            OrderDTO order = orders.place(customerId, request);
+            DeliveryAddressDTO expectedAddress = useDefaultAddress
+                    ? new DeliveryAddressDTO("Old Street 1", "2800", "Kongens Lyngby", "Denmark")
+                    : new DeliveryAddressDTO("Testvej 67", "2900", "Hellerup", "Denmark");
+            assertThat(order.deliveryAddress(), is(expectedAddress));
+            if (saveAsDefault)
+            {
+                expectedProfileStreet = "Testvej 67";
+            }
+        } else
+        {
+            ApiException exception = assertThrows(ApiException.class, () -> orders.place(customerId, request));
+            assertThat(exception.getClass().getSimpleName(), is(expected));
+            assertThat(orderRows(), is(rowsBefore));
+        }
+        assertThat(jdbc.queryForObject("""
+                SELECT a.street FROM users u JOIN user_profiles p ON p.id = u.profile_id
+                LEFT JOIN addresses a ON a.id = p.address_id WHERE u.id = ?
+                """, String.class, customerId), is(expectedProfileStreet));
     }
 
     @Test

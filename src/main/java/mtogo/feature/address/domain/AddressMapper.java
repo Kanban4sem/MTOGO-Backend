@@ -30,6 +30,7 @@ public class AddressMapper
             return null;
         }
         PostalCode postalCode = address.getPostalCode();
-        return new AddressDTO(postalCode.getCode(), postalCode.getCity(), postalCode.getCountry(), address.isDefault());
+        return new AddressDTO(postalCode.getCode(), postalCode.getCity(), postalCode.getCountry(), address.isDefault(),
+                address.getStreet());
     }
 }

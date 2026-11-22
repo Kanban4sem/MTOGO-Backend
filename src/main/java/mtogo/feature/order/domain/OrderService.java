@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import mtogo.feature.address.domain.Address;
+import mtogo.feature.address.domain.PostalCode;
 import mtogo.exceptions.*;
 import mtogo.feature.order.data.OrderRepository;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
@@ -22,8 +23,10 @@ import mtogo.feature.restaurant.domain.MenuItem;
 import mtogo.feature.restaurant.domain.Restaurant;
 import mtogo.feature.user.data.UserRepository;
 import mtogo.feature.user.domain.User;
+import mtogo.feature.user.domain.UserProfile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 public class OrderService
@@ -54,20 +57,33 @@ public class OrderService
     @Transactional
     public OrderDTO place(Long customerId, PlaceOrderDTO request)
     {
+        validateDeliveryAddressChoice(request);
         Map<Long, MenuItem> items = requireMenuItems(request.lines());
         Restaurant restaurant = requireOneRestaurant(items.values());
         items.values().forEach(OrderService::requireOrderable);
 
+        // Reusing an address must see the street and postal area from the same update.
+        User customer = request.useDefaultAddress() || request.saveAsDefault()
+                ? users.findByIdForUpdate(customerId).orElseThrow(() -> new NotFoundException("Customer not found"))
+                : users.getReferenceById(customerId);
+        Address address = request.useDefaultAddress()
+                ? copyDefaultAddress(customer)
+                : deliveryAddress(request.deliveryAddress());
+
         Order order = new Order();
-        order.setCustomer(users.getReferenceById(customerId));
+        order.setCustomer(customer);
         order.setRestaurant(restaurant);
-        order.setDeliveryAddress(deliveryAddress(request.deliveryAddress()));
+        order.setDeliveryAddress(address);
         order.setChannel(OrderChannel.WEBSITE);
         request.lines().forEach(line -> order.addLine(OrderLine.of(items.get(line.menuItemId()), line.quantity())));
 
         if (!payments.charge(order.getTotal(), request.paymentToken()).isConfirmed())
         {
             throw new PaymentRequiredException("The payment was declined");
+        }
+        if (request.saveAsDefault())
+        {
+            saveDefaultAddress(customer.getProfile(), address);
         }
         order.moveTo(OrderStatus.PLACED);
         return mapper.toDTO(orders.save(order));
@@ -148,6 +164,49 @@ public class OrderService
     {
         return users.findById(userId).map(User::getRestaurant).map(Restaurant::getId)
                 .orElseThrow(() -> new NotFoundException("No restaurant is assigned to this account"));
+    }
+
+    private static void validateDeliveryAddressChoice(PlaceOrderDTO request)
+    {
+        boolean hasNewAddress = request.deliveryAddress() != null;
+        if (request.useDefaultAddress() == hasNewAddress)
+        {
+            throw new BadRequestException("Enter a delivery address or choose the default address");
+        }
+        if (request.saveAsDefault() && !hasNewAddress)
+        {
+            throw new BadRequestException("Only an entered delivery address can be saved as the default");
+        }
+    }
+
+    private Address copyDefaultAddress(User customer)
+    {
+        Address address = customer.getProfile().getAddress();
+        if (address == null || !address.isDefault() || !StringUtils.hasText(address.getStreet()))
+        {
+            throw new BadRequestException("Your profile has no complete default delivery address");
+        }
+        PostalCode postalCode = address.getPostalCode();
+        return deliveryAddress(
+                new PlaceOrderDTO.DeliveryAddress(address.getStreet(), postalCode.getCode(), postalCode.getCity()));
+    }
+
+    private static void saveDefaultAddress(UserProfile profile, Address deliveryAddress)
+    {
+        Address profileAddress = profile.getAddress();
+        if (profileAddress == null)
+        {
+            profileAddress = new Address();
+            profileAddress.setPostalCode(new PostalCode());
+            profile.setAddress(profileAddress);
+        }
+        profileAddress.setStreet(deliveryAddress.getStreet());
+        profileAddress.setDefault(true);
+        PostalCode postalCode = profileAddress.getPostalCode();
+        PostalCode deliveryPostalCode = deliveryAddress.getPostalCode();
+        postalCode.setCode(deliveryPostalCode.getCode());
+        postalCode.setCity(deliveryPostalCode.getCity());
+        postalCode.setCountry(deliveryPostalCode.getCountry());
     }
 
     private Address deliveryAddress(PlaceOrderDTO.DeliveryAddress request)
