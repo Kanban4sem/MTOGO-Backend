@@ -1,6 +1,6 @@
 # Contributing
 
-**Version:** 6.0 · **Date:** 2026-11-24
+**Version:** 7.0 · **Date:** 2026-11-24
 
 MTOGO is developed with Kanban and trunk-based development using [TakT](https://github.com/devx-cafe/gh-tt). Every change starts as an issue and ends as one commit on `main`.
 
@@ -33,7 +33,8 @@ Every change starts with an issue created from the issue template.
 - Write the title in imperative mood without a type prefix: `Add order endpoint`. The title becomes the subject of the commit on `main`.
 - Give the issue one of TakT's work labels: `development` for planned work, or `ad hoc` for a small change outside the plan. A bug fix is an `ad hoc` issue with the Type field set to Bug. Only `development` issues need the [four-eyes](#four-eyes-principle) approval before Ready. Also set the Type field and the `backend` or `frontend` label.
 - Fill in the acceptance criteria. The Definition of Done is checked against them.
-- Before `deliver`, fill in **Time spent** at the bottom of the issue: the total time everyone spent on it, rounded up to the nearest 30 minutes, in hours (2 h 12 min is `2.5 h`).
+- Before `deliver`, fill in the **Time spent (h)** field on the board: the total time everyone spent on the issue, rounded up to the nearest 30 minutes, in hours (2 h 12 min is `2.5`).
+- Don't fill in the **Cycle time (h)** field on the board. The `cycle-time` workflow computes it every hour for each closed issue on the board, in both repositories: the hours from the first move to In Progress until the last close.
 - When the issue is done, add the label of the course week it was delivered in (`week 1`, `week 2`, …).
 
 ## Workflow
@@ -163,3 +164,4 @@ These rules apply to the documents below. A change to a document shared with [MT
 | 4.2     | 2026-11-16 | Flag steps move to the coding standards, repeated rules link to one place | #39      |
 | 5.0     | 2026-11-16 | TakT's work labels: a bug fix is `ad hoc` with Type Bug                   | #47      |
 | 6.0     | 2026-11-24 | Issue branches run the fast checks, the build and tests run in the hook   | #58      |
+| 7.0     | 2026-11-24 | Time spent is a board field, cycle time is computed on the board          | #51      |

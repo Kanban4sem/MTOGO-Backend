@@ -1,0 +1,29 @@
+name: cycle-time
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "0 * * * *" # Every hour
+
+concurrency:
+  group: "cycle-time"
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  cycle-time:
+    name: Write cycle time to the board
+    runs-on: ubuntu-latest
+    env:
+      # GITHUB_TOKEN can't write to the organisation's board. Token with the `project` scope.
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Write Cycle time (h)
+        run: bash .github/scripts/cycle-time.sh
