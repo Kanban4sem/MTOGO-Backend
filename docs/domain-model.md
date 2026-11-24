@@ -116,6 +116,8 @@ class OrderStatusChange {
 
 class OrderStatus {
     <<enumeration>>
+    +String danishName
+    +String englishName
     PLACED
     ACCEPTED
     REJECTED

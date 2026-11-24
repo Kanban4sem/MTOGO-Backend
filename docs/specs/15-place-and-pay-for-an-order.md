@@ -1,15 +1,26 @@
 # Place and pay for an order
 
-**Version:** 2.0 · **Date:** 2026-11-22 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
+**Version:** 3.0 · **Date:** 2026-11-24 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
 
 ## Acceptance criteria
 
-Copied from #15. The issue is the source: change the issue first, then this copy.
+Copied from #15 and #66. The issues are the source: change the issue first, then this copy.
+
+From #15:
 
 - [x] A customer can order menu items to a delivery address
 - [x] The order total is calculated from the menu prices
 - [x] An order is placed only when the mocked payment is confirmed
 - [x] The order records its channel and when it was placed
+
+From #66:
+
+- [x] Every order status has a Danish and an English name
+- [x] Placing an order, the customer's order list and detail, the restaurant's orders and status change, and the delivery agent's orders and updates all return the status's Danish and English name as `statusName.danish` and `statusName.english`
+- [x] The customer's order list and order detail include the order's delivery address
+- [x] The delivery agent's orders include the order lines and the order total
+- [x] The delivery agent's orders no longer include `deliveryCity`, and still return `assignedToMe`, backed by the Java field `isAssignedToMe`
+- [x] Endpoint tests cover the status names and the new fields on every order response
 
 ## Behaviour
 
@@ -33,6 +44,11 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 18. A customer can reuse their complete default without entering any address fields. A profile without a street, including a registration or seeded address with only a postal area, requires the customer to enter a delivery address.
 19. Each order keeps its own delivery address when the customer changes the profile default.
 20. A delivery agent sees the complete delivery address for every ready, unassigned order and every order assigned to them. Taking an order removes it from other agents' lists.
+21. Every order status has a Danish and an English status name: Placed is "Bestilt" and "Placed", Accepted is "Accepteret" and "Accepted", Rejected is "Afvist" and "Rejected", Ready is "Klar til afhentning" and "Ready for pickup", PickedUp is "Afhentet" and "Picked up", and Delivered is "Leveret" and "Delivered".
+22. Every order response returns the order status together with both its status names: placing an order, the customer's order list and order detail, the restaurant user's orders and status change, and the delivery agent's orders and the response to taking, picking up or delivering an order.
+23. A customer sees the delivery address recorded on each of their orders in their order list and order detail, not their current profile default.
+24. A delivery agent sees the order lines and the order total of every order they can see: every ready, unassigned order and every order assigned to them.
+25. A delivery agent's order gives the city only as part of the delivery address, and still tells the agent whether the order is assigned to them.
 
 ## Implementation decisions
 
@@ -49,6 +65,12 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 - **Flag:** a new `orderingEnabled` flag (`FEATURE_ORDERING_ENABLED`, property `app.ordering-enabled`), off by default, in AppProperties, `application.properties`, `.env.example` and FeatureFlagsDTO, as described in the [coding standards](../coding-standards.md#feature-flags). `GET /v1/features` reports it. Placing an order also needs `authEnabled`, since it requires a customer token. The order feature declares a FeatureGate for `/v1/orders`, so FeatureGateFilter answers `404` before authentication while the flag is off. #44 removes the flag.
 - **Default address:** checkout stores the default in the existing profile address and stores the delivery address separately on each order. Saving the default and placing the order share one transaction. #61 adds no feature flag.
 - **Delivery agent list:** `GET /v1/delivery-agent/orders` returns the order's `deliveryAddress` with street, postal code, city and country for every item in the existing agent-scoped list.
+- **Status names:** OrderStatus holds a Danish and an English status name next to each code. Every order response DTO (OrderDTO, CustomerOrderSummaryDTO, CustomerOrderDTO, RestaurantOrderDTO and DeliveryAgentOrderDTO) returns `status` (the code) and `statusName` as a StatusNameDTO object `{ "danish": "Bestilt", "english": "Placed" }`. It replaces the Danish `statusName` string from #18. The keys are words, not language codes, so a later language is one more key. This covers `POST /v1/orders`, `GET /v1/customer/orders` and `/{id}`, `GET` and `PATCH /v1/restaurant/orders`, and `GET` and `PATCH /v1/delivery-agent/orders`.
+- **Customer order reads:** CustomerOrderSummaryDTO and CustomerOrderDTO add `deliveryAddress` (`street`, `postalCode`, `city`, `country`), taken from the order's own address.
+- **Delivery agent order:** DeliveryAgentOrderDTO adds `lines` (the existing OrderLineDTO) and `total`, and drops `deliveryCity`, which repeated `deliveryAddress.city`. Its boolean is the Java field `isAssignedToMe`, mapped to the unchanged JSON name `assignedToMe` with `@JsonProperty`, like the other response booleans. The PATCH response uses the same DTO.
+- **Mapper:** OrderMapper builds DeliveryAddressDTO, StatusNameDTO and the order lines in one place each, and every order DTO uses them.
+- **Contract:** removing `deliveryCity` and turning `statusName` into an object break the contract, so #66 ships together with Kanban4sem/MTOGO-Frontend#50. Swagger describes StatusNameDTO and the new fields with `@Schema`.
+- **Flag for #66:** none of its own. The changed endpoints are already hidden behind `orderingEnabled`, which #44 removes shortly after #66.
 - **ADRs:** [ADR-001](../adr/001-feature-flags.md), [ADR-004](../adr/004-backend-structure.md) and [ADR-005](../adr/005-account-authentication.md) apply. No new ADR: the mocked payment behind an interface is decided in the MVP.
 
 ## Testing decisions
@@ -62,6 +84,10 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 - **AppPropertiesTest**: EP over `app.ordering-enabled`, unset, true, false and invalid; `bind-ordering-enabled`.
 - **FeatureGateTest** (plain JUnit): `isClosedFor` as a decision table over the flag and the request path; `is-closed-for`.
 - **FeatureFlagControllerTest** and **FeatureFlagServiceTest**: update them so `GET /v1/features` reports `orderingEnabled`.
+- **CustomerOrderControllerTest** (#66): `get-current-status` has the columns `status`, `danishName`, `englishName`, `expected` (the HTTP status code) and `reason`, so EP over the six order statuses checks both status names on the order list and the order detail. The get-all and get-by-id happy paths change the profile default after placing and check that `deliveryAddress` is still the order's own address.
+- **OrderControllerTest** (#66): the place happy path checks `statusName.danish` and `statusName.english` for Placed.
+- **RestaurantOrderControllerTest** (#66): the get-all happy path checks both status names, and every successful row of `update-status-transition` checks both names of the new status on the PATCH response.
+- **DeliveryAgentOrderControllerTest** (#66): the delivery happy path checks both status names at Ready, PickedUp and Delivered across the list and the PATCH responses, `lines` and `total`, `assignedToMe`, and that `deliveryCity` is absent. The status names are a mapping, so they need no further CSV files and no domain test.
 - CSV files live under `testcases/order/<class-under-test>/`, `testcases/featureflag/feature-gate/` and `testcases/config/app-properties/`.
 
 ## Out of scope
@@ -73,10 +99,11 @@ Copied from #15. The issue is the source: change the issue first, then this copy
 - Validating postal codes against the real Danish list: #45.
 - Delivery fees, service fees and commission: #23.
 - Removing the flag: #44.
+- The frontend side of #66: Kanban4sem/MTOGO-Frontend#50.
 
 ## Further notes
 
-Issue #18 exposes a Danish `statusName` alongside the status code on customer order reads. The domain model was updated for orders during the grilling.
+Issue #18 exposed a Danish `statusName` alongside the status code on customer order reads. #66 turned it into a Danish and English status name on every order response. The domain model was updated for orders during the grilling.
 
 ## Implementation notes
 
@@ -110,6 +137,13 @@ Issue #18 exposes a Danish `statusName` alongside the status code on customer or
 - **Tests:** `OrderServiceTest` (`place-delivery-address`) and the checkout flow in `OrderControllerTest`. `DeliveryAgentOrderControllerTest` checks the full address before assignment and that another agent loses access after assignment. Test execution is left to the developer.
 - **Follow-up:** frontend checkout integration.
 
+### Spec 3.0 - 2026-11-24 - #66
+
+- **Built:** OrderStatus holds a Danish and an English status name for each status. OrderMapper builds StatusNameDTO, DeliveryAddressDTO and the order lines in one private method each, and every order DTO uses them. OrderDTO, CustomerOrderSummaryDTO, CustomerOrderDTO, RestaurantOrderDTO and DeliveryAgentOrderDTO return `statusName` as `{ "danish", "english" }`. The customer's order list and detail return the order's own `deliveryAddress`. DeliveryAgentOrderDTO adds `total` and `lines`, drops `deliveryCity`, and keeps the JSON name `assignedToMe` for the Java field `isAssignedToMe` with `@JsonProperty`. `statusName` on every order DTO, `danish`, `english` and the new fields carry `@Schema` descriptions. The README and `customerOrders.http` describe the new fields.
+- **Deviations:** None.
+- **Tests:** CustomerOrderControllerTest (`get-current-status` with both names and `expected` 200 for all six statuses on the list and the detail; the get-all and get-by-id happy paths save the delivery address as the profile default, change the default after placing and check that `deliveryAddress` is still the order's own). OrderControllerTest (the place happy path checks both names for Placed). RestaurantOrderControllerTest (the get-all happy path checks both names, and every 200 row of `update-status-transition` checks both names of the new status on the PATCH response). DeliveryAgentOrderControllerTest (the delivery happy path checks both names at Ready, PickedUp and Delivered on the list and on the TAKE, PICK_UP and DELIVER responses, `lines` and `total` before and after taking, and `assignedToMe` false on the list and true on the TAKE response. `deliveryCity` and `isAssignedToMe` are checked absent on the Ready list and the TAKE response).
+- **Follow-up:** None. The frontend side is Kanban4sem/MTOGO-Frontend#50.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -118,3 +152,4 @@ Issue #18 exposes a Danish `statusName` alongside the status code on customer or
 | 1.1     | 2026-11-18 | Tests use the shared test container, older notes are historical | #48   |
 | 1.2     | 2026-11-21 | Clarify where Danish status names are returned                  | #18   |
 | 2.0     | 2026-11-22 | Save, reuse and display delivery addresses                      | #61   |
+| 3.0     | 2026-11-24 | Status names in Danish and English, complete order responses    | #66   |

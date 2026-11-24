@@ -40,7 +40,7 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
     OrderService orders;
 
     @Test
-    @DisplayName("Delivery - a ready order can be taken, picked up and delivered by one agent")
+    @DisplayName("Delivery - a ready order can be taken, picked up and delivered by one agent, who sees its status names, lines and total")
     void deliverReadyOrder()
     {
         long restaurantId = restaurant("Bakery", true);
@@ -54,24 +54,37 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
 
         orders.updateRestaurantOrderStatus(restaurantUser, orderId, new UpdateRestaurantOrderStatusDTO("READY"));
         request(agent).get(PATH).then().statusCode(200).body("id", contains((int) orderId))
-                .body("[0].status", is("READY")).body("[0].assignedToMe", is(false))
-                .body("[0].restaurantName", is("Bakery")).body("[0].deliveryCity", is("Copenhagen"))
+                .body("[0].status", is("READY")).body("[0].statusName.danish", is("Klar til afhentning"))
+                .body("[0].statusName.english", is("Ready for pickup")).body("[0].assignedToMe", is(false))
+                .body("[0]", not(hasKey("isAssignedToMe"))).body("[0]", not(hasKey("deliveryCity")))
+                .body("[0].restaurantName", is("Bakery")).body("[0].total", is(25.00f)).body("[0].lines.size()", is(1))
+                .body("[0].lines[0].name", is("Bun")).body("[0].lines[0].unitPrice", is(12.50f))
+                .body("[0].lines[0].quantity", is(2)).body("[0].lines[0].subtotal", is(25.00f))
                 .body("[0].deliveryAddress.street", is("Test Street 10"))
                 .body("[0].deliveryAddress.postalCode", is("1165")).body("[0].deliveryAddress.city", is("Copenhagen"))
                 .body("[0].deliveryAddress.country", is("Denmark"));
 
         patch(request(agent), orderId, "TAKE").then().statusCode(200).body("status", is("READY"))
-                .body("assignedToMe", is(true)).body("deliveryAddress.street", is("Test Street 10"));
+                .body("statusName.danish", is("Klar til afhentning")).body("statusName.english", is("Ready for pickup"))
+                .body("assignedToMe", is(true)).body("$", not(hasKey("isAssignedToMe")))
+                .body("deliveryAddress.street", is("Test Street 10")).body("lines[0].name", is("Bun"))
+                .body("total", is(25.00f)).body("$", not(hasKey("deliveryCity")));
+        request(agent).get(PATH).then().statusCode(200).body("[0].assignedToMe", is(true))
+                .body("[0].lines[0].name", is("Bun")).body("[0].total", is(25.00f));
         request(otherAgent).get(PATH).then().statusCode(200).body("size()", is(0));
         patch(request(otherAgent), orderId, "TAKE").then().statusCode(409);
         patch(request(otherAgent), orderId, "PICK_UP").then().statusCode(404);
         patch(request(agent), orderId, "DELIVER").then().statusCode(409);
-        patch(request(agent), orderId, "PICK_UP").then().statusCode(200).body("status", is("PICKED_UP"));
-        request(agent).get(PATH).then().statusCode(200).body("[0].status", is("PICKED_UP"));
+        patch(request(agent), orderId, "PICK_UP").then().statusCode(200).body("status", is("PICKED_UP"))
+                .body("statusName.danish", is("Afhentet")).body("statusName.english", is("Picked up"));
+        request(agent).get(PATH).then().statusCode(200).body("[0].status", is("PICKED_UP"))
+                .body("[0].statusName.danish", is("Afhentet")).body("[0].statusName.english", is("Picked up"));
         patch(request(otherAgent), orderId, "DELIVER").then().statusCode(404);
-        patch(request(agent), orderId, "DELIVER").then().statusCode(200).body("status", is("DELIVERED"));
+        patch(request(agent), orderId, "DELIVER").then().statusCode(200).body("status", is("DELIVERED"))
+                .body("statusName.danish", is("Leveret")).body("statusName.english", is("Delivered"));
         patch(request(agent), orderId, "DELIVER").then().statusCode(409);
-        request(agent).get(PATH).then().statusCode(200).body("[0].status", is("DELIVERED"));
+        request(agent).get(PATH).then().statusCode(200).body("[0].status", is("DELIVERED"))
+                .body("[0].statusName.danish", is("Leveret")).body("[0].statusName.english", is("Delivered"));
         request(otherAgent).get(PATH).then().statusCode(200).body("size()", is(0));
 
         assertEquals(agent,
@@ -135,10 +148,10 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
 
     private long place(long restaurantId)
     {
-        long itemId = item(menu(restaurantId, "Lunch", true), "Bun", true);
+        long itemId = item(menu(restaurantId, "Lunch", true), "Bun", "12.50");
         return orders
                 .place(customer(),
-                        new PlaceOrderDTO(List.of(new PlaceOrderDTO.OrderLine(itemId, 1)),
+                        new PlaceOrderDTO(List.of(new PlaceOrderDTO.OrderLine(itemId, 2)),
                                 new PlaceOrderDTO.DeliveryAddress("Test Street 10", "1165", "Copenhagen"), "tok_visa"))
                 .id();
     }

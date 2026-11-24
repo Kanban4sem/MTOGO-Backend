@@ -36,7 +36,7 @@ class OrderControllerTest extends OrderTestData
     UserSeedService seedUsers;
 
     @Test
-    @DisplayName("Place - a customer receives the placed order with prices, total, channel and delivery address")
+    @DisplayName("Place - a customer receives the placed order with status names, prices, total, channel and delivery address")
     void placeReturnsOrder()
     {
         long restaurantId = restaurant("Requested", true);
@@ -48,6 +48,7 @@ class OrderControllerTest extends OrderTestData
                 .body(placeOrder(List.of(line(kebabId, 2), line(breadId, 1)))).post("/v1/orders").then().statusCode(201)
                 .contentType("application/json").header("Location", nullValue()).body("id", notNullValue())
                 .body("restaurantId", equalTo((int) restaurantId)).body("status", equalTo("PLACED"))
+                .body("statusName.danish", equalTo("Bestilt")).body("statusName.english", equalTo("Placed"))
                 .body("channel", equalTo("WEBSITE")).body("placedAt", matchesPattern("\\d{4}-\\d{2}-\\d{2}T.+Z"))
                 .body("total", equalTo(204.90f)).body("deliveryAddress.street", equalTo("Nørregade 10"))
                 .body("deliveryAddress.postalCode", equalTo("1165"))

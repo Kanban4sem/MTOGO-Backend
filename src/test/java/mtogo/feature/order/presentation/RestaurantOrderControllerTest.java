@@ -9,6 +9,7 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import mtogo.feature.order.OrderTestData;
 import mtogo.feature.order.domain.OrderService;
+import mtogo.feature.order.domain.OrderStatus;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.security.JwtService;
 import org.junit.jupiter.api.DisplayName;
@@ -49,8 +50,9 @@ class RestaurantOrderControllerTest extends OrderTestData
 
         request(port, requesterId).get(ORDERS_PATH).then().statusCode(200)
                 .body("id", contains((int) latestOrderId, (int) firstOrderId)).body("[0].status", is("PLACED"))
-                .body("[0].statusName", is("Bestilt")).body("[0].total", is(179.90f))
-                .body("[0].lines[0].name", is("Kebab")).body("[0].lines[0].quantity", is(2));
+                .body("[0].statusName.danish", is("Bestilt")).body("[0].statusName.english", is("Placed"))
+                .body("[0].total", is(179.90f)).body("[0].lines[0].name", is("Kebab"))
+                .body("[0].lines[0].quantity", is(2));
     }
 
     @ParameterizedTest(name = "[{index}] {2}")
@@ -101,7 +103,9 @@ class RestaurantOrderControllerTest extends OrderTestData
         var response = patch(request(port, requesterId), orderId, body).then().statusCode(expected);
         if (expected == 200)
         {
-            response.body("status", is(requestedStatus));
+            OrderStatus status = OrderStatus.valueOf(requestedStatus);
+            response.body("status", is(requestedStatus)).body("statusName.danish", is(status.getDanishName()))
+                    .body("statusName.english", is(status.getEnglishName()));
             assertEquals(requestedStatus, readStatus(orderId));
             List<String> history = orderHistory(orderId);
             assertEquals(previousHistory.size() + 1, history.size());

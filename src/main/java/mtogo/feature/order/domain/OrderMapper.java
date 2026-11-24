@@ -1,5 +1,6 @@
 package mtogo.feature.order.domain;
 
+import java.util.List;
 import mtogo.feature.address.domain.Address;
 import mtogo.feature.address.domain.PostalCode;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
@@ -10,6 +11,7 @@ import mtogo.feature.order.presentation.dto.response.DeliveryAgentOrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderLineDTO;
 import mtogo.feature.order.presentation.dto.response.RestaurantOrderDTO;
+import mtogo.feature.order.presentation.dto.response.StatusNameDTO;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -28,45 +30,57 @@ public class OrderMapper
 
     public OrderDTO toDTO(Order order)
     {
-        Address address = order.getDeliveryAddress();
-        PostalCode postalCode = address.getPostalCode();
-        return new OrderDTO(order.getId(), order.getRestaurant().getId(), order.getStatus(), order.getChannel(),
-                order.getPlacedAt(), order.getTotal(), new DeliveryAddressDTO(address.getStreet(), postalCode.getCode(),
-                        postalCode.getCity(), postalCode.getCountry()),
-                order.getLines().stream().map(this::toDTO).toList());
+        OrderStatus status = order.getStatus();
+        return new OrderDTO(order.getId(), order.getRestaurant().getId(), status, toStatusNameDTO(status),
+                order.getChannel(), order.getPlacedAt(), order.getTotal(), toDeliveryAddressDTO(order),
+                toLineDTOs(order));
     }
 
     public CustomerOrderSummaryDTO toCustomerOrderSummaryDTO(Order order)
     {
         OrderStatus status = order.getStatus();
-        return new CustomerOrderSummaryDTO(order.getId(), order.getRestaurant().getId(), status, status.getDanishName(),
-                order.getTotal());
+        return new CustomerOrderSummaryDTO(order.getId(), order.getRestaurant().getId(), status,
+                toStatusNameDTO(status), order.getTotal(), toDeliveryAddressDTO(order));
     }
 
     public CustomerOrderDTO toCustomerOrderDTO(Order order)
     {
         OrderStatus status = order.getStatus();
-        return new CustomerOrderDTO(order.getId(), order.getRestaurant().getId(), status, status.getDanishName(),
-                order.getPlacedAt(), order.getTotal(), order.getLines().stream().map(this::toDTO).toList());
+        return new CustomerOrderDTO(order.getId(), order.getRestaurant().getId(), status, toStatusNameDTO(status),
+                order.getPlacedAt(), order.getTotal(), toDeliveryAddressDTO(order), toLineDTOs(order));
     }
 
     public RestaurantOrderDTO toRestaurantOrderDTO(Order order)
     {
         OrderStatus status = order.getStatus();
-        return new RestaurantOrderDTO(order.getId(), status, status.getDanishName(), order.getPlacedAt(),
-                order.getTotal(), order.getLines().stream().map(this::toDTO).toList());
+        return new RestaurantOrderDTO(order.getId(), status, toStatusNameDTO(status), order.getPlacedAt(),
+                order.getTotal(), toLineDTOs(order));
     }
 
     public DeliveryAgentOrderDTO toDeliveryAgentOrderDTO(Order order, Long agentId)
     {
-        Address address = order.getDeliveryAddress();
-        PostalCode postalCode = address.getPostalCode();
-        boolean assignedToMe = order.isAssignedTo(agentId);
-        DeliveryAddressDTO deliveryAddress = new DeliveryAddressDTO(address.getStreet(), postalCode.getCode(),
-                postalCode.getCity(), postalCode.getCountry());
         OrderStatus status = order.getStatus();
         return new DeliveryAgentOrderDTO(order.getId(), order.getRestaurant().getId(), order.getRestaurant().getName(),
-                status, status.getDanishName(), assignedToMe, postalCode.getCity(), deliveryAddress);
+                status, toStatusNameDTO(status), order.isAssignedTo(agentId), toDeliveryAddressDTO(order),
+                order.getTotal(), toLineDTOs(order));
+    }
+
+    private StatusNameDTO toStatusNameDTO(OrderStatus status)
+    {
+        return new StatusNameDTO(status.getDanishName(), status.getEnglishName());
+    }
+
+    private DeliveryAddressDTO toDeliveryAddressDTO(Order order)
+    {
+        Address address = order.getDeliveryAddress();
+        PostalCode postalCode = address.getPostalCode();
+        return new DeliveryAddressDTO(address.getStreet(), postalCode.getCode(), postalCode.getCity(),
+                postalCode.getCountry());
+    }
+
+    private List<OrderLineDTO> toLineDTOs(Order order)
+    {
+        return order.getLines().stream().map(this::toDTO).toList();
     }
 
     private OrderLineDTO toDTO(OrderLine line)

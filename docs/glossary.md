@@ -48,6 +48,10 @@ _Avoid_: Shipping address, location
 The point an order has reached in its lifecycle: Placed, Accepted, Rejected, Ready, PickedUp or Delivered.
 _Avoid_: State, stage
 
+**Status name**:
+The Danish or English name of an order status that customers, restaurant users and delivery agents read, such as "Klar til afhentning" or "Ready for pickup".
+_Avoid_: Label, display name, status text
+
 **Order channel**:
 The way an order reached MTOGO: website, app or telephone.
 _Avoid_: Source, platform, origin

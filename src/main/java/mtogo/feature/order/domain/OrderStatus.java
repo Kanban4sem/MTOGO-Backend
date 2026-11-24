@@ -2,19 +2,27 @@ package mtogo.feature.order.domain;
 
 public enum OrderStatus
 {
-    PLACED("Bestilt"), ACCEPTED("Accepteret"), REJECTED("Afvist"), READY("Klar til afhentning"), PICKED_UP(
-            "Afhentet"), DELIVERED("Leveret");
+    PLACED("Bestilt", "Placed"), ACCEPTED("Accepteret", "Accepted"), REJECTED("Afvist", "Rejected"), READY(
+            "Klar til afhentning",
+            "Ready for pickup"), PICKED_UP("Afhentet", "Picked up"), DELIVERED("Leveret", "Delivered");
 
     private final String danishName;
+    private final String englishName;
 
-    OrderStatus(String danishName)
+    OrderStatus(String danishName, String englishName)
     {
         this.danishName = danishName;
+        this.englishName = englishName;
     }
 
     public String getDanishName()
     {
         return danishName;
+    }
+
+    public String getEnglishName()
+    {
+        return englishName;
     }
 
     public boolean canMoveTo(OrderStatus next)

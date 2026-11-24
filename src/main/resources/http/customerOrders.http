@@ -48,11 +48,11 @@ Content-Type: application/json
     }
 %}
 
-### List own orders (200, newest first, with statusName)
+### List own orders (200, newest first, with statusName and deliveryAddress)
 GET {{baseUrl}}/v1/customer/orders
 Authorization: Bearer {{CUSTOMER_ORDERS_TOKEN}}
 
-### Read own order (200, with lines, total and statusName)
+### Read own order (200, with lines, total, statusName and deliveryAddress)
 GET {{baseUrl}}/v1/customer/orders/{{CUSTOMER_ORDER_ID}}
 Authorization: Bearer {{CUSTOMER_ORDERS_TOKEN}}
 

@@ -1,7 +1,7 @@
-status,expected,reason
-PLACED,Bestilt,"EP: a placed order is Bestilt"
-ACCEPTED,Accepteret,"EP: an accepted order is Accepteret"
-REJECTED,Afvist,"EP: a rejected order is Afvist"
-READY,Klar til afhentning,"EP: a ready order is Klar til afhentning"
-PICKED_UP,Afhentet,"EP: a picked-up order is Afhentet"
-DELIVERED,Leveret,"EP: a delivered order is Leveret"
+status,danishName,englishName,expected,reason
+PLACED,Bestilt,Placed,200,"EP: a placed order is Bestilt and Placed"
+ACCEPTED,Accepteret,Accepted,200,"EP: an accepted order is Accepteret and Accepted"
+REJECTED,Afvist,Rejected,200,"EP: a rejected order is Afvist and Rejected"
+READY,Klar til afhentning,Ready for pickup,200,"EP: a ready order is Klar til afhentning and Ready for pickup"
+PICKED_UP,Afhentet,Picked up,200,"EP: a picked-up order is Afhentet and Picked up"
+DELIVERED,Leveret,Delivered,200,"EP: a delivered order is Leveret and Delivered"
