@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The 4-core runner keeps the parallel test JVMs from #74 (#84)
+      MTOGO_TEST_FORKS: 4
     permissions:
       contents: read
       statuses: write # required to set commit statuses for gh insitu

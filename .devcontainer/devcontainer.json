@@ -45,7 +45,8 @@
     "TESTCONTAINERS_HOST_OVERRIDE": "host.docker.internal",
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
     "MTOGO_SKIP_CLAUDE": "${localEnv:MTOGO_SKIP_CLAUDE}",
-    "MTOGO_SKIP_CODEX": "${localEnv:MTOGO_SKIP_CODEX}"
+    "MTOGO_SKIP_CODEX": "${localEnv:MTOGO_SKIP_CODEX}",
+    "MTOGO_TEST_FORKS": "${localEnv:MTOGO_TEST_FORKS:1}"
   },
   "remoteEnv": {
     "GH_TOKEN": "${localEnv:GH_TOKEN}"

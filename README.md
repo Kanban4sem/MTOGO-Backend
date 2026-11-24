@@ -189,6 +189,19 @@ Submit checkout with the item still in the basket to trigger the conflict. Run t
 
 The tests start PostgreSQL with Testcontainers, so Docker must be running.
 
+### Test JVMs
+
+By default the tests run in one JVM, which starts one PostgreSQL container. Each extra JVM starts its own Spring contexts and its own PostgreSQL container, so more JVMs finish faster but need more memory and cores. A higher value pays off on a machine with cores and memory to spare: try 2, then 4, and keep the value that makes `./mvnw verify` faster without slowing the machine down. Stay at 1 on a machine with little memory or a small Docker Desktop VM.
+
+Set the number with the `MTOGO_TEST_FORKS` environment variable:
+
+- **For every run, kept across rebuilds:** set it on your own machine, restart VS Code and rebuild the dev container.
+  - Windows (PowerShell): `setx MTOGO_TEST_FORKS 4`
+  - macOS (zsh): add `export MTOGO_TEST_FORKS=4` to `~/.zshrc`
+- **Until the container restarts, without a rebuild:** run `export MTOGO_TEST_FORKS=4` in the dev container terminal.
+
+For a single run, `./mvnw verify -Dsurefire.forkCount=4` overrides the variable. The ready flow on GitHub always uses 4.
+
 ## Docker image
 
 Build the jar first, then the image:

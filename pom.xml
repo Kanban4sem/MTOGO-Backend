@@ -32,7 +32,8 @@
         <springdoc.version>3.2.0</springdoc.version>
         <!-- Java 25 needs JaCoCo 0.8.14 or newer -->
         <jacoco.version>0.8.14</jacoco.version>
-        <surefire.forkCount>4</surefire.forkCount>
+        <!-- One test JVM by default. Set MTOGO_TEST_FORKS for more on your own machine (#84) -->
+        <surefire.forkCount>1</surefire.forkCount>
     </properties>
 
     <!-- Dependencies -->
@@ -261,5 +262,20 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Runs the tests in MTOGO_TEST_FORKS JVMs. -Dsurefire.forkCount still overrides it for one run -->
+        <profile>
+            <id>test-forks</id>
+            <activation>
+                <property>
+                    <name>env.MTOGO_TEST_FORKS</name>
+                </property>
+            </activation>
+            <properties>
+                <surefire.forkCount>${env.MTOGO_TEST_FORKS}</surefire.forkCount>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
