@@ -1,5 +1,6 @@
 name: Deploy to stage
-# Every commit on main is built once, tagged with its SHA and deployed to stage (ADR-003)
+# Every commit on main gets one image, tagged with its SHA and deployed to stage (ADR-003). The analyse job
+# builds and tests the commit separately for SonarQube Cloud (#21)
 
 on:
   push:
@@ -58,6 +59,38 @@ jobs:
             --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
             -t "$IMAGE:$GITHUB_SHA" .
           docker push "$IMAGE:$GITHUB_SHA"
+
+  # Keeps main analysed as the reference branch for new code. Runs beside build and deploy, so a slow or
+  # failed analysis never holds back the stage deployment (#21)
+  analyse:
+    name: Analyse the commit in SonarQube Cloud
+    runs-on: ubuntu-latest
+    # One analysis at a time, so main's analyses arrive in commit order. GitHub cancels an older waiting run,
+    # which is fine: the reference branch only needs the newest commit (#21)
+    concurrency:
+      group: sonar-main
+      cancel-in-progress: false
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      # The image build skips the tests, so the coverage report must come from a test run of this commit
+      - name: Build, test and analyse
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./mvnw -B verify sonar:sonar
 
   # GitHub keeps one waiting run per group and cancels the older one, which is fine: the newest commit is deployed last
   deploy:

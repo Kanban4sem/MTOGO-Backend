@@ -34,6 +34,11 @@
         <jacoco.version>0.8.14</jacoco.version>
         <!-- One test JVM by default. Set MTOGO_TEST_FORKS for more on your own machine (#84) -->
         <surefire.forkCount>1</surefire.forkCount>
+        <sonar-maven-plugin.version>5.9.0.7382</sonar-maven-plugin.version>
+        <!-- SonarQube Cloud project, kept in the pom so CI and local analyses report to the same project (#21) -->
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>kanban4sem</sonar.organization>
+        <sonar.projectKey>Kanban4sem_MTOGO-Backend</sonar.projectKey>
     </properties>
 
     <!-- Dependencies -->
@@ -259,6 +264,12 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- Run on its own with sonar:sonar after verify, so the analysis reads this build's JaCoCo report -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar-maven-plugin.version}</version>
             </plugin>
         </plugins>
     </build>

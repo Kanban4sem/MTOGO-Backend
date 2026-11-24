@@ -11,6 +11,9 @@ Thumbs.db
 # NOTE: the Maven wrapper (mvnw, .mvn/wrapper/) MUST be committed
 target/
 
+# === SonarQube scanner (local analysis) ===
+.sonar/
+
 # === Logs and local data ===
 logs/
 storage/

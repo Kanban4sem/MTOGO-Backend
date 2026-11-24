@@ -24,8 +24,11 @@ jobs:
       statuses: write # required to set commit statuses for gh insitu
 
     steps:
+      # Sonar needs the history to find new code against main and to blame lines
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Java 25
         uses: actions/setup-java@v5
@@ -38,6 +41,19 @@ jobs:
         uses: ./.github/actions/prep-runner
         with:
           verify: gh insitu run trunk-worthy
+
+      # Reuses the classes and the JaCoCo report trunk-worthy wrote. A failed gate, or no result, fails the job,
+      # so merge-to-trunk doesn't run. SonarQube Cloud has no reference branch setting at project level, so the
+      # delivery's new code is measured against main here (#21)
+      - name: SonarQube Cloud quality gate
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -z "${SONAR_TOKEN}" ]; then
+            echo "ERROR: secrets.SONAR_TOKEN is not configured. See Code quality in the README."
+            exit 1
+          fi
+          ./mvnw -B sonar:sonar -Dsonar.qualitygate.wait=true -Dsonar.newCode.referenceBranch=main
 
   merge-to-trunk:
     name: Merge to trunk
@@ -68,4 +84,5 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.READY_PUSHER }} # PAT with content:write (GITHUB_TOKEN pushes do not trigger other workflows)
 
-      - uses: devx-cafe/takt-actions/ready-to-trunk@v1
+      # Pinned to a commit, because the action receives READY_PUSHER. Update the SHA by hand to update TakT (#21)
+      - uses: devx-cafe/takt-actions/ready-to-trunk@d354e40ce1916a4fce4bd30f095e9aecc952adeb # v1
