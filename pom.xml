@@ -32,6 +32,7 @@
         <springdoc.version>3.2.0</springdoc.version>
         <!-- Java 25 needs JaCoCo 0.8.14 or newer -->
         <jacoco.version>0.8.14</jacoco.version>
+        <surefire.forkCount>4</surefire.forkCount>
     </properties>
 
     <!-- Dependencies -->
@@ -217,6 +218,19 @@
                     </java>
                 </configuration>
             </plugin>
+            <!-- Test classes run in parallel JVMs. Each JVM starts its own Spring contexts and its own
+                 SharedPostgres container, so a class still gets its own database (#74) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <forkCount>${surefire.forkCount}</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <!-- The backend imports .env from the working directory. Tests run from target/, so a
+                         developer's .env never changes their result (#74) -->
+                    <workingDirectory>${project.build.directory}</workingDirectory>
+                </configuration>
+            </plugin>
             <!-- Coverage is reported to SonarQube; thresholds live in its quality gate, not here -->
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -228,6 +242,13 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <!-- Only our classes. Instrumenting Spring, Hibernate and Tomcat as well slows every
+                             context start and makes each test JVM exit too slowly for Surefire (#74) -->
+                        <configuration>
+                            <includes>
+                                <include>mtogo.*</include>
+                            </includes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>report</id>

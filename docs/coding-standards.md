@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 7.1 · **Date:** 2026-11-18
+**Version:** 7.2 · **Date:** 2026-11-24
 
 ## Overview
 
@@ -195,10 +195,11 @@ Tests follow the Detroit (classical) school:
 
 ### Test database
 
-All tests that need a database use one PostgreSQL container for the whole test run, started once by `SharedPostgres` and removed by Testcontainers when the JVM exits. Never declare a `@Container` or `@Testcontainers` in a test class: a container that stops after its class while Spring keeps the cached context open makes the test run fail at exit.
+Surefire runs the test classes in several JVMs at once, set by `surefire.forkCount` in `pom.xml`. All tests in a JVM that need a database use one PostgreSQL container, started once by `SharedPostgres` and removed by Testcontainers when the JVM exits. Never declare a `@Container` or `@Testcontainers` in a test class: a container that stops after its class while Spring keeps the cached context open makes the test run fail at exit.
 
 - Put `@SharedDatabase` on the test class, or on a base class. Each test class then gets its own empty database in the container, migrated by Flyway, so classes never see each other's data. A `@Nested` class uses the database of its top-level class.
 - Shared test infrastructure such as `SharedPostgres` lives in `mtogo.testsupport`, which has no counterpart in the main code.
+- Tests run with `target/` as the working directory, so a developer's `.env` never reaches them. Read test files from the classpath, not from a path relative to the working directory.
 - Test-only Spring properties go in `src/test/resources/config/application.properties`. It sets `server.shutdown=immediate`, so no test web server waits for requests when the JVM exits.
 - Clean the data the test class changes before each test, as described under [General rules](#general-rules).
 - Configuration tests with `ApplicationContextRunner` use no database and no `@SharedDatabase`.
@@ -360,17 +361,18 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 
 ## Changelog
 
-| Version | Date       | Change                                                                           | Issue    |
-| ------- | ---------- | -------------------------------------------------------------------------------- | -------- |
-| 1.0     | 2026-11-10 | First version                                                                    | -        |
-| 1.1     | 2026-11-10 | API changes get a linked frontend issue                                          | MTOGO#32 |
-| 1.2     | 2026-11-10 | Fixes to Frontend Architecture                                                   | MTOGO#33 |
-| 2.0     | 2026-11-11 | Moved from `MTOGO`, backend rules only                                           | #5       |
-| 3.0     | 2026-11-12 | Configuration tests                                                              | #30      |
-| 3.1     | 2026-11-12 | DTOs in the presentation layer                                                   | #33      |
-| 4.0     | 2026-11-12 | The tool configuration replaces `.editorconfig`                                  | #34      |
-| 5.0     | 2026-11-15 | Separate CRUD and DTO responsibilities; use service interfaces only when needed  | #13      |
-| 6.0     | 2026-11-16 | Tests for changes to behaviour, feature flag steps, each rule stated once        | #39      |
-| 6.1     | 2026-11-17 | A declined payment is a 402 from PaymentRequiredException; FeatureGate for flags | #15      |
-| 7.0     | 2026-11-18 | Tests share one PostgreSQL container, with a database per test class             | #48      |
-| 7.1     | 2026-11-18 | Entity ↔ DTO mappers live in the `domain` layer                                  | #40      |
+| Version | Date       | Change                                                                                   | Issue    |
+| ------- | ---------- | ---------------------------------------------------------------------------------------- | -------- |
+| 1.0     | 2026-11-10 | First version                                                                            | -        |
+| 1.1     | 2026-11-10 | API changes get a linked frontend issue                                                  | MTOGO#32 |
+| 1.2     | 2026-11-10 | Fixes to Frontend Architecture                                                           | MTOGO#33 |
+| 2.0     | 2026-11-11 | Moved from `MTOGO`, backend rules only                                                   | #5       |
+| 3.0     | 2026-11-12 | Configuration tests                                                                      | #30      |
+| 3.1     | 2026-11-12 | DTOs in the presentation layer                                                           | #33      |
+| 4.0     | 2026-11-12 | The tool configuration replaces `.editorconfig`                                          | #34      |
+| 5.0     | 2026-11-15 | Separate CRUD and DTO responsibilities; use service interfaces only when needed          | #13      |
+| 6.0     | 2026-11-16 | Tests for changes to behaviour, feature flag steps, each rule stated once                | #39      |
+| 6.1     | 2026-11-17 | A declined payment is a 402 from PaymentRequiredException; FeatureGate for flags         | #15      |
+| 7.0     | 2026-11-18 | Tests share one PostgreSQL container, with a database per test class                     | #48      |
+| 7.1     | 2026-11-18 | Entity ↔ DTO mappers live in the `domain` layer                                          | #40      |
+| 7.2     | 2026-11-24 | Test classes run in several JVMs, each with its own PostgreSQL container, from `target/` | #74      |

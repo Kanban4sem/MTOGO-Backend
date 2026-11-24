@@ -9,9 +9,9 @@ import java.util.Set;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
- * One PostgreSQL container for the whole test run. It starts the first time a
- * test needs a database and is removed by Testcontainers when the JVM exits, so
- * no Spring context ever outlives the database it points at.
+ * One PostgreSQL container for each test JVM that Surefire forks. It starts the
+ * first time a test needs a database and is removed by Testcontainers when the
+ * JVM exits, so no Spring context ever outlives the database it points at.
  */
 public final class SharedPostgres
 {
