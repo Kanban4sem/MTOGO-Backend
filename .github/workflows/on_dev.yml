@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  trunk-worthy:
-    name: Check trunk worthiness
+  wrapup:
+    name: Fast checks on issue branches
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -35,4 +35,4 @@ jobs:
       - name: Set up and verify runner environment
         uses: ./.github/actions/prep-runner
         with:
-          verify: gh insitu run trunk-worthy
+          verify: gh insitu run wrapup

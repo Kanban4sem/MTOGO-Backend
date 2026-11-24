@@ -137,6 +137,18 @@ waves:
       - repo-gitconfig
       - install-npm-tools
 
+  # Run by the wrapup workflow on issue branches. The pre-commit hook has already
+  # run trunk-worthy, Maven build and tests included, so the workflow repeats only
+  # the fast checks and gh tt wrapup runs Maven once.
+  - id: wrapup
+    name: Fast checks on issue branches
+    parallel: true
+    checks:
+      - cspell
+      - markdownlint
+      - prettier
+      - java-format-check
+
   - id: trunk-worthy
     name: Minimum quality checks before commit
     parallel: true
