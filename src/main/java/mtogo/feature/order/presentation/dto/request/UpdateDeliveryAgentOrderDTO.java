@@ -1,10 +1,8 @@
 package mtogo.feature.order.presentation.dto.request;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import mtogo.feature.order.domain.DeliveryAction;
 
-public record UpdateDeliveryAgentOrderDTO(@NotNull @Pattern(regexp = "TAKE|PICK_UP|DELIVER") @Schema(allowableValues =
+public record UpdateDeliveryAgentOrderDTO(@NotNull DeliveryAction action)
 {
-        "TAKE", "PICK_UP", "DELIVER"}) String action){
 }

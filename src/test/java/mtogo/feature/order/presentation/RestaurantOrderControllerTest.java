@@ -77,46 +77,35 @@ class RestaurantOrderControllerTest extends OrderTestData
         }
     }
 
-    @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/order/restaurant-order-controller/update-status-transition.csv", numLinesToSkip = 1)
-    @DisplayName("Update status - only restaurant transitions allowed by the order lifecycle are recorded")
-    void updateStatusTransition(String currentStatus, String requestedStatus, int expected, String reason)
+    @ParameterizedTest(name = "[{index}] {2}")
+    @CsvFileSource(resources = "/testcases/order/restaurant-order-controller/update-status-fields.csv", numLinesToSkip = 1)
+    @DisplayName("Update status - accepts only a status a restaurant sets and records it")
+    void updateStatusFields(String status, int expected, String reason)
     {
         long restaurantId = restaurant("Kebab restaurant", true);
         long requesterId = restaurantUser(restaurantId);
         long orderId = place(customer(), item(menu(restaurantId, "Lunch", true), "Kebab", true));
-        if (currentStatus.equals("ACCEPTED"))
-        {
-            patch(request(port, requesterId), orderId, "{\"status\":\"ACCEPTED\"}").then().statusCode(200);
-        } else if (!currentStatus.equals("PLACED"))
-        {
-            jdbc.update("UPDATE orders SET status = ? WHERE id = ?", currentStatus, orderId);
-        }
-        List<String> previousHistory = orderHistory(orderId);
-        String body = switch (requestedStatus)
+        String body = switch (status)
         {
             case "MISSING" -> "{}";
+            // 1 is the position of ACCEPTED, so a number read as a position would succeed.
             case "NUMERIC" -> "{\"status\":1}";
-            default -> "{\"status\":\"" + requestedStatus + "\"}";
+            default -> "{\"status\":\"" + status + "\"}";
         };
 
         var response = patch(request(port, requesterId), orderId, body).then().statusCode(expected);
         if (expected == 200)
         {
-            OrderStatus status = OrderStatus.valueOf(requestedStatus);
-            response.body("status", is(requestedStatus)).body("statusName.danish", is(status.getDanishName()))
-                    .body("statusName.english", is(status.getEnglishName()));
-            assertEquals(requestedStatus, readStatus(orderId));
-            List<String> history = orderHistory(orderId);
-            assertEquals(previousHistory.size() + 1, history.size());
-            assertEquals(previousHistory, history.subList(0, previousHistory.size()));
-            assertEquals(requestedStatus, history.getLast());
-            request(port, requesterId).get(ORDERS_PATH).then().statusCode(200).body("[0].status", is(requestedStatus));
+            OrderStatus requested = OrderStatus.valueOf(status);
+            response.body("status", is(status)).body("statusName.danish", is(requested.getDanishName()))
+                    .body("statusName.english", is(requested.getEnglishName()));
+            assertEquals(status, readStatus(orderId));
+            assertEquals(List.of("PLACED", status), orderHistory(orderId));
         } else
         {
             response.contentType("application/problem+json").body("status", is(expected));
-            assertEquals(currentStatus, readStatus(orderId));
-            assertEquals(previousHistory, orderHistory(orderId));
+            assertEquals("PLACED", readStatus(orderId));
+            assertEquals(List.of("PLACED"), orderHistory(orderId));
         }
     }
 
@@ -149,9 +138,7 @@ class RestaurantOrderControllerTest extends OrderTestData
 
     private long restaurantUser(long restaurantId)
     {
-        long id = user("restaurant@example.test", "RESTAURANT");
-        jdbc.update("UPDATE users SET restaurant_id = ? WHERE id = ?", restaurantId, id);
-        return id;
+        return restaurantUser("restaurant@example.test", restaurantId);
     }
 
     private long place(long customerId, long itemId)
@@ -161,17 +148,6 @@ class RestaurantOrderControllerTest extends OrderTestData
                         new PlaceOrderDTO(List.of(new PlaceOrderDTO.OrderLine(itemId, 2)),
                                 new PlaceOrderDTO.DeliveryAddress("Test Street 10", "1165", "Copenhagen"), "tok_visa"))
                 .id();
-    }
-
-    private String readStatus(long orderId)
-    {
-        return jdbc.queryForObject("SELECT status FROM orders WHERE id = ?", String.class, orderId);
-    }
-
-    private List<String> orderHistory(long orderId)
-    {
-        return jdbc.queryForList("SELECT status FROM order_status_changes WHERE order_id = ? ORDER BY id", String.class,
-                orderId);
     }
 
     private RequestSpecification request(int serverPort, long userId)

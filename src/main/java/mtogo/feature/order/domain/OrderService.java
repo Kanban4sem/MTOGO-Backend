@@ -63,8 +63,9 @@ public class OrderService
         items.values().forEach(OrderService::requireOrderable);
 
         // Reusing an address must see the street and postal area from the same update.
+        // An authenticated customer always exists.
         User customer = request.useDefaultAddress() || request.saveAsDefault()
-                ? users.findByIdForUpdate(customerId).orElseThrow(() -> new NotFoundException("Customer not found"))
+                ? users.findByIdForUpdate(customerId).orElseThrow()
                 : users.getReferenceById(customerId);
         Address address = request.useDefaultAddress()
                 ? copyDefaultAddress(customer)
@@ -106,7 +107,7 @@ public class OrderService
     @Transactional(readOnly = true)
     public List<RestaurantOrderDTO> getRestaurantOrders(Long userId)
     {
-        return orders.findAllByRestaurantIdOrderByIdDesc(requireRestaurantId(userId)).stream()
+        return orders.findAllByRestaurantIdOrderByIdDesc(getRestaurantId(userId)).stream()
                 .map(mapper::toRestaurantOrderDTO).toList();
     }
 
@@ -114,17 +115,13 @@ public class OrderService
     public RestaurantOrderDTO updateRestaurantOrderStatus(Long userId, Long orderId,
             UpdateRestaurantOrderStatusDTO request)
     {
-        OrderStatus status = switch (request.status())
+        if (!request.status().isSetByRestaurant())
         {
-            case "ACCEPTED" -> OrderStatus.ACCEPTED;
-            case "REJECTED" -> OrderStatus.REJECTED;
-            case "READY" -> OrderStatus.READY;
-            case null, default ->
-                throw new BadRequestException("A restaurant can only set an order to ACCEPTED, REJECTED or READY");
-        };
-        Order order = orders.findByIdAndRestaurantId(orderId, requireRestaurantId(userId))
+            throw new BadRequestException("A restaurant cannot set an order to " + request.status());
+        }
+        Order order = orders.findByIdAndRestaurantId(orderId, getRestaurantId(userId))
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
-        order.moveTo(status);
+        order.moveTo(request.status());
         return mapper.toRestaurantOrderDTO(order);
     }
 
@@ -143,10 +140,9 @@ public class OrderService
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
         switch (request.action())
         {
-            case "TAKE" -> order.assignDeliveryAgent(users.getReferenceById(agentId));
-            case "PICK_UP" -> moveDeliveryOrder(order, agentId, OrderStatus.PICKED_UP);
-            case "DELIVER" -> moveDeliveryOrder(order, agentId, OrderStatus.DELIVERED);
-            case null, default -> throw new BadRequestException("Invalid delivery action");
+            case TAKE -> order.assignDeliveryAgent(users.getReferenceById(agentId));
+            case PICK_UP -> moveDeliveryOrder(order, agentId, OrderStatus.PICKED_UP);
+            case DELIVER -> moveDeliveryOrder(order, agentId, OrderStatus.DELIVERED);
         }
         return mapper.toDeliveryAgentOrderDTO(order, agentId);
     }
@@ -160,10 +156,11 @@ public class OrderService
         order.moveTo(status);
     }
 
-    private Long requireRestaurantId(Long userId)
+    // Every restaurant user has a restaurant: the role cannot be assigned without
+    // one.
+    private Long getRestaurantId(Long userId)
     {
-        return users.findById(userId).map(User::getRestaurant).map(Restaurant::getId)
-                .orElseThrow(() -> new NotFoundException("No restaurant is assigned to this account"));
+        return users.getReferenceById(userId).getRestaurant().getId();
     }
 
     private static void validateDeliveryAddressChoice(PlaceOrderDTO request)

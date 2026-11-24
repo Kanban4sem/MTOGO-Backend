@@ -40,6 +40,42 @@ public abstract class OrderTestData extends RestaurantTestData
         return user("customer@example.test", "CUSTOMER");
     }
 
+    protected long restaurantUser(String email, long restaurantId)
+    {
+        long id = user(email, "RESTAURANT");
+        jdbc.update("UPDATE users SET restaurant_id = ? WHERE id = ?", restaurantId, id);
+        return id;
+    }
+
+    protected long deliveryAgent(String name)
+    {
+        return user(name + "@example.test", "DELIVERY_AGENT");
+    }
+
+    // Moves an order straight to a status and delivery agent, without the status
+    // change a real move records.
+    protected void setOrder(long orderId, String status, Long deliveryAgentId)
+    {
+        jdbc.update("UPDATE orders SET status = ?, delivery_agent_id = ? WHERE id = ?", status, deliveryAgentId,
+                orderId);
+    }
+
+    protected String readStatus(long orderId)
+    {
+        return jdbc.queryForObject("SELECT status FROM orders WHERE id = ?", String.class, orderId);
+    }
+
+    protected Long readDeliveryAgent(long orderId)
+    {
+        return jdbc.queryForObject("SELECT delivery_agent_id FROM orders WHERE id = ?", Long.class, orderId);
+    }
+
+    protected List<String> orderHistory(long orderId)
+    {
+        return jdbc.queryForList("SELECT status FROM order_status_changes WHERE order_id = ? ORDER BY id", String.class,
+                orderId);
+    }
+
     protected long item(long menuId, String name, String price)
     {
         long id = item(menuId, name, true);

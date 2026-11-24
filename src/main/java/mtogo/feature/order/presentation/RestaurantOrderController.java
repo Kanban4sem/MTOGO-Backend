@@ -34,7 +34,7 @@ public class RestaurantOrderController
     @GetMapping
     @PreAuthorize("hasRole('RESTAURANT')")
     @Operation(summary = "List the authenticated restaurant's orders, newest first")
-    @ApiResponse(responseCode = "404", description = "Ordering is disabled or the account has no restaurant")
+    @ApiResponse(responseCode = "404", description = "Ordering is disabled")
     public List<RestaurantOrderDTO> getAll(Principal principal)
     {
         return orders.getRestaurantOrders(Long.valueOf(principal.getName()));

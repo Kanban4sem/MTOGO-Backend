@@ -25,6 +25,15 @@ public enum OrderStatus
         return englishName;
     }
 
+    /**
+     * Whether a restaurant user sets this status. The other statuses are set when
+     * an order is placed or by a delivery agent.
+     */
+    public boolean isSetByRestaurant()
+    {
+        return this == ACCEPTED || this == REJECTED || this == READY;
+    }
+
     public boolean canMoveTo(OrderStatus next)
     {
         return switch (this)

@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import mtogo.feature.order.OrderTestData;
+import mtogo.feature.order.domain.OrderStatus;
 import mtogo.feature.order.domain.OrderService;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.request.UpdateRestaurantOrderStatusDTO;
@@ -40,57 +41,42 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
     OrderService orders;
 
     @Test
-    @DisplayName("Delivery - a ready order can be taken, picked up and delivered by one agent, who sees its status names, lines and total")
+    @DisplayName("Delivery - one agent takes, picks up and delivers a ready order and sees its status names, lines and total")
     void deliverReadyOrder()
     {
         long restaurantId = restaurant("Bakery", true);
-        long restaurantUser = user("restaurant@example.test", "RESTAURANT");
-        jdbc.update("UPDATE users SET restaurant_id = ? WHERE id = ?", restaurantId, restaurantUser);
-        long agent = agent("first");
-        long otherAgent = agent("second");
+        long restaurantUser = restaurantUser("restaurant@example.test", restaurantId);
+        long agent = deliveryAgent("first");
         long orderId = place(restaurantId);
-        orders.updateRestaurantOrderStatus(restaurantUser, orderId, new UpdateRestaurantOrderStatusDTO("ACCEPTED"));
-        request(agent).get(PATH).then().statusCode(200).body("size()", is(0));
+        orders.updateRestaurantOrderStatus(restaurantUser, orderId,
+                new UpdateRestaurantOrderStatusDTO(OrderStatus.ACCEPTED));
+        orders.updateRestaurantOrderStatus(restaurantUser, orderId,
+                new UpdateRestaurantOrderStatusDTO(OrderStatus.READY));
 
-        orders.updateRestaurantOrderStatus(restaurantUser, orderId, new UpdateRestaurantOrderStatusDTO("READY"));
         request(agent).get(PATH).then().statusCode(200).body("id", contains((int) orderId))
                 .body("[0].status", is("READY")).body("[0].statusName.danish", is("Klar til afhentning"))
                 .body("[0].statusName.english", is("Ready for pickup")).body("[0].assignedToMe", is(false))
                 .body("[0]", not(hasKey("isAssignedToMe"))).body("[0]", not(hasKey("deliveryCity")))
-                .body("[0].restaurantName", is("Bakery")).body("[0].total", is(25.00f)).body("[0].lines.size()", is(1))
-                .body("[0].lines[0].name", is("Bun")).body("[0].lines[0].unitPrice", is(12.50f))
-                .body("[0].lines[0].quantity", is(2)).body("[0].lines[0].subtotal", is(25.00f))
-                .body("[0].deliveryAddress.street", is("Test Street 10"))
+                .body("[0].restaurantId", is((int) restaurantId)).body("[0].restaurantName", is("Bakery"))
+                .body("[0].total", is(25.00f)).body("[0].lines.size()", is(1)).body("[0].lines[0].name", is("Bun"))
+                .body("[0].lines[0].unitPrice", is(12.50f)).body("[0].lines[0].quantity", is(2))
+                .body("[0].lines[0].subtotal", is(25.00f)).body("[0].deliveryAddress.street", is("Test Street 10"))
                 .body("[0].deliveryAddress.postalCode", is("1165")).body("[0].deliveryAddress.city", is("Copenhagen"))
                 .body("[0].deliveryAddress.country", is("Denmark"));
-
-        patch(request(agent), orderId, "TAKE").then().statusCode(200).body("status", is("READY"))
-                .body("statusName.danish", is("Klar til afhentning")).body("statusName.english", is("Ready for pickup"))
-                .body("assignedToMe", is(true)).body("$", not(hasKey("isAssignedToMe")))
+        patch(request(agent), orderId, "TAKE").then().statusCode(200).body("id", is((int) orderId))
+                .body("status", is("READY")).body("statusName.danish", is("Klar til afhentning"))
+                .body("statusName.english", is("Ready for pickup")).body("assignedToMe", is(true))
+                .body("$", not(hasKey("isAssignedToMe"))).body("$", not(hasKey("deliveryCity")))
                 .body("deliveryAddress.street", is("Test Street 10")).body("lines[0].name", is("Bun"))
-                .body("total", is(25.00f)).body("$", not(hasKey("deliveryCity")));
-        request(agent).get(PATH).then().statusCode(200).body("[0].assignedToMe", is(true))
-                .body("[0].lines[0].name", is("Bun")).body("[0].total", is(25.00f));
-        request(otherAgent).get(PATH).then().statusCode(200).body("size()", is(0));
-        patch(request(otherAgent), orderId, "TAKE").then().statusCode(409);
-        patch(request(otherAgent), orderId, "PICK_UP").then().statusCode(404);
-        patch(request(agent), orderId, "DELIVER").then().statusCode(409);
+                .body("total", is(25.00f));
         patch(request(agent), orderId, "PICK_UP").then().statusCode(200).body("status", is("PICKED_UP"))
                 .body("statusName.danish", is("Afhentet")).body("statusName.english", is("Picked up"));
-        request(agent).get(PATH).then().statusCode(200).body("[0].status", is("PICKED_UP"))
-                .body("[0].statusName.danish", is("Afhentet")).body("[0].statusName.english", is("Picked up"));
-        patch(request(otherAgent), orderId, "DELIVER").then().statusCode(404);
         patch(request(agent), orderId, "DELIVER").then().statusCode(200).body("status", is("DELIVERED"))
-                .body("statusName.danish", is("Leveret")).body("statusName.english", is("Delivered"));
-        patch(request(agent), orderId, "DELIVER").then().statusCode(409);
-        request(agent).get(PATH).then().statusCode(200).body("[0].status", is("DELIVERED"))
-                .body("[0].statusName.danish", is("Leveret")).body("[0].statusName.english", is("Delivered"));
-        request(otherAgent).get(PATH).then().statusCode(200).body("size()", is(0));
+                .body("statusName.danish", is("Leveret")).body("statusName.english", is("Delivered"))
+                .body("assignedToMe", is(true));
 
-        assertEquals(agent,
-                jdbc.queryForObject("SELECT delivery_agent_id FROM orders WHERE id = ?", Long.class, orderId));
-        assertEquals(List.of("PLACED", "ACCEPTED", "READY", "PICKED_UP", "DELIVERED"), jdbc.queryForList(
-                "SELECT status FROM order_status_changes WHERE order_id = ? ORDER BY id", String.class, orderId));
+        assertEquals(agent, readDeliveryAgent(orderId));
+        assertEquals(List.of("PLACED", "ACCEPTED", "READY", "PICKED_UP", "DELIVERED"), orderHistory(orderId));
     }
 
     @Test
@@ -99,8 +85,8 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
     {
         long orderId = place(restaurant("Bakery", true));
         jdbc.update("UPDATE orders SET status = 'READY' WHERE id = ?", orderId);
-        long firstAgent = agent("first");
-        long secondAgent = agent("second");
+        long firstAgent = deliveryAgent("first");
+        long secondAgent = deliveryAgent("second");
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
         try (var executor = Executors.newFixedThreadPool(2))
@@ -137,6 +123,10 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
             case "MISSING_ACTION" ->
                 requester.contentType("application/json").body("{}").patch(PATH + "/{id}", orderId);
             case "INVALID_ACTION" -> patch(requester, orderId, "READY");
+            case "LOWERCASE_ACTION" -> patch(requester, orderId, "take");
+            // 0 is the position of TAKE, so a number read as a position would answer 409.
+            case "NUMERIC_ACTION" ->
+                requester.contentType("application/json").body("{\"action\":0}").patch(PATH + "/{id}", orderId);
             default -> patch(requester, orderId, "TAKE");
         };
         result.then().statusCode(expected);
@@ -154,11 +144,6 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
                         new PlaceOrderDTO(List.of(new PlaceOrderDTO.OrderLine(itemId, 2)),
                                 new PlaceOrderDTO.DeliveryAddress("Test Street 10", "1165", "Copenhagen"), "tok_visa"))
                 .id();
-    }
-
-    private long agent(String name)
-    {
-        return user(name + "@example.test", "DELIVERY_AGENT");
     }
 
     private RequestSpecification request(long userId)

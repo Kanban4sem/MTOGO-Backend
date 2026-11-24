@@ -52,6 +52,10 @@ _Avoid_: State, stage
 The Danish or English name of an order status that customers, restaurant users and delivery agents read, such as "Klar til afhentning" or "Ready for pickup".
 _Avoid_: Label, display name, status text
 
+**Delivery action**:
+What a delivery agent does to an order: take a ready order no one has taken, pick up their order at the restaurant, or deliver it.
+_Avoid_: Claim, accept, collect
+
 **Order channel**:
 The way an order reached MTOGO: website, app or telephone.
 _Avoid_: Source, platform, origin

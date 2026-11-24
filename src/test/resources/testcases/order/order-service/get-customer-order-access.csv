@@ -1,0 +1,4 @@
+order,expected,reason
+OWN,ACCEPT,"DT: a customer can read their own order"
+OTHER,NotFoundException,"DT: another customer's order looks like an order that does not exist"
+UNKNOWN,NotFoundException,"DT: an order that does not exist is not found"

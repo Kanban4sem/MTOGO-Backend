@@ -1,0 +1,10 @@
+status,assignedTo,expected,reason
+PLACED,NONE,NOT_LISTED,"DT: a placed order is not ready for delivery"
+ACCEPTED,NONE,NOT_LISTED,"DT: an accepted order is not ready for delivery"
+REJECTED,NONE,NOT_LISTED,"DT: a rejected order is never delivered"
+READY,NONE,LISTED,"DT: a ready order no one has taken is listed"
+READY,ME,LISTED,"DT: a ready order the agent has taken is listed"
+PICKED_UP,ME,LISTED,"DT: a picked-up order the agent has taken is listed"
+DELIVERED,ME,LISTED,"DT: a delivered order the agent has taken is listed"
+READY,OTHER,NOT_LISTED,"DT: a ready order another agent has taken is not listed"
+PICKED_UP,OTHER,NOT_LISTED,"DT: a picked-up order another agent has taken is not listed"

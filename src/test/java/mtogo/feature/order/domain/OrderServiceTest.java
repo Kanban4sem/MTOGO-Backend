@@ -8,12 +8,18 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 import mtogo.exceptions.ApiException;
 import mtogo.feature.order.OrderTestData;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
+import mtogo.feature.order.presentation.dto.request.UpdateDeliveryAgentOrderDTO;
+import mtogo.feature.order.presentation.dto.request.UpdateRestaurantOrderStatusDTO;
+import mtogo.feature.order.presentation.dto.response.CustomerOrderDTO;
 import mtogo.feature.order.presentation.dto.response.DeliveryAddressDTO;
+import mtogo.feature.order.presentation.dto.response.DeliveryAgentOrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderLineDTO;
+import mtogo.feature.order.presentation.dto.response.RestaurantOrderDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -93,7 +99,9 @@ class OrderServiceTest extends OrderTestData
             boolean saveAsDefault, String paymentToken, String expected, String reason)
     {
         long customerId = customer();
-        String originalStreet = profileAddress.equals("complete") ? "Old Street 1" : null;
+        String originalStreet = profileAddress.equals("complete") || profileAddress.equals("notDefault")
+                ? "Old Street 1"
+                : null;
         if (!profileAddress.equals("none"))
         {
             long postalCodeId = jdbc.queryForObject("""
@@ -101,8 +109,8 @@ class OrderServiceTest extends OrderTestData
                     RETURNING id
                     """, Long.class);
             long addressId = jdbc.queryForObject(
-                    "INSERT INTO addresses (street, postal_code_id) VALUES (?, ?) RETURNING id", Long.class,
-                    originalStreet, postalCodeId);
+                    "INSERT INTO addresses (street, postal_code_id, is_default) VALUES (?, ?, ?) RETURNING id",
+                    Long.class, originalStreet, postalCodeId, !profileAddress.equals("notDefault"));
             jdbc.update(
                     "UPDATE user_profiles SET address_id = ? WHERE id = (SELECT profile_id FROM users WHERE id = ?)",
                     addressId, customerId);
@@ -223,6 +231,138 @@ class OrderServiceTest extends OrderTestData
                 WHERE o.id = ?
                 """, result.id()), allOf(hasEntry("street", (Object) "Nørregade 10"), hasEntry("code", (Object) "1165"),
                 hasEntry("city", (Object) "København K"), hasEntry("country", (Object) "Denmark")));
+    }
+
+    @ParameterizedTest(name = "[{index}] {2}")
+    @CsvFileSource(resources = "/testcases/order/order-service/get-customer-order-access.csv", numLinesToSkip = 1)
+    @DisplayName("Get customer order - a customer can read only their own order")
+    void getCustomerOrderChecksOwnership(String order, String expected, String reason)
+    {
+        long customerId = customer();
+        long ownerId = order.equals("OTHER") ? user("other@example.test", "CUSTOMER") : customerId;
+        long placedId = order(ownerId, restaurant("Requested", true));
+        long orderId = order.equals("UNKNOWN") ? placedId + 1 : placedId;
+
+        if (expected.equals("ACCEPT"))
+        {
+            CustomerOrderDTO result = orders.getCustomerOrder(customerId, orderId);
+            assertThat(result.id(), is(orderId));
+        } else
+        {
+            ApiException exception = assertThrows(ApiException.class,
+                    () -> orders.getCustomerOrder(customerId, orderId));
+            assertThat(exception.getClass().getSimpleName(), is(expected));
+        }
+    }
+
+    @ParameterizedTest(name = "[{index}] {4}")
+    @CsvFileSource(resources = "/testcases/order/order-service/update-restaurant-order-status-transition.csv", numLinesToSkip = 1)
+    @DisplayName("Update restaurant order status - only statuses a restaurant sets, on its own order and allowed by the order lifecycle, are recorded")
+    void updateRestaurantOrderStatusFollowsLifecycle(String order, OrderStatus currentStatus,
+            OrderStatus requestedStatus, String expected, String reason)
+    {
+        long restaurantId = restaurant("Requested", true);
+        long requesterId = restaurantUser("restaurant@example.test",
+                order.equals("OTHER") ? restaurant("Other", true) : restaurantId);
+        long placedId = order(customer(), restaurantId);
+        setOrder(placedId, currentStatus.name(), null);
+        long orderId = order.equals("UNKNOWN") ? placedId + 1 : placedId;
+        List<String> previousHistory = orderHistory(placedId);
+        UpdateRestaurantOrderStatusDTO request = new UpdateRestaurantOrderStatusDTO(requestedStatus);
+
+        if (expected.equals("ACCEPT"))
+        {
+            RestaurantOrderDTO result = orders.updateRestaurantOrderStatus(requesterId, orderId, request);
+            assertThat(result.status(), is(requestedStatus));
+            assertThat(readStatus(orderId), is(requestedStatus.name()));
+            assertThat(orderHistory(orderId), is(append(previousHistory, requestedStatus.name())));
+        } else
+        {
+            ApiException exception = assertThrows(ApiException.class,
+                    () -> orders.updateRestaurantOrderStatus(requesterId, orderId, request));
+            assertThat(exception.getClass().getSimpleName(), is(expected));
+            assertThat(readStatus(placedId), is(currentStatus.name()));
+            assertThat(orderHistory(placedId), is(previousHistory));
+        }
+    }
+
+    @ParameterizedTest(name = "[{index}] {4}")
+    @CsvFileSource(resources = "/testcases/order/order-service/update-delivery-agent-order-action.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Update delivery agent order - each delivery action depends on the order status and on who has taken the order")
+    void updateDeliveryAgentOrderChecksStatusAndAgent(DeliveryAction action, OrderStatus status, String assignedTo,
+            String expected, String reason)
+    {
+        long agentId = deliveryAgent("me");
+        long otherAgentId = deliveryAgent("other");
+        long placedId = order(customer(), restaurant("Requested", true));
+        Long assignedAgentId = assignedAgent(assignedTo, agentId, otherAgentId);
+        if (status != null)
+        {
+            setOrder(placedId, status.name(), assignedAgentId);
+        }
+        long orderId = status == null ? placedId + 1 : placedId;
+        UpdateDeliveryAgentOrderDTO request = new UpdateDeliveryAgentOrderDTO(action);
+
+        if (expected.equals("ACCEPT"))
+        {
+            DeliveryAgentOrderDTO result = orders.updateDeliveryAgentOrder(agentId, orderId, request);
+            OrderStatus expectedStatus = switch (action)
+            {
+                case TAKE -> OrderStatus.READY;
+                case PICK_UP -> OrderStatus.PICKED_UP;
+                case DELIVER -> OrderStatus.DELIVERED;
+            };
+            assertThat(result.status(), is(expectedStatus));
+            assertThat(result.isAssignedToMe(), is(true));
+            assertThat(readStatus(orderId), is(expectedStatus.name()));
+            assertThat(readDeliveryAgent(orderId), is(agentId));
+        } else
+        {
+            String previousStatus = readStatus(placedId);
+            ApiException exception = assertThrows(ApiException.class,
+                    () -> orders.updateDeliveryAgentOrder(agentId, orderId, request));
+            assertThat(exception.getClass().getSimpleName(), is(expected));
+            assertThat(readStatus(placedId), is(previousStatus));
+            assertThat(readDeliveryAgent(placedId), is(assignedAgentId));
+        }
+    }
+
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/order/order-service/get-delivery-agent-orders-visibility.csv", numLinesToSkip = 1)
+    @DisplayName("Get delivery agent orders - lists ready orders no one has taken and every order the agent has taken")
+    void getDeliveryAgentOrdersShowsAvailableAndOwnOrders(OrderStatus status, String assignedTo, String expected,
+            String reason)
+    {
+        long agentId = deliveryAgent("me");
+        long otherAgentId = deliveryAgent("other");
+        long orderId = order(customer(), restaurant("Requested", true));
+        Long assignedAgentId = assignedAgent(assignedTo, agentId, otherAgentId);
+        setOrder(orderId, status.name(), assignedAgentId);
+
+        List<Long> listed = orders.getDeliveryAgentOrders(agentId).stream().map(DeliveryAgentOrderDTO::id).toList();
+
+        assertThat(listed.contains(orderId), is(expected.equals("LISTED")));
+    }
+
+    private static Long assignedAgent(String assignedTo, long agentId, long otherAgentId)
+    {
+        return switch (assignedTo)
+        {
+            case "ME" -> agentId;
+            case "OTHER" -> otherAgentId;
+            default -> null;
+        };
+    }
+
+    private static List<String> append(List<String> history, String status)
+    {
+        return Stream.concat(history.stream(), Stream.of(status)).toList();
+    }
+
+    private long order(long customerId, long restaurantId)
+    {
+        long itemId = item(menu(restaurantId, "Lunch", true), "Meal", true);
+        return orders.place(customerId, placeOrder(List.of(new PlaceOrderDTO.OrderLine(itemId, 1)), "tok_visa")).id();
     }
 
     private static PlaceOrderDTO placeOrder(List<PlaceOrderDTO.OrderLine> lines, String paymentToken)

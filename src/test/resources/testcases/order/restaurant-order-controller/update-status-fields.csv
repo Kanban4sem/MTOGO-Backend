@@ -1,0 +1,10 @@
+status,expected,reason
+ACCEPTED,200,"EP: a status a restaurant sets is accepted"
+PLACED,400,"EP: Placed is set only when an order is placed"
+PICKED_UP,400,"EP: Picked up is set only by a delivery agent"
+DELIVERED,400,"EP: Delivered is set only by a delivery agent"
+COOKING,400,"EP: an unknown status is refused"
+accepted,400,"EP: a status in lowercase is refused"
+NUMERIC,400,"EP: a number is refused, even the position of Accepted"
+MISSING,400,"EP: the status is required"
+READY,409,"EP: a move the order lifecycle does not allow maps to 409"
