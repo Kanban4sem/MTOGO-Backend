@@ -1,10 +1,10 @@
 # Place and pay for an order
 
-**Version:** 3.0 · **Date:** 2026-11-24 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
+**Version:** 4.0 · **Date:** 2026-11-25 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
 
 ## Acceptance criteria
 
-Copied from #15 and #66. The issues are the source: change the issue first, then this copy.
+Copied from #15, #66 and #46. The issues are the source: change the issue first, then this copy.
 
 From #15:
 
@@ -21,6 +21,11 @@ From #66:
 - [x] The delivery agent's orders include the order lines and the order total
 - [x] The delivery agent's orders no longer include `deliveryCity`, and still return `assignedToMe`, backed by the Java field `isAssignedToMe`
 - [x] Endpoint tests cover the status names and the new fields on every order response
+
+From #46:
+
+- [x] Placing an order returns a `Location` header with the order's URL
+- [x] A GET on that URL returns the placed order
 
 ## Behaviour
 
@@ -49,6 +54,7 @@ From #66:
 23. A customer sees the delivery address recorded on each of their orders in their order list and order detail, not their current profile default.
 24. A delivery agent sees the order lines and the order total of every order they can see: every ready, unassigned order and every order assigned to them.
 25. A delivery agent's order gives the city only as part of the delivery address, and still tells the agent whether the order is assigned to them.
+26. When a customer places an order, the response gives them the order's URL in the `Location` header. The customer can read the order by sending an authenticated GET to that URL.
 
 ## Implementation decisions
 
@@ -57,7 +63,7 @@ From #66:
 - **Flow:** one request validates the input, loads the menu items, checks unknown and repeated menu items, then that all items come from one restaurant, then that every item is orderable, calculates the order total, charges the IPaymentProvider and saves the order in one transaction. A declined payment throws before anything is saved.
 - **Order status:** OrderStatus is an enum with English codes PLACED, ACCEPTED, REJECTED, READY, PICKED_UP and DELIVERED. The database and the place-order response use these codes. Order has the current status and a `moveTo(status)` method that applies the lifecycle and appends an OrderStatusChange with the time it was set. Placing an order records the PLACED entry, which is the time the order was placed. No endpoint moves an order in this issue; #16 and #17 call `moveTo`.
 - **Channel:** OrderChannel is an enum with WEBSITE, APP and TELEPHONE. The backend sets WEBSITE; the client does not send it.
-- **API:** `POST /v1/orders` with PlaceOrderDTO: `lines` (array of `menuItemId`, `quantity`), `deliveryAddress` (`street`, `postalCode`, `city`) and `paymentToken`. Bean Validation: 1–20 lines, a positive menu item ID, quantity 1–20, street and city not blank and at most 100 characters, postal code matching exactly four digits, payment token not blank. It returns `201` with OrderDTO: `id`, `restaurantId`, `status`, `channel`, `placedAt`, `total`, `deliveryAddress` (`street`, `postalCode`, `city`, `country`) and `lines` (`menuItemId`, `name`, `unitPrice`, `quantity`, `subtotal`). No `Location` header until #46.
+- **API:** `POST /v1/orders` with PlaceOrderDTO: `lines` (array of `menuItemId`, `quantity`), `deliveryAddress` (`street`, `postalCode`, `city`) and `paymentToken`. Bean Validation: 1–20 lines, a positive menu item ID, quantity 1–20, street and city not blank and at most 100 characters, postal code matching exactly four digits, payment token not blank. It returns `201` with OrderDTO: `id`, `restaurantId`, `status`, `channel`, `placedAt`, `total`, `deliveryAddress` (`street`, `postalCode`, `city`, `country`) and `lines` (`menuItemId`, `name`, `unitPrice`, `quantity`, `subtotal`). The `Location` header contains the relative URL `/v1/customer/orders/{id}` for the order.
 - **Address selection:** `deliveryAddress` is required for manual entry. Send `useDefaultAddress: true` and omit `deliveryAddress` to reuse the saved address. Send `saveAsDefault: true` with a newly entered address to save it. Both flags default to false. Invalid combinations and a missing complete default return `400`.
 - **Errors:** ProblemDetail through the existing GlobalExceptionHandler. `400` for invalid input, unknown or repeated menu items and menu items from more than one restaurant. `401` without a valid token. `402` for a declined payment, from a new PaymentRequiredException with the detail "The payment was declined". `403` for users who are not customers. `404` when `orderingEnabled` is off. `409` for an unavailable item, an inactive menu or a restaurant that does not accept orders.
 - **Access:** SecurityConfig restricts `POST /v1/orders` to CUSTOMER users, and the controller declares the same with `@PreAuthorize`. The order's customer is the authenticated user, never a request field.
@@ -71,6 +77,7 @@ From #66:
 - **Mapper:** OrderMapper builds DeliveryAddressDTO, StatusNameDTO and the order lines in one place each, and every order DTO uses them.
 - **Contract:** removing `deliveryCity` and turning `statusName` into an object break the contract, so #66 ships together with Kanban4sem/MTOGO-Frontend#50. Swagger describes StatusNameDTO and the new fields with `@Schema`.
 - **Flag for #66:** none of its own. The changed endpoints are already hidden behind `orderingEnabled`, which #44 removes shortly after #66.
+- **Flag for #46:** none. #44 handles removal of `orderingEnabled`.
 - **ADRs:** [ADR-001](../adr/001-feature-flags.md), [ADR-004](../adr/004-backend-structure.md) and [ADR-005](../adr/005-account-authentication.md) apply. No new ADR: the mocked payment behind an interface is decided in the MVP.
 
 ## Testing decisions
@@ -86,6 +93,7 @@ From #66:
 - **FeatureFlagControllerTest** and **FeatureFlagServiceTest**: update them so `GET /v1/features` reports `orderingEnabled`.
 - **CustomerOrderControllerTest** (#66): `get-current-status` has the columns `status`, `danishName`, `englishName`, `expected` (the HTTP status code) and `reason`, so EP over the six order statuses checks both status names on the order list and the order detail. The get-all and get-by-id happy paths change the profile default after placing and check that `deliveryAddress` is still the order's own address.
 - **OrderControllerTest** (#66): the place happy path checks `statusName.danish` and `statusName.english` for Placed.
+- **OrderControllerTest** (#46) checks the `Location` URL against the ID returned by `POST /v1/orders` and follows it with the same customer token to verify the order can be read.
 - **RestaurantOrderControllerTest** (#66): the get-all happy path checks both status names, and every successful row of `update-status-transition` checks both names of the new status on the PATCH response.
 - **DeliveryAgentOrderControllerTest** (#66): the delivery happy path checks both status names at Ready, PickedUp and Delivered across the list and the PATCH responses, `lines` and `total`, `assignedToMe`, and that `deliveryCity` is absent. The status names are a mapping, so they need no further CSV files and no domain test.
 - CSV files live under `testcases/order/<class-under-test>/`, `testcases/featureflag/feature-gate/` and `testcases/config/app-properties/`.
@@ -93,7 +101,6 @@ From #66:
 ## Out of scope
 
 - Frontend views, the basket and the preview total: Kanban4sem/MTOGO-Frontend#8. The contract and the glossary terms are in a comment on that issue.
-- Reading orders and the `Location` header: #18 and #46.
 - Moving an order after Placed: #16 and #17.
 - Storing payments, refunds and pay on delivery.
 - Validating postal codes against the real Danish list: #45.
@@ -144,6 +151,13 @@ Issue #18 exposed a Danish `statusName` alongside the status code on customer or
 - **Tests:** CustomerOrderControllerTest (`get-current-status` with both names and `expected` 200 for all six statuses on the list and the detail; the get-all and get-by-id happy paths save the delivery address as the profile default, change the default after placing and check that `deliveryAddress` is still the order's own). OrderControllerTest (the place happy path checks both names for Placed). RestaurantOrderControllerTest (the get-all happy path checks both names, and every 200 row of `update-status-transition` checks both names of the new status on the PATCH response). DeliveryAgentOrderControllerTest (the delivery happy path checks both names at Ready, PickedUp and Delivered on the list and on the TAKE, PICK_UP and DELIVER responses, `lines` and `total` before and after taking, and `assignedToMe` false on the list and true on the TAKE response. `deliveryCity` and `isAssignedToMe` are checked absent on the Ready list and the TAKE response).
 - **Follow-up:** None. The frontend side is Kanban4sem/MTOGO-Frontend#50.
 
+### Spec 4.0 - 2026-11-25 - #46
+
+- **Built:** `POST /v1/orders` includes the customer order URL in the `Location` header of its `201` response. OpenAPI and the README document the header.
+- **Deviations:** None.
+- **Tests:** The place happy path in OrderControllerTest verifies the relative URL and retrieves the order at that URL with the same customer token. Test execution is left to the developer.
+- **Follow-up:** None.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -153,3 +167,4 @@ Issue #18 exposed a Danish `statusName` alongside the status code on customer or
 | 1.2     | 2026-11-21 | Clarify where Danish status names are returned                  | #18   |
 | 2.0     | 2026-11-22 | Save, reuse and display delivery addresses                      | #61   |
 | 3.0     | 2026-11-24 | Status names in Danish and English, complete order responses    | #66   |
+| 4.0     | 2026-11-25 | Return the order URL in the `Location` header                   | #46   |

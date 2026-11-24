@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import mtogo.config.AppProperties;
 import mtogo.feature.order.OrderTestData;
@@ -36,7 +37,7 @@ class OrderControllerTest extends OrderTestData
     UserSeedService seedUsers;
 
     @Test
-    @DisplayName("Place - a customer receives the placed order with status names, prices, total, channel and delivery address")
+    @DisplayName("Place - a customer receives the order details and can read the placed order at its Location")
     void placeReturnsOrder()
     {
         long restaurantId = restaurant("Requested", true);
@@ -44,9 +45,10 @@ class OrderControllerTest extends OrderTestData
         long kebabId = item(menuId, "Kebab", "89.95");
         long breadId = item(menuId, "Bread", "25.00");
 
-        given().port(port).auth().oauth2(token(customer())).contentType(ContentType.JSON)
+        String accessToken = token(customer());
+        Response response = given().port(port).auth().oauth2(accessToken).contentType(ContentType.JSON)
                 .body(placeOrder(List.of(line(kebabId, 2), line(breadId, 1)))).post("/v1/orders").then().statusCode(201)
-                .contentType("application/json").header("Location", nullValue()).body("id", notNullValue())
+                .contentType("application/json").body("id", notNullValue())
                 .body("restaurantId", equalTo((int) restaurantId)).body("status", equalTo("PLACED"))
                 .body("statusName.danish", equalTo("Bestilt")).body("statusName.english", equalTo("Placed"))
                 .body("channel", equalTo("WEBSITE")).body("placedAt", matchesPattern("\\d{4}-\\d{2}-\\d{2}T.+Z"))
@@ -56,7 +58,14 @@ class OrderControllerTest extends OrderTestData
                 .body("deliveryAddress.country", equalTo("Denmark")).body("lines.size()", is(2))
                 .body("lines[0].menuItemId", equalTo((int) kebabId)).body("lines[0].name", equalTo("Kebab"))
                 .body("lines[0].unitPrice", equalTo(89.95f)).body("lines[0].quantity", is(2))
-                .body("lines[0].subtotal", equalTo(179.90f)).body("lines[1].menuItemId", equalTo((int) breadId));
+                .body("lines[0].subtotal", equalTo(179.90f)).body("lines[1].menuItemId", equalTo((int) breadId))
+                .extract().response();
+
+        int orderId = response.jsonPath().getInt("id");
+        String location = response.getHeader("Location");
+        assertThat(location, equalTo("/v1/customer/orders/" + orderId));
+        given().port(port).auth().oauth2(accessToken).get(location).then().statusCode(200).body("id", equalTo(orderId))
+                .body("status", equalTo("PLACED"));
     }
 
     @Test

@@ -127,6 +127,8 @@ Placing orders is behind `FEATURE_ORDERING_ENABLED`, off by default, and also ne
 
 At checkout, send `deliveryAddress` with `street`, `postalCode` and `city`. Add `saveAsDefault: true` to save it on the customer's profile after payment succeeds. To use that saved address, send `useDefaultAddress: true` and omit `deliveryAddress`. Read the current address from `GET /v1/users/me` at `profile.address`. A profile address from registration or seeding has a postal area and needs a street before it can be used as a delivery default.
 
+The `201 Created` response includes a `Location` header with the URL of the new order, `/v1/customer/orders/{id}`.
+
 With the same flags enabled, a customer can list their own orders at `GET /v1/customer/orders` and read order lines and the total at `GET /v1/customer/orders/{id}`. Both endpoints include the current status code, its Danish and English names in `statusName.danish` and `statusName.english`, and the delivery address recorded on the order. Try the flow with [customerOrders.http](src/main/resources/http/customerOrders.http) in JetBrains HTTP Client.
 
 With the same flags enabled, a restaurant can list its orders with `GET /v1/restaurant/orders`. To update one, send `PATCH /v1/restaurant/orders/{id}` with a JSON `status` of `ACCEPTED` or `REJECTED` for a placed order, or `READY` for an accepted order. The response includes the updated order. A transition that the current status does not allow returns `409`. The restaurant is determined by the authenticated account.
