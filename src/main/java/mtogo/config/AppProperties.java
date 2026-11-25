@@ -20,7 +20,8 @@ public record AppProperties(@Valid @NotNull Cors cors, @Name("auth-enabled") boo
     }
 
     // A blank password skips that role's seeded users, so none is required here.
-    public record Seed(String customerPassword, String restaurantPassword, String deliveryAgentPassword)
+    public record Seed(String customerPassword, String restaurantPassword, String deliveryAgentPassword,
+            String adminPassword)
     {
         public String passwordFor(RoleName role)
         {
@@ -29,6 +30,7 @@ public record AppProperties(@Valid @NotNull Cors cors, @Name("auth-enabled") boo
                 case CUSTOMER -> customerPassword;
                 case RESTAURANT -> restaurantPassword;
                 case DELIVERY_AGENT -> deliveryAgentPassword;
+                case ADMIN -> adminPassword;
             };
         }
     }

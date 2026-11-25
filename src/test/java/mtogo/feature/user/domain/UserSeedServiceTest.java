@@ -32,11 +32,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 class UserSeedServiceTest
 {
     private static final Map<RoleName, String> VALID_PASSWORDS = Map.of(RoleName.CUSTOMER, "Customer123!",
-            RoleName.RESTAURANT, "Restaurant123!", RoleName.DELIVERY_AGENT, "Agent123!");
+            RoleName.RESTAURANT, "Restaurant123!", RoleName.DELIVERY_AGENT, "Agent123!", RoleName.ADMIN, "Admin123!");
     private static final Map<RoleName, List<String>> SEEDED_EMAILS = Map.of(RoleName.CUSTOMER,
             List.of("customer@mtogo.example"), RoleName.RESTAURANT,
             List.of("kebab@mtogo.example", "bakery@mtogo.example"), RoleName.DELIVERY_AGENT,
-            List.of("agent@mtogo.example"));
+            List.of("agent@mtogo.example"), RoleName.ADMIN, List.of("admin@mtogo.example"));
     private static final AppProperties.Seed ALL_PASSWORDS = seedPasswords(VALID_PASSWORDS);
 
     @Autowired
@@ -57,14 +57,14 @@ class UserSeedServiceTest
         jdbc.update("DELETE FROM postal_codes");
     }
 
-    @ParameterizedTest(name = "[{index}] {4}")
+    @ParameterizedTest(name = "[{index}] {5}")
     @CsvFileSource(resources = "/testcases/user/user-seed-service/seed-roles.csv", numLinesToSkip = 1)
     @DisplayName("Seed - creates the users of each role whose seed password is set")
     void seedCreatesUsersOfRolesWithAPassword(String customerPassword, String restaurantPassword,
-            String deliveryAgentPassword, String expected, String reason)
+            String deliveryAgentPassword, String adminPassword, String expected, String reason)
     {
         Map<RoleName, String> states = Map.of(RoleName.CUSTOMER, customerPassword, RoleName.RESTAURANT,
-                restaurantPassword, RoleName.DELIVERY_AGENT, deliveryAgentPassword);
+                restaurantPassword, RoleName.DELIVERY_AGENT, deliveryAgentPassword, RoleName.ADMIN, adminPassword);
         Map<RoleName, String> rolePasswords = new EnumMap<>(RoleName.class);
         List<String> expectedEmails = new ArrayList<>();
         states.forEach((role, state) -> {
@@ -115,7 +115,7 @@ class UserSeedServiceTest
     @DisplayName("Seed - logs each role it skips because its seed password is not set")
     void seedLogsSkippedRoles(CapturedOutput output)
     {
-        seedService.seed(new AppProperties.Seed("", "   ", ""));
+        seedService.seed(new AppProperties.Seed("", "   ", "", ""));
 
         for (RoleName role : RoleName.values())
         {
@@ -143,7 +143,7 @@ class UserSeedServiceTest
         assertThat(output.getOut(), containsString(
                 "Skipped the seeded user kebab@mtogo.example, because a user with that email already exists"));
         assertThat(seededEmails(), containsInAnyOrder("customer@mtogo.example", "kebab@mtogo.example",
-                "bakery@mtogo.example", "agent@mtogo.example"));
+                "bakery@mtogo.example", "agent@mtogo.example", "admin@mtogo.example"));
     }
 
     @Test
@@ -153,10 +153,10 @@ class UserSeedServiceTest
         seedService.seed(ALL_PASSWORDS);
         List<Map<String, Object>> before = jdbc.queryForList("SELECT * FROM users ORDER BY id");
 
-        seedService.seed(new AppProperties.Seed("Changed123!", "Changed123!", "Changed123!"));
+        seedService.seed(new AppProperties.Seed("Changed123!", "Changed123!", "Changed123!", "Changed123!"));
 
         assertThat(jdbc.queryForList("SELECT * FROM users ORDER BY id"), is(before));
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM user_profiles", Long.class), is(4L));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM user_profiles", Long.class), is(5L));
         assertThat(jdbc.queryForObject("SELECT count(*) FROM addresses", Long.class), is(1L));
     }
 
@@ -170,6 +170,8 @@ class UserSeedServiceTest
         assertSeededUser("kebab@mtogo.example", "RESTAURANT", "MTOGO", "Kebab", "MTOGO Kebab");
         assertSeededUser("bakery@mtogo.example", "RESTAURANT", "MTOGO", "Bakery", "MTOGO Bakery");
         assertSeededUser("agent@mtogo.example", "DELIVERY_AGENT", "Delivery", "Agent", null);
+        assertSeededUser("admin@mtogo.example", "ADMIN", "MTOGO", "Admin", null);
+        assertThat(persistedUser("admin@mtogo.example").get("phone_number"), is("+4500000005"));
 
         Map<String, Object> address = jdbc.queryForMap("""
                 SELECT a.street, a.is_default, pc.code, pc.city, pc.country
@@ -216,7 +218,7 @@ class UserSeedServiceTest
     private static AppProperties.Seed seedPasswords(Map<RoleName, String> passwords)
     {
         return new AppProperties.Seed(passwords.get(RoleName.CUSTOMER), passwords.get(RoleName.RESTAURANT),
-                passwords.get(RoleName.DELIVERY_AGENT));
+                passwords.get(RoleName.DELIVERY_AGENT), passwords.get(RoleName.ADMIN));
     }
 
     // UNSET is what an unset variable binds to, BLANK a variable set to spaces.

@@ -4,3 +4,5 @@ kebab@mtogo.example,RESTAURANT,200,"EP: a seeded restaurant user logs in with th
 bakery@mtogo.example,RESTAURANT,200,"EP: the other seeded restaurant user logs in with the same password"
 agent@mtogo.example,DELIVERY_AGENT,200,"EP: the seeded delivery agent logs in with the delivery-agent seed password"
 kebab@mtogo.example,DELIVERY_AGENT,401,"EP: a seeded user cannot log in with another role's seed password"
+admin@mtogo.example,ADMIN,200,"EP: the seeded admin logs in with the admin seed password and gets the admin role"
+admin@mtogo.example,CUSTOMER,401,"EP: the seeded admin cannot log in with another role's seed password"

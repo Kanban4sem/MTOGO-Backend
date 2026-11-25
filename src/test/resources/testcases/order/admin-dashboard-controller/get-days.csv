@@ -1,0 +1,8 @@
+days,expected,reason
+0,400,"BVA: a period of 0 days is below the minimum of 1"
+1,200,"BVA: a period of 1 day is the minimum"
+365,200,"BVA: a period of 365 days is the maximum"
+366,400,"BVA: a period of 366 days is above the maximum"
+abc,400,"EP: a period that is not a number is refused"
+1.5,400,"EP: a period that is not a whole number is refused"
+NULL,200,"EP: without a period the dashboard uses 7 days"

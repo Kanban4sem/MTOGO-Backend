@@ -11,6 +11,7 @@ This repository holds the backend: the REST API behind the MTOGO website. The [M
 - **Orders and payment:** customers place and pay for orders. Payment goes through a mocked payment service.
 - **Order handling:** restaurants accept or reject new orders and mark them as ready. Delivery agents take ready orders, pick them up and deliver them.
 - **Tracking and notifications:** customers see the status of their orders and get a notification each time it changes.
+- **Management dashboard:** admins follow open orders, orders per 24 hours, sales and delivery times, for all of MTOGO and per restaurant.
 - **Feature flags:** the backend tells the frontend which features are switched on.
 
 What the first release contains, and the order status lifecycle, are described in the [minimum viable product](docs/minimum-viable-product.md). The words we use for the domain are in the [glossary](docs/glossary.md).

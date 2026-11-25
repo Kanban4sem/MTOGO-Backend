@@ -5,7 +5,7 @@
 
 The draft was made by Jonas and Jesper. Daniel and Dino have not approved it yet. It was moved here from `MTOGO/docs/brainstorm/domainmodel.md`. An online copy is on [mermaid.ai](https://mermaid.ai/d/4f7b7a63-16a6-4759-bc76-0d6c9b800673).
 
-The account model is split into user (User and UserProfile), address (Address and PostalCode) and role (Role) features. The account portion is now implemented for [issue #13](specs/13-add-customer-accounts.md), with five entities and one optional profile address. The restaurant feature implements Restaurant, Menu and MenuItem for [issue #14](specs/14-show-restaurants-and-their-menus.md). The order feature implements Order, OrderLine, the OrderStatus enum and the status history for [issue #15](specs/15-place-and-pay-for-an-order.md). An order line copies the menu item's name and unit price when the order is placed. Payment is mocked and not stored. The remaining domains are still drafts. PostalCode stores city, code and country; Role uses CUSTOMER, RESTAURANT or DELIVERY_AGENT. A restaurant user belongs to exactly one restaurant, and a restaurant can have several restaurant users, for [issue #52](specs/52-seed-restaurant-and-delivery-agent-users.md). Other roles have no restaurant. Restaurant addresses remain a draft relationship.
+The account model is split into user (User and UserProfile), address (Address and PostalCode) and role (Role) features. The account portion is now implemented for [issue #13](specs/13-add-customer-accounts.md), with five entities and one optional profile address. The restaurant feature implements Restaurant, Menu and MenuItem for [issue #14](specs/14-show-restaurants-and-their-menus.md). The order feature implements Order, OrderLine, the OrderStatus enum and the status history for [issue #15](specs/15-place-and-pay-for-an-order.md). An order line copies the menu item's name and unit price when the order is placed. Payment is mocked and not stored. The remaining domains are still drafts. PostalCode stores city, code and country; Role uses CUSTOMER, RESTAURANT, DELIVERY_AGENT or ADMIN, where ADMIN was added for [issue #26](specs/26-add-a-management-dashboard.md). A restaurant user belongs to exactly one restaurant, and a restaurant can have several restaurant users, for [issue #52](specs/52-seed-restaurant-and-delivery-agent-users.md). Other roles, including admins, have no restaurant. Restaurant addresses remain a draft relationship.
 
 ```mermaid
 classDiagram
@@ -158,6 +158,7 @@ class Role {
     +Long id
     +RoleName name
 }
+note for Role "CUSTOMER, RESTAURANT, DELIVERY_AGENT or ADMIN.\nOnly a restaurant manager has a restaurant. Admins have none."
 
 class DeliveryAgent {
     +Long id

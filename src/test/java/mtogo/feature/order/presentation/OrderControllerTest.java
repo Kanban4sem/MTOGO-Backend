@@ -72,7 +72,7 @@ class OrderControllerTest extends OrderTestData
     @DisplayName("Place - a seeded customer can save, reuse and replace a default without changing earlier orders")
     void seededCustomerCanSaveAndReuseDefault()
     {
-        AppProperties.Seed seed = new AppProperties.Seed("SeedCustomer123!", null, null);
+        AppProperties.Seed seed = new AppProperties.Seed("SeedCustomer123!", null, null, null);
         seedUsers.seed(seed);
         long customerId = jdbc.queryForObject("SELECT id FROM users WHERE email = 'customer@mtogo.example'",
                 Long.class);

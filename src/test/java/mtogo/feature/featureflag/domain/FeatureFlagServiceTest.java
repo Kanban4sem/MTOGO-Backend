@@ -27,7 +27,7 @@ class FeatureFlagServiceTest
     private static FeatureFlagsDTO getAllWith(boolean isAuthEnabled, boolean isOrderingEnabled)
     {
         AppProperties appProperties = new AppProperties(new AppProperties.Cors("http://localhost:5173"), isAuthEnabled,
-                isOrderingEnabled, new AppProperties.Seed("", "", ""));
+                isOrderingEnabled, new AppProperties.Seed("", "", "", ""));
         return new FeatureFlagService(appProperties).getAll();
     }
 }

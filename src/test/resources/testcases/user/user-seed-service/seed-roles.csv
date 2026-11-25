@@ -1,7 +1,8 @@
-customerPassword,restaurantPassword,deliveryAgentPassword,expected,reason
-UNSET,UNSET,UNSET,ACCEPT,"Decision table: no seed password set seeds nobody, as on prod"
-BLANK,BLANK,BLANK,ACCEPT,"Decision table: blank seed passwords seed nobody"
-SET,SET,SET,ACCEPT,"Decision table: every seed password set seeds every user"
-SET,UNSET,UNSET,ACCEPT,"Decision table: only the customer password set seeds only the customer"
-BLANK,SET,BLANK,ACCEPT,"Decision table: only the restaurant password set seeds both restaurant users"
-UNSET,BLANK,SET,ACCEPT,"Decision table: only the delivery-agent password set seeds only the delivery agent"
+customerPassword,restaurantPassword,deliveryAgentPassword,adminPassword,expected,reason
+UNSET,UNSET,UNSET,UNSET,ACCEPT,"Decision table: no seed password set seeds nobody, as on prod"
+BLANK,BLANK,BLANK,BLANK,ACCEPT,"Decision table: blank seed passwords seed nobody"
+SET,SET,SET,SET,ACCEPT,"Decision table: every seed password set seeds every user"
+SET,UNSET,UNSET,UNSET,ACCEPT,"Decision table: only the customer password set seeds only the customer"
+BLANK,SET,BLANK,UNSET,ACCEPT,"Decision table: only the restaurant password set seeds both restaurant users"
+UNSET,BLANK,SET,BLANK,ACCEPT,"Decision table: only the delivery-agent password set seeds only the delivery agent"
+UNSET,UNSET,BLANK,SET,ACCEPT,"Decision table: only the admin password set seeds only the admin"

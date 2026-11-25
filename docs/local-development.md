@@ -44,6 +44,7 @@ On every startup the backend creates these users for each role whose seed passwo
 | `kebab@mtogo.example`    | RESTAURANT     | MTOGO Kebab  | MTOGO Kebab    | `SEED_RESTAURANT_PASSWORD`     |
 | `bakery@mtogo.example`   | RESTAURANT     | MTOGO Bakery | MTOGO Bakery   | `SEED_RESTAURANT_PASSWORD`     |
 | `agent@mtogo.example`    | DELIVERY_AGENT | None         | Delivery Agent | `SEED_DELIVERY_AGENT_PASSWORD` |
+| `admin@mtogo.example`    | ADMIN          | None         | MTOGO Admin    | `SEED_ADMIN_PASSWORD`          |
 
 - **Locally:** set the variables in your `.env` and restart. Each user logs in with their email and their role's password. An unset or blank variable skips that role. A password shorter than 8 characters or longer than 72 UTF-8 bytes stops the startup. Logging in needs `FEATURE_AUTH_ENABLED`; seeding does not.
 - **On stage:** the passwords are in the droplet's `backend.env`. The team has no shared secret store yet, so ask a team member with access to the droplet.

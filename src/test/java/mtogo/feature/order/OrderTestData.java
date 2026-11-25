@@ -1,10 +1,14 @@
 package mtogo.feature.order;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import mtogo.feature.order.domain.OrderStatus;
 import mtogo.feature.restaurant.RestaurantTestData;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -60,6 +64,28 @@ public abstract class OrderTestData extends RestaurantTestData
     {
         jdbc.update("UPDATE orders SET status = ?, delivery_agent_id = ? WHERE id = ?", status, deliveryAgentId,
                 orderId);
+    }
+
+    // Inserts an order with a status change at each given time, so a test controls
+    // exactly when each step ended. The current status is the latest in the
+    // lifecycle, which an EnumMap iterates last.
+    protected long orderAt(long restaurantId, long customerId, String total, EnumMap<OrderStatus, Instant> statusTimes)
+    {
+        OrderStatus currentStatus = statusTimes.keySet().stream().reduce((earlier, later) -> later).orElseThrow();
+        long postalCodeId = jdbc.queryForObject(
+                "INSERT INTO postal_codes (code, city, country) VALUES ('1165', 'Copenhagen', 'Denmark') RETURNING id",
+                Long.class);
+        long addressId = jdbc.queryForObject(
+                "INSERT INTO addresses (street, postal_code_id, is_default) VALUES ('Test Street 10', ?, false) RETURNING id",
+                Long.class, postalCodeId);
+        long orderId = jdbc.queryForObject("""
+                INSERT INTO orders (customer_id, restaurant_id, delivery_address_id, channel, total, status)
+                VALUES (?, ?, ?, 'WEBSITE', ?, ?) RETURNING id
+                """, Long.class, customerId, restaurantId, addressId, new BigDecimal(total), currentStatus.name());
+        statusTimes.forEach((status, changedAt) -> jdbc.update(
+                "INSERT INTO order_status_changes (order_id, status, changed_at) VALUES (?, ?, ?)", orderId,
+                status.name(), Timestamp.from(changedAt)));
+        return orderId;
     }
 
     protected String readStatus(long orderId)

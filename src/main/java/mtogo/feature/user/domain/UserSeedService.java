@@ -28,7 +28,8 @@ public class UserSeedService
             SeededUser.customer("Test", "Customer", "customer@mtogo.example", "+4500000001", "2800", "Kongens Lyngby"),
             SeededUser.restaurant("MTOGO", "Kebab", "kebab@mtogo.example", "+4500000002", "MTOGO Kebab"),
             SeededUser.restaurant("MTOGO", "Bakery", "bakery@mtogo.example", "+4500000003", "MTOGO Bakery"),
-            SeededUser.deliveryAgent("Delivery", "Agent", "agent@mtogo.example", "+4500000004"));
+            SeededUser.deliveryAgent("Delivery", "Agent", "agent@mtogo.example", "+4500000004"),
+            SeededUser.admin("MTOGO", "Admin", "admin@mtogo.example", "+4500000005"));
 
     private final UserRepository users;
     private final RoleRepository roles;
@@ -132,6 +133,11 @@ public class UserSeedService
         static SeededUser deliveryAgent(String firstName, String lastName, String email, String phoneNumber)
         {
             return new SeededUser(RoleName.DELIVERY_AGENT, profileOnly(firstName, lastName, email, phoneNumber), null);
+        }
+
+        static SeededUser admin(String firstName, String lastName, String email, String phoneNumber)
+        {
+            return new SeededUser(RoleName.ADMIN, profileOnly(firstName, lastName, email, phoneNumber), null);
         }
 
         private static RegisterUserDTO profileOnly(String firstName, String lastName, String email, String phoneNumber)

@@ -26,12 +26,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
         "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef", "app.seed.customer-password=Customer123!",
-        "app.seed.restaurant-password=Restaurant123!", "app.seed.delivery-agent-password=Agent123!"})
+        "app.seed.restaurant-password=Restaurant123!", "app.seed.delivery-agent-password=Agent123!",
+        "app.seed.admin-password=Admin123!"})
 @SharedDatabase
 class UserSeedInitializerTest
 {
     private static final Map<String, String> SEED_PASSWORDS = Map.of("CUSTOMER", "Customer123!", "RESTAURANT",
-            "Restaurant123!", "DELIVERY_AGENT", "Agent123!");
+            "Restaurant123!", "DELIVERY_AGENT", "Agent123!", "ADMIN", "Admin123!");
 
     @LocalServerPort
     int port;
@@ -42,8 +43,9 @@ class UserSeedInitializerTest
     @DisplayName("Startup - seeds the users of every role whose seed password is set")
     void startupSeedsTheUsers()
     {
-        assertThat(jdbc.queryForList("SELECT email FROM users", String.class), containsInAnyOrder(
-                "customer@mtogo.example", "kebab@mtogo.example", "bakery@mtogo.example", "agent@mtogo.example"));
+        assertThat(jdbc.queryForList("SELECT email FROM users", String.class),
+                containsInAnyOrder("customer@mtogo.example", "kebab@mtogo.example", "bakery@mtogo.example",
+                        "agent@mtogo.example", "admin@mtogo.example"));
     }
 
     @ParameterizedTest(name = "[{index}] {3}")

@@ -49,7 +49,7 @@ public class SecurityConfig
                         .requestMatchers(HttpMethod.POST, "/v1/orders").hasRole("CUSTOMER")
                         .requestMatchers("/v1/customer/**").hasRole("CUSTOMER").requestMatchers("/v1/restaurant/**")
                         .hasRole("RESTAURANT").requestMatchers("/v1/delivery-agent/**").hasRole("DELIVERY_AGENT")
-                        .anyRequest().authenticated())
+                        .requestMatchers("/v1/admin/**").hasRole("ADMIN").anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) -> problems.write(request, response,
                                 HttpStatus.UNAUTHORIZED, "Authentication is required"))

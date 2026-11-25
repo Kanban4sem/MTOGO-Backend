@@ -10,13 +10,17 @@ The domain language of MTOGO. Code, issues, specs and documentation call each co
 A user with the customer role, who orders food from restaurants.
 _Avoid_: Client, buyer, consumer
 
-**Restaurant user**:
-A user with the restaurant role, who handles orders for exactly one restaurant.
-_Avoid_: Restaurant staff, restaurant owner, restaurant account
+**Restaurant manager**:
+A user with the restaurant role, who manages exactly one restaurant and handles its orders.
+_Avoid_: Restaurant user, restaurant staff, restaurant owner, restaurant account
 
 **Delivery agent**:
 A user with the delivery-agent role, who collects ready orders and delivers them.
 _Avoid_: Courier, driver, rider
+
+**Admin**:
+A user with the admin role, who looks after MTOGO as a whole, such as following operations on the dashboard.
+_Avoid_: Sys admin, superuser, management
 
 ### Ordering
 
@@ -49,7 +53,7 @@ The point an order has reached in its lifecycle: Placed, Accepted, Rejected, Rea
 _Avoid_: State, stage
 
 **Status name**:
-The Danish or English name of an order status that customers, restaurant users and delivery agents read, such as "Klar til afhentning" or "Ready for pickup".
+The Danish or English name of an order status that customers, restaurant managers, delivery agents and admins read, such as "Klar til afhentning" or "Ready for pickup".
 _Avoid_: Label, display name, status text
 
 **Order notification**:
@@ -62,3 +66,49 @@ _Avoid_: Claim, accept, collect
 **Order channel**:
 The way an order reached MTOGO: website, app or telephone.
 _Avoid_: Source, platform, origin
+
+**Open order**:
+An order whose status is not final: Placed, Accepted, Ready or PickedUp. Rejected and Delivered are final.
+_Avoid_: Active order, pending order, current order
+
+**Delivery time**:
+The time from an order being placed to it being delivered. Only a delivered order has one.
+_Avoid_: Processing time, lead time, turnaround
+
+### Operations
+
+**Dashboard**:
+The page that shows figures about MTOGO's operations, calculated from the orders.
+_Avoid_: Overview, report, statistics page
+
+**Figure**:
+One number on the dashboard, such as the number of open orders.
+_Avoid_: Metric, KPI, statistic, key figure
+
+**Orders per 24 hours**:
+The average number of orders placed per 24 hours over a recent period. Rejected orders count, because they were placed.
+_Avoid_: Daily orders, order rate, orders per day
+
+**Sales**:
+The sum of order totals of the orders delivered in a period, in DKK.
+_Avoid_: Revenue, turnover, income
+
+**Revenue**:
+What MTOGO earns from an order: its commission and service fee.
+_Avoid_: Sales, profit, income
+
+**Acceptance time**:
+The time from an order being placed to the restaurant accepting it. A rejected order has none.
+_Avoid_: Response time
+
+**Preparation time**:
+The time from an order being accepted to it being ready for pickup.
+_Avoid_: Cooking time
+
+**Pickup time**:
+The time from an order being ready to a delivery agent picking it up.
+_Avoid_: Waiting time
+
+**Transit time**:
+The time from an order being picked up to it being delivered.
+_Avoid_: Delivery time, driving time

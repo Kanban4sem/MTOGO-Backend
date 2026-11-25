@@ -31,4 +31,12 @@ public class OrderGateConfig
     {
         return new FeatureGate("/v1/delivery-agent/orders", properties::isOrderingEnabled, "Ordering is not available");
     }
+
+    // Only the dashboard follows the ordering flag, so later admin endpoints are
+    // not tied to ordering.
+    @Bean
+    public FeatureGate adminDashboardGate(AppProperties properties)
+    {
+        return new FeatureGate("/v1/admin/dashboard", properties::isOrderingEnabled, "Ordering is not available");
+    }
 }

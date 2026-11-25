@@ -1,0 +1,8 @@
+status,placedDaysAgo,expected,reason
+PLACED,1,OPEN,"EP: a placed order is open"
+ACCEPTED,1,OPEN,"EP: an accepted order is open"
+READY,1,OPEN,"EP: a ready order is open"
+PICKED_UP,1,OPEN,"EP: a picked-up order is open"
+REJECTED,1,NOT_OPEN,"EP: a rejected order is final, not open"
+DELIVERED,1,NOT_OPEN,"EP: a delivered order is final, not open"
+PLACED,30,OPEN,"EP: an order placed before the period is open whatever the period"

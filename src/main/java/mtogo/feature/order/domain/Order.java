@@ -107,7 +107,16 @@ public class Order
 
     public Instant getPlacedAt()
     {
-        return statusChanges.stream().filter(change -> change.getStatus() == OrderStatus.PLACED).findFirst()
+        return getChangedAt(OrderStatus.PLACED);
+    }
+
+    /**
+     * When the order first reached the given status, or {@code null} when it never
+     * did.
+     */
+    public Instant getChangedAt(OrderStatus status)
+    {
+        return statusChanges.stream().filter(change -> change.getStatus() == status).findFirst()
                 .map(OrderStatusChange::getChangedAt).orElse(null);
     }
 }

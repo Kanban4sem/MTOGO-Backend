@@ -34,6 +34,15 @@ public enum OrderStatus
         return this == ACCEPTED || this == REJECTED || this == READY;
     }
 
+    /**
+     * Whether an order in this status is open: it has not yet been rejected or
+     * delivered.
+     */
+    public boolean isOpen()
+    {
+        return this != REJECTED && this != DELIVERED;
+    }
+
     public boolean canMoveTo(OrderStatus next)
     {
         return switch (this)
