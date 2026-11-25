@@ -1,8 +1,7 @@
-package mtogo.feature.order.data;
+package mtogo.feature.order;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import mtogo.feature.order.OrderTestData;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -11,12 +10,14 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+// Tests the migration db/migration/V4__create_orders.sql, which has no Java class,
+// so the class is named after the file.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-// Without a test transaction, so a refused delete doesn't abort the cleanup
-// that OrderTestData runs after each test.
+// Without a test transaction, so a refused delete doesn't abort the transaction
+// that the test data and the cleanup run in.
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
-class OrderSchemaTest extends OrderTestData
+class CreateOrdersTest extends OrderTestData
 {
     @Test
     @DisplayName("Delete menu item - the database refuses to delete a menu item that has been ordered")

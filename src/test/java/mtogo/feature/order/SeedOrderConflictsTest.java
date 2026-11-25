@@ -1,4 +1,4 @@
-package mtogo.feature.order.presentation;
+package mtogo.feature.order;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -16,12 +16,14 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+// Tests the SQL seed db/local/afterMigrate__seed_order_conflicts.sql, which has no
+// Java class, so the class is named after the file.
 @SharedDatabase
 @ActiveProfiles("local")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
         "FEATURE_ORDERING_ENABLED=true", "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef",
         "app.seed.customer-password=Customer123!"})
-class OrderConflictSeedTest
+class SeedOrderConflictsTest
 {
     @LocalServerPort
     int port;
@@ -29,7 +31,7 @@ class OrderConflictSeedTest
     JdbcTemplate jdbc;
 
     @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/order/order-controller/place-seeded-conflicts.csv", numLinesToSkip = 1)
+    @CsvFileSource(resources = "/testcases/order/seed-order-conflicts/place-conflicts.csv", numLinesToSkip = 1)
     @DisplayName("Place - local seed data exercises each order conflict")
     void placeSeededConflict(String itemName, String detail, int expected, String reason)
     {

@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 8.0 · **Date:** 2026-11-25
+**Version:** 9.0 · **Date:** 2026-11-25
 
 ## Overview
 
@@ -34,6 +34,7 @@ Names describe what something is or does in [domain language](../CONTRIBUTING.md
 | Boolean                    | `is` / `has` / `can` prefix                        | `isPaid`                         |
 | Constant, enum value       | UPPER_SNAKE_CASE                                   | `IN_DELIVERY`                    |
 | Test class                 | `<ClassUnderTest>Test`                             | `OrderServiceTest`               |
+| Test class of a SQL file   | The file name without its prefix, + `Test`         | `CreateOrdersTest`               |
 
 Spring Data repositories are interfaces without the `I` prefix, because Spring generates the implementation.
 
@@ -189,6 +190,7 @@ Tests follow the Detroit (classical) school:
 
 - Test at the level where the behaviour lives (see [Techniques per test level](#techniques-per-test-level)).
 - Tests mirror the main package structure under `src/test/java`.
+- A test of a Flyway migration or SQL callback has no Java class to mirror. It is named after the file without its version or callback prefix (`V4__create_orders.sql` → `CreateOrdersTest`) and lives in the feature package, such as `mtogo.feature.order`.
 - Describe behaviour, not implementation: `@DisplayName("Cancel - should reject an order that is in delivery")`.
 - Tests are independent of each other and of execution order. Each test creates the data it needs, and the database is cleaned between tests.
 - Tests never touch a shared or production database. A database that only the test run uses, such as the one in [Test database](#test-database), is not shared in this sense.
@@ -379,3 +381,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 7.2     | 2026-11-24 | Test classes run in several JVMs, each with its own PostgreSQL container, from `target/` | #74      |
 | 7.3     | 2026-11-24 | Tests run in one JVM by default, more with `MTOGO_TEST_FORKS`                            | #84      |
 | 8.0     | 2026-11-25 | REST paths: singular role scopes, login and logout as session actions                    | #73      |
+| 9.0     | 2026-11-25 | Tests of SQL files are named after the file                                              | #71      |

@@ -1,25 +1,18 @@
-package mtogo.server;
+package mtogo.config;
 
-import mtogo.config.AppProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class Server implements WebMvcConfigurer
+public class CorsConfig implements WebMvcConfigurer
 {
-
-    // Attributes
     private final AppProperties appProperties;
 
-    // _________________________________________________________________________________________________________________
-
-    public Server(AppProperties appProperties)
+    public CorsConfig(AppProperties appProperties)
     {
         this.appProperties = appProperties;
     }
-
-    // _________________________________________________________________________________________________________________
 
     @Override
     public void addCorsMappings(CorsRegistry corsRegistry)
@@ -28,5 +21,4 @@ public class Server implements WebMvcConfigurer
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("Authorization", "Content-Type");
     }
-
 }

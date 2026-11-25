@@ -15,7 +15,7 @@ import org.junit.jupiter.params.provider.CsvFileSource;
 class UserTest
 {
     @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/user/user/restaurant-link.csv", numLinesToSkip = 1)
+    @CsvFileSource(resources = "/testcases/user/user/assign-role-restaurant.csv", numLinesToSkip = 1)
     @DisplayName("Assign role - only a restaurant user has a restaurant, and always has one")
     void assignRoleLinksOnlyRestaurantUsersToARestaurant(RoleName roleName, boolean hasRestaurant, String expected,
             String reason)

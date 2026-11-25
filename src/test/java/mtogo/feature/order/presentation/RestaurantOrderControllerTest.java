@@ -168,7 +168,7 @@ class RestaurantOrderControllerTest extends OrderTestData
         int disabledPort;
 
         @ParameterizedTest(name = "[{index}] {3}")
-        @CsvFileSource(resources = "/testcases/order/restaurant-order-controller/orders-disabled.csv", numLinesToSkip = 1)
+        @CsvFileSource(resources = "/testcases/order/restaurant-order-controller/get-all-and-update-status-disabled.csv", numLinesToSkip = 1)
         @DisplayName("Restaurant orders - both endpoints are hidden before authentication when ordering is disabled")
         void endpointsAreNotFound(String method, String path, int expected, String reason)
         {

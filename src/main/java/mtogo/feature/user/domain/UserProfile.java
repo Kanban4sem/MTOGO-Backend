@@ -16,6 +16,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserProfile
 {
+    private static final String DEFAULT_PREFERRED_LANGUAGE = "da";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,4 +37,25 @@ public class UserProfile
     @JoinColumn(name = "saved_by_profile_id")
     @OrderBy("id ASC")
     private List<Address> savedDeliveryAddresses = new ArrayList<>();
+
+    /**
+     * Sets the language, or Danish when none is given.
+     */
+    public void setPreferredLanguage(String preferredLanguage)
+    {
+        this.preferredLanguage = preferredLanguage == null ? DEFAULT_PREFERRED_LANGUAGE : preferredLanguage;
+    }
+
+    /**
+     * Sets the profile address, which is always the customer's default address.
+     * Saved delivery addresses are kept apart in {@code savedDeliveryAddresses}.
+     */
+    public void setAddress(Address address)
+    {
+        if (address != null)
+        {
+            address.setDefault(true);
+        }
+        this.address = address;
+    }
 }

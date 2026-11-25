@@ -17,7 +17,7 @@ class SecurityConfigTest
     int port;
 
     @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/security/security-config/endpoint-access.csv", numLinesToSkip = 1)
+    @CsvFileSource(resources = "/testcases/security/security-config/request-endpoint-access.csv", numLinesToSkip = 1)
     @DisplayName("Endpoint access - only the health check, the feature flags and the API documentation are public")
     void onlyHealthCheckFeatureFlagsAndApiDocumentationArePublic(String method, String path, int expected,
             String reason)

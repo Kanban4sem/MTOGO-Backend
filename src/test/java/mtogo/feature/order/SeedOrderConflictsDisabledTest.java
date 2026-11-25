@@ -1,4 +1,4 @@
-package mtogo.feature.order.presentation;
+package mtogo.feature.order;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -11,10 +11,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+// Tests the SQL seed db/local/afterMigrate__seed_order_conflicts.sql, which has no
+// Java class, so the class is named after the file.
 @SharedDatabase
 @ActiveProfiles("default")
 @SpringBootTest
-class OrderConflictSeedDisabledTest
+class SeedOrderConflictsDisabledTest
 {
     @Autowired
     JdbcTemplate jdbc;

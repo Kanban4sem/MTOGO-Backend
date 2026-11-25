@@ -13,7 +13,7 @@ public abstract class RestaurantTestData
     protected JdbcTemplate jdbc;
 
     @BeforeEach
-    void cleanRestaurants()
+    protected void cleanDatabase()
     {
         jdbc.update("DELETE FROM menu_items");
         jdbc.update("DELETE FROM menus");

@@ -8,8 +8,6 @@ import org.springframework.util.StringUtils;
 @Component
 public class AddressMapper
 {
-    private static final String DELIVERY_COUNTRY = "Denmark";
-
     public Address toEntity(String code, String city, String country)
     {
         if (!StringUtils.hasText(code))
@@ -22,7 +20,6 @@ public class AddressMapper
         postalCode.setCountry(country.strip());
         Address address = new Address();
         address.setPostalCode(postalCode);
-        address.setDefault(true);
         return address;
     }
 
@@ -40,18 +37,13 @@ public class AddressMapper
     public Address toDeliveryAddress(String street, String code, String city)
     {
         Address address = new Address();
-        address.setPostalCode(new PostalCode());
         updateDeliveryAddress(address, street, code, city);
         return address;
     }
 
     public void updateDeliveryAddress(Address address, String street, String code, String city)
     {
-        address.setStreet(street.strip());
-        PostalCode postalCode = address.getPostalCode();
-        postalCode.setCode(code);
-        postalCode.setCity(city.strip());
-        postalCode.setCountry(DELIVERY_COUNTRY);
+        address.changeDeliveryAddress(street.strip(), code, city.strip());
     }
 
     public SavedDeliveryAddressDTO toSavedDeliveryAddressDTO(Address address)

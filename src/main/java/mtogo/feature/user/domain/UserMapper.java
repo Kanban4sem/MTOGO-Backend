@@ -26,7 +26,7 @@ public class UserMapper
         profile.setFirstName(request.firstName().strip());
         profile.setLastName(request.lastName().strip());
         profile.setPhoneNumber(request.phoneNumber());
-        profile.setPreferredLanguage(request.preferredLanguage() == null ? "da" : request.preferredLanguage());
+        profile.setPreferredLanguage(request.preferredLanguage());
         profile.setAddress(addresses.toEntity(request.postalCode(), request.city(), request.country()));
         user.setProfile(profile);
         return user;

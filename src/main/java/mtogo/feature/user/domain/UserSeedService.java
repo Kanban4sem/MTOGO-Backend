@@ -2,13 +2,13 @@ package mtogo.feature.user.domain;
 
 import java.util.List;
 import mtogo.config.AppProperties;
-import mtogo.feature.address.domain.AddressMapper;
 import mtogo.feature.restaurant.data.RestaurantRepository;
 import mtogo.feature.restaurant.domain.Restaurant;
 import mtogo.feature.role.data.RoleRepository;
 import mtogo.feature.role.domain.Role;
 import mtogo.feature.role.domain.RoleName;
 import mtogo.feature.user.data.UserRepository;
+import mtogo.feature.user.presentation.dto.request.RegisterUserDTO;
 import mtogo.security.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,27 +25,24 @@ public class UserSeedService
 {
     private static final Logger LOG = LoggerFactory.getLogger(UserSeedService.class);
     private static final List<SeededUser> SEEDED_USERS = List.of(
-            new SeededUser(RoleName.CUSTOMER, "customer@mtogo.example", "Test", "Customer", "+4500000001", null, true),
-            new SeededUser(RoleName.RESTAURANT, "kebab@mtogo.example", "MTOGO", "Kebab", "+4500000002", "MTOGO Kebab",
-                    false),
-            new SeededUser(RoleName.RESTAURANT, "bakery@mtogo.example", "MTOGO", "Bakery", "+4500000003",
-                    "MTOGO Bakery", false),
-            new SeededUser(RoleName.DELIVERY_AGENT, "agent@mtogo.example", "Delivery", "Agent", "+4500000004", null,
-                    false));
+            SeededUser.customer("Test", "Customer", "customer@mtogo.example", "+4500000001", "2800", "Kongens Lyngby"),
+            SeededUser.restaurant("MTOGO", "Kebab", "kebab@mtogo.example", "+4500000002", "MTOGO Kebab"),
+            SeededUser.restaurant("MTOGO", "Bakery", "bakery@mtogo.example", "+4500000003", "MTOGO Bakery"),
+            SeededUser.deliveryAgent("Delivery", "Agent", "agent@mtogo.example", "+4500000004"));
 
     private final UserRepository users;
     private final RoleRepository roles;
     private final RestaurantRepository restaurants;
-    private final AddressMapper addressMapper;
+    private final UserMapper mapper;
     private final PasswordService passwords;
 
     public UserSeedService(UserRepository users, RoleRepository roles, RestaurantRepository restaurants,
-            AddressMapper addressMapper, PasswordService passwords)
+            UserMapper mapper, PasswordService passwords)
     {
         this.users = users;
         this.roles = roles;
         this.restaurants = restaurants;
-        this.addressMapper = addressMapper;
+        this.mapper = mapper;
         this.passwords = passwords;
     }
 
@@ -80,10 +77,10 @@ public class UserSeedService
             {
                 continue;
             }
-            if (users.existsByEmail(seededUser.email()))
+            if (users.existsByEmail(seededUser.registration().email()))
             {
                 LOG.warn("Skipped the seeded user {}, because a user with that email already exists",
-                        seededUser.email());
+                        seededUser.registration().email());
                 continue;
             }
             users.save(toUser(seededUser, role, passwordHash));
@@ -92,18 +89,7 @@ public class UserSeedService
 
     private User toUser(SeededUser seededUser, Role role, String passwordHash)
     {
-        UserProfile profile = new UserProfile();
-        profile.setFirstName(seededUser.firstName());
-        profile.setLastName(seededUser.lastName());
-        profile.setPhoneNumber(seededUser.phoneNumber());
-        profile.setPreferredLanguage("da");
-        if (seededUser.hasAddress())
-        {
-            profile.setAddress(addressMapper.toEntity("2800", "Kongens Lyngby", "Denmark"));
-        }
-        User user = new User();
-        user.setEmail(seededUser.email());
-        user.setProfile(profile);
+        User user = mapper.toEntity(seededUser.registration());
         user.activate(passwordHash, role, restaurantOf(seededUser));
         return user;
     }
@@ -118,13 +104,39 @@ public class UserSeedService
         if (matches.size() != 1)
         {
             throw new IllegalStateException("Seeded user %s needs exactly one restaurant named %s, but found %d"
-                    .formatted(seededUser.email(), seededUser.restaurantName(), matches.size()));
+                    .formatted(seededUser.registration().email(), seededUser.restaurantName(), matches.size()));
         }
         return matches.getFirst();
     }
 
-    private record SeededUser(RoleName role, String email, String firstName, String lastName, String phoneNumber,
-            String restaurantName, boolean hasAddress)
+    /**
+     * The registration holds the profile only. Its password fields stay empty,
+     * because seeded users get their role's seed password.
+     */
+    private record SeededUser(RoleName role, RegisterUserDTO registration, String restaurantName)
     {
+        static SeededUser customer(String firstName, String lastName, String email, String phoneNumber,
+                String postalCode, String city)
+        {
+            return new SeededUser(RoleName.CUSTOMER, new RegisterUserDTO(firstName, lastName, email, null, null,
+                    phoneNumber, null, postalCode, city, "Denmark"), null);
+        }
+
+        static SeededUser restaurant(String firstName, String lastName, String email, String phoneNumber,
+                String restaurantName)
+        {
+            return new SeededUser(RoleName.RESTAURANT, profileOnly(firstName, lastName, email, phoneNumber),
+                    restaurantName);
+        }
+
+        static SeededUser deliveryAgent(String firstName, String lastName, String email, String phoneNumber)
+        {
+            return new SeededUser(RoleName.DELIVERY_AGENT, profileOnly(firstName, lastName, email, phoneNumber), null);
+        }
+
+        private static RegisterUserDTO profileOnly(String firstName, String lastName, String email, String phoneNumber)
+        {
+            return new RegisterUserDTO(firstName, lastName, email, null, null, phoneNumber, null, null, null, null);
+        }
     }
 }

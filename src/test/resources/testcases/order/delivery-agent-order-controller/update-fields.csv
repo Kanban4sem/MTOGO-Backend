@@ -1,0 +1,5 @@
+body,expected,reason
+{},400,"EP: the action is required"
+"{""action"":""READY""}",400,"EP: an unsupported action is invalid"
+"{""action"":""take""}",400,"EP: an action in lowercase is invalid"
+"{""action"":0}",400,"EP: a number is invalid, even 0, the position of TAKE"

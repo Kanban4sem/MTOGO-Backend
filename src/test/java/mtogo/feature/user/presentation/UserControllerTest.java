@@ -81,7 +81,7 @@ class UserControllerTest
         String first = given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
                 .body(Map.of("street", " Testvej 67 ", "postalCode", "2900", "city", " Hellerup ")).post(collection)
                 .then().statusCode(201).body("street", is("Testvej 67")).body("city", is("Hellerup"))
-                .body("country", is("Denmark")).extract().header("Location");
+                .body("country", is("Denmark")).body("isDefault", is(false)).extract().header("Location");
         String second = given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
                 .body(Map.of("street", "Other Street 2", "postalCode", "2800", "city", "Lyngby")).post(collection)
                 .then().statusCode(201).extract().header("Location");
@@ -145,16 +145,16 @@ class UserControllerTest
         given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users").then().statusCode(201)
                 .body("email", equalTo("customer@example.test")).body("role", equalTo("CUSTOMER"))
                 .body("profile.firstName", equalTo("Jonas")).body("profile.preferredLanguage", equalTo("da"))
-                .body("profile.address.city", equalTo("Copenhagen")).body("passwordHash", nullValue())
-                .body("password", nullValue());
+                .body("profile.address.city", equalTo("Copenhagen")).body("profile.address.isDefault", equalTo(true))
+                .body("passwordHash", nullValue()).body("password", nullValue());
         String hash = jdbc.queryForObject("SELECT password_hash FROM users WHERE email = 'customer@example.test'",
                 String.class);
         assertNotEquals("Customer123!", hash);
         assertTrue(passwords.matches("Customer123!", hash));
         String first = login("CUSTOMER");
         String second = login("CUSTOMER");
-        given().port(port).auth().oauth2(first).get("/v1/users/me").then().statusCode(200).body("email",
-                equalTo("customer@example.test"));
+        given().port(port).auth().oauth2(first).get("/v1/users/me").then().statusCode(200)
+                .body("email", equalTo("customer@example.test")).body("profile.address.isDefault", equalTo(true));
         given().port(port).auth().oauth2(first).post("/v1/users/logout").then().statusCode(204);
         for (String token : new String[]{first, second})
         {
@@ -296,7 +296,7 @@ class UserControllerTest
     }
 
     @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/user/user-controller/role-access.csv", numLinesToSkip = 1)
+    @CsvFileSource(resources = "/testcases/user/user-controller/get-scope-access.csv", numLinesToSkip = 1)
     @DisplayName("Role access - accounts only enter their assigned API scope")
     void roleAccess(String role, String path, int expected, String reason)
     {
@@ -313,7 +313,7 @@ class UserControllerTest
     }
 
     @ParameterizedTest(name = "[{index}] {2}")
-    @CsvFileSource(resources = "/testcases/user/user-controller/invalid-tokens.csv", numLinesToSkip = 1)
+    @CsvFileSource(resources = "/testcases/user/user-controller/get-profile-tokens.csv", numLinesToSkip = 1)
     @DisplayName("Token validation - rejects expired, tampered, missing-claim, malformed and disabled-user tokens")
     void invalidTokens(String kind, int expected, String reason)
     {
@@ -343,7 +343,7 @@ class UserControllerTest
     }
 
     @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/user/user-controller/account-access.csv", numLinesToSkip = 1)
+    @CsvFileSource(resources = "/testcases/user/user-controller/request-account-access.csv", numLinesToSkip = 1)
     @DisplayName("Account access - anonymous and unsupported requests cannot access private account endpoints")
     void accountAccess(String method, String path, int expected, String reason)
     {

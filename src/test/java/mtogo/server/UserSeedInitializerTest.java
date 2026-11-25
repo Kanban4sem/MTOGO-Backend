@@ -47,7 +47,7 @@ class UserSeedInitializerTest
     }
 
     @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/server/user-seed-initializer/seeded-login.csv", numLinesToSkip = 1)
+    @CsvFileSource(resources = "/testcases/server/user-seed-initializer/login-seeded-users.csv", numLinesToSkip = 1)
     @DisplayName("Login - a seeded user logs in with their role's seed password and gets that role")
     void seededUserLogsIn(String email, String passwordRole, int expected, String reason)
     {

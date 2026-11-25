@@ -1,0 +1,4 @@
+address,expectedDefault,reason
+NULL,NULL,"EP: no address leaves the profile without one"
+NOT_DEFAULT,true,"EP: a given address becomes the default address"
+DEFAULT,true,"EP: an address that is already the default stays the default"

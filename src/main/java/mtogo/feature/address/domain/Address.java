@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Address
 {
+    private static final String DELIVERY_COUNTRY = "Denmark";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,4 +25,20 @@ public class Address
     private PostalCode postalCode;
     @Column(name = "is_default", nullable = false)
     private boolean isDefault;
+
+    /**
+     * Changes the delivery address. MTOGO delivers in Denmark only, so the country
+     * is always Denmark.
+     */
+    public void changeDeliveryAddress(String street, String code, String city)
+    {
+        this.street = street;
+        if (postalCode == null)
+        {
+            postalCode = new PostalCode();
+        }
+        postalCode.setCode(code);
+        postalCode.setCity(city);
+        postalCode.setCountry(DELIVERY_COUNTRY);
+    }
 }

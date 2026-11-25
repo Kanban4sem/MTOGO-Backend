@@ -219,7 +219,6 @@ public class OrderService
             profile.setAddress(profileAddress);
         }
         profileAddress.setStreet(deliveryAddress.getStreet());
-        profileAddress.setDefault(true);
         PostalCode postalCode = profileAddress.getPostalCode();
         PostalCode deliveryPostalCode = deliveryAddress.getPostalCode();
         postalCode.setCode(deliveryPostalCode.getCode());

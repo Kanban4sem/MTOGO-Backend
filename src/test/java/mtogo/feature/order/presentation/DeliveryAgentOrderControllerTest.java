@@ -105,30 +105,59 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
         }
     }
 
+    @ParameterizedTest(name = "[{index}] {2}")
+    @CsvFileSource(resources = "/testcases/order/delivery-agent-order-controller/get-all-access.csv", numLinesToSkip = 1)
+    @DisplayName("Get all - only delivery agents can list deliveries")
+    void getAllAccess(String role, int expected, String reason)
+    {
+        Response result = requester(role).get(PATH);
+
+        assertStatus(result, expected);
+    }
+
     @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/order/delivery-agent-order-controller/access.csv", numLinesToSkip = 1)
-    @DisplayName("Delivery endpoints - enforce role access and map invalid requests to problem details")
-    void access(String role, String operation, int expected, String reason)
+    @CsvFileSource(resources = "/testcases/order/delivery-agent-order-controller/update-access.csv", numLinesToSkip = 1)
+    @DisplayName("Update - only delivery agents can change a delivery, and only one that exists")
+    void updateAccess(String role, String order, int expected, String reason)
     {
         long orderId = place(restaurant("Bakery", true));
-        RequestSpecification requester = switch (role)
+        String requestedId = switch (order)
+        {
+            case "EXISTING" -> Long.toString(orderId);
+            case "UNKNOWN" -> Long.toString(orderId + 1);
+            default -> order;
+        };
+
+        Response result = patch(requester(role), requestedId, "TAKE");
+
+        assertStatus(result, expected);
+        assertEquals("PLACED", readStatus(orderId));
+    }
+
+    @ParameterizedTest(name = "[{index}] {2}")
+    @CsvFileSource(resources = "/testcases/order/delivery-agent-order-controller/update-fields.csv", numLinesToSkip = 1)
+    @DisplayName("Update - accepts only a supported action")
+    void updateFields(String body, int expected, String reason)
+    {
+        long orderId = place(restaurant("Bakery", true));
+
+        Response result = patchBody(requester("DELIVERY_AGENT"), orderId, body);
+
+        assertStatus(result, expected);
+        assertEquals("PLACED", readStatus(orderId));
+    }
+
+    private RequestSpecification requester(String role)
+    {
+        return switch (role)
         {
             case "ANONYMOUS" -> given().port(port);
             default -> request(user("requester@example.test", role));
         };
-        Response result = switch (operation)
-        {
-            case "LIST" -> requester.get(PATH);
-            case "UNKNOWN" -> patch(requester, orderId + 1, "TAKE");
-            case "MISSING_ACTION" ->
-                requester.contentType("application/json").body("{}").patch(PATH + "/{id}", orderId);
-            case "INVALID_ACTION" -> patch(requester, orderId, "READY");
-            case "LOWERCASE_ACTION" -> patch(requester, orderId, "take");
-            // 0 is the position of TAKE, so a number read as a position would answer 409.
-            case "NUMERIC_ACTION" ->
-                requester.contentType("application/json").body("{\"action\":0}").patch(PATH + "/{id}", orderId);
-            default -> patch(requester, orderId, "TAKE");
-        };
+    }
+
+    private static void assertStatus(Response result, int expected)
+    {
         result.then().statusCode(expected);
         if (expected >= 400)
         {
@@ -151,10 +180,14 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
         return given().port(port).auth().oauth2(tokens.issue(userId, 0).value());
     }
 
-    private Response patch(RequestSpecification requester, long orderId, String action)
+    private Response patch(RequestSpecification requester, Object orderId, String action)
     {
-        return requester.contentType("application/json").body("{\"action\":\"" + action + "\"}").patch(PATH + "/{id}",
-                orderId);
+        return patchBody(requester, orderId, "{\"action\":\"" + action + "\"}");
+    }
+
+    private Response patchBody(RequestSpecification requester, Object orderId, String body)
+    {
+        return requester.contentType("application/json").body(body).patch(PATH + "/{id}", orderId);
     }
 
     private int takeWhenStarted(long agent, long orderId, CountDownLatch ready, CountDownLatch start)

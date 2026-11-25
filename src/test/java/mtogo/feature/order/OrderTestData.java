@@ -6,14 +6,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import mtogo.feature.restaurant.RestaurantTestData;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class OrderTestData extends RestaurantTestData
 {
-    // Runs after each test, because RestaurantTestData deletes menu items before
-    // each test and order lines must be gone by then.
-    @AfterEach
-    void cleanOrders()
+    // Overrides the restaurant cleanup, because order lines and restaurant users
+    // must be deleted before the menu items and restaurants they reference.
+    @BeforeEach
+    @Override
+    protected void cleanDatabase()
     {
         jdbc.update("DELETE FROM order_status_changes");
         jdbc.update("DELETE FROM order_lines");
@@ -22,6 +23,7 @@ public abstract class OrderTestData extends RestaurantTestData
         jdbc.update("DELETE FROM user_profiles");
         jdbc.update("DELETE FROM addresses");
         jdbc.update("DELETE FROM postal_codes");
+        super.cleanDatabase();
     }
 
     protected long user(String email, String role)

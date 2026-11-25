@@ -1,0 +1,3 @@
+preferredLanguage,expected,reason
+NULL,da,"EP: no language gives Danish"
+en,en,"EP: a given language is kept"
