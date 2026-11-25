@@ -6,4 +6,6 @@
 .gitconfig          @saldic
 .tt-config.json     @saldic
 README.md           @saldic
+docs/getting-started.md @saldic
+docs/deployment.md  @saldic
 deploy/**           @saldic

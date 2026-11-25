@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 9.0 · **Date:** 2026-11-25
+**Version:** 9.1 · **Date:** 2026-11-25
 
 ## Overview
 
@@ -198,7 +198,7 @@ Tests follow the Detroit (classical) school:
 
 ### Test database
 
-Surefire runs the test classes in one JVM by default. A developer sets more with the `MTOGO_TEST_FORKS` environment variable, as the README describes under Build and test, and the ready flow uses 4. All tests in a JVM that need a database use one PostgreSQL container, started once by `SharedPostgres` and removed by Testcontainers when the JVM exits. Never declare a `@Container` or `@Testcontainers` in a test class: a container that stops after its class while Spring keeps the cached context open makes the test run fail at exit.
+Surefire runs the test classes in one JVM by default. A developer sets more with the `MTOGO_TEST_FORKS` environment variable, as [Build and test](build-and-test.md#test-jvms) describes, and the ready flow uses 4. All tests in a JVM that need a database use one PostgreSQL container, started once by `SharedPostgres` and removed by Testcontainers when the JVM exits. Never declare a `@Container` or `@Testcontainers` in a test class: a container that stops after its class while Spring keeps the cached context open makes the test run fail at exit.
 
 - Put `@SharedDatabase` on the test class, or on a base class. Each test class then gets its own empty database in the container, migrated by Flyway, so classes never see each other's data. A `@Nested` class uses the database of its top-level class.
 - Shared test infrastructure such as `SharedPostgres` lives in `mtogo.testsupport`, which has no counterpart in the main code.
@@ -382,3 +382,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 7.3     | 2026-11-24 | Tests run in one JVM by default, more with `MTOGO_TEST_FORKS`                            | #84      |
 | 8.0     | 2026-11-25 | REST paths: singular role scopes, login and logout as session actions                    | #73      |
 | 9.0     | 2026-11-25 | Tests of SQL files are named after the file                                              | #71      |
+| 9.1     | 2026-11-25 | Test JVM setup moves from the README to `docs/build-and-test.md`                         | #64      |
