@@ -1,7 +1,7 @@
 isEnabled,requestPath,expected,reason
-false,/v1/orders,true,"Decision table: with the flag off, the gated path is closed"
-false,/v1/orders/1,true,"Decision table: with the flag off, a path below the gated path is closed"
-false,/v1/ordersx,false,"Decision table: with the flag off, a path that only starts with the same letters is open"
+false,/v1/users,true,"Decision table: with the flag off, the gated path is closed"
+false,/v1/users/1,true,"Decision table: with the flag off, a path below the gated path is closed"
+false,/v1/usersx,false,"Decision table: with the flag off, a path that only starts with the same letters is open"
 false,/v1/restaurants,false,"Decision table: with the flag off, another feature's path is open"
-true,/v1/orders,false,"Decision table: with the flag on, the gated path is open"
-true,/v1/orders/1,false,"Decision table: with the flag on, a path below the gated path is open"
+true,/v1/users,false,"Decision table: with the flag on, the gated path is open"
+true,/v1/users/1,false,"Decision table: with the flag on, a path below the gated path is open"

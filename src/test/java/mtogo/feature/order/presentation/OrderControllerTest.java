@@ -14,19 +14,15 @@ import mtogo.config.AppProperties;
 import mtogo.feature.order.OrderTestData;
 import mtogo.feature.user.domain.UserSeedService;
 import mtogo.security.JwtService;
+import mtogo.testsupport.AuthenticatedEndpointTest;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.TestPropertySource;
 
-// The flags are pinned so a developer's local .env cannot change the result.
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
-        "FEATURE_ORDERING_ENABLED=true", "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef"})
+@AuthenticatedEndpointTest
 class OrderControllerTest extends OrderTestData
 {
     @LocalServerPort
@@ -272,33 +268,5 @@ class OrderControllerTest extends OrderTestData
     private String token(long userId)
     {
         return tokens.issue(userId, 0).value();
-    }
-
-    // The flag is read at startup, so turning it off needs its own application
-    // context.
-    @Nested
-    @TestPropertySource(properties = "FEATURE_ORDERING_ENABLED=false")
-    class WhenOrderingIsDisabled
-    {
-        @LocalServerPort
-        int disabledPort;
-
-        @ParameterizedTest(name = "[{index}] {3}")
-        @CsvFileSource(resources = "/testcases/order/order-controller/place-disabled.csv", numLinesToSkip = 1)
-        @DisplayName("Place - with orderingEnabled off, the endpoint does not exist for anyone")
-        void placeIsNotFound(String role, boolean validBody, int expected, String reason)
-        {
-            long itemId = item(menu(restaurant("Requested", true), "Lunch", true), "Meal", true);
-            RequestSpecification request = given().port(disabledPort).contentType(ContentType.JSON)
-                    .body(validBody ? placeOrder(List.of(line(itemId, 1))) : Map.of());
-            if (!role.equals("ANONYMOUS"))
-            {
-                request.auth().oauth2(token(user(role.toLowerCase() + "@example.test", role)));
-            }
-
-            request.post("/v1/orders").then().statusCode(expected).contentType("application/problem+json")
-                    .body("status", is(expected)).body("detail", equalTo("Ordering is not available"));
-            assertThat(jdbc.queryForObject("SELECT count(*) FROM orders", Long.class), is(0L));
-        }
     }
 }

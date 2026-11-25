@@ -37,7 +37,7 @@ public class OrderController
     @ApiResponse(responseCode = "201", description = "Payment confirmed and order placed", headers = @Header(name = HttpHeaders.LOCATION, description = "Customer order URL", schema = @Schema(type = "string", example = "/v1/customer/orders/42")), content = @Content(schema = @Schema(implementation = OrderDTO.class)))
     @ApiResponse(responseCode = "400", description = "Invalid fields or delivery address selection, missing complete default address, unknown or repeated menu items, or menu items from more than one restaurant")
     @ApiResponse(responseCode = "402", description = "The payment was declined. No order was placed")
-    @ApiResponse(responseCode = "404", description = "Ordering is disabled or the selected saved delivery address was not found")
+    @ApiResponse(responseCode = "404", description = "The selected saved delivery address was not found")
     @ApiResponse(responseCode = "409", description = "A menu item is unavailable, on an inactive menu or from a restaurant that does not accept orders")
     public ResponseEntity<OrderDTO> place(@Valid @RequestBody PlaceOrderDTO request, Principal principal)
     {

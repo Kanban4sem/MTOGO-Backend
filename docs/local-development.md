@@ -17,7 +17,6 @@ Flyway applies migrations at startup and Hibernate validates their tables. In pg
 Unfinished features are behind feature flags that are off by default, as described in [CONTRIBUTING](../CONTRIBUTING.md#feature-flags). To try them locally, enable them in your own `.env` and restart the backend:
 
 - `FEATURE_AUTH_ENABLED` turns on the account endpoints. It needs `JWT_SECRET` set to a Base64 key generated with `openssl rand -base64 32`. Never commit the key.
-- `FEATURE_ORDERING_ENABLED` turns on ordering and the order endpoints for customers, restaurants and delivery agents. It also needs `FEATURE_AUTH_ENABLED`.
 
 Send the access token from `POST /v1/users/login` as `Authorization: Bearer <accessToken>`. It expires after 15 minutes by default (`JWT_LIFETIME_SECONDS`). The backend does not use authentication cookies or sessions. The authentication decision is [ADR-005](adr/005-account-authentication.md).
 
@@ -60,7 +59,7 @@ Start the backend with the `local` Spring profile against your development datab
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-The profile seeds **Sold-out kebab** in the MTOGO Kebab menu and **Closed restaurant meal** at MTOGO Closed Restaurant. To try both `409` responses, enable authentication and ordering, seed a customer, and open [orderConflicts.http](../src/main/resources/http/orderConflicts.http) in JetBrains HTTP Client.
+The profile seeds **Sold-out kebab** in the MTOGO Kebab menu and **Closed restaurant meal** at MTOGO Closed Restaurant. To try both `409` responses, enable authentication, seed a customer, and open [orderConflicts.http](../src/main/resources/http/orderConflicts.http) in JetBrains HTTP Client.
 
 In the repository root's `http-client.private.env.json`, create an `order-conflicts` environment with `seedCustomerPassword` set to the seeded customer's password and the numeric `unavailableItemId` and `closedRestaurantItemId` set from the SQL query in the HTTP file. Select **Run with → order-conflicts** and send the login request first. It saves the access token for both order requests.
 

@@ -27,7 +27,7 @@ import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest(properties = {"FEATURE_AUTH_ENABLED=false", "FEATURE_ORDERING_ENABLED=true"})
+@SpringBootTest(properties = {"FEATURE_AUTH_ENABLED=false"})
 class OrderServiceTest extends OrderTestData
 {
     @Autowired

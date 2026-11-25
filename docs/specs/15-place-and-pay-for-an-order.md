@@ -1,10 +1,10 @@
 # Place and pay for an order
 
-**Version:** 4.0 · **Date:** 2026-11-25 · **Issue:** #15 · **Feature flag:** `orderingEnabled`, off by default
+**Version:** 5.0 · **Date:** 2026-11-25 · **Issue:** #15 · **Feature flag:** None
 
 ## Acceptance criteria
 
-Copied from #15, #66 and #46. The issues are the source: change the issue first, then this copy.
+Copied from #15, #66, #46 and #44. The issues are the source: change the issue first, then this copy.
 
 From #15:
 
@@ -27,6 +27,12 @@ From #46:
 - [x] Placing an order returns a `Location` header with the order's URL
 - [x] A GET on that URL returns the placed order
 
+From #44:
+
+- [x] A customer can place an order without `FEATURE_ORDERING_ENABLED` set
+- [x] `GET /v1/features` no longer returns `orderingEnabled`
+- [x] No code or configuration refers to the flag
+
 ## Behaviour
 
 1. A logged-in customer can place an order with order lines, a payment token and either a newly entered delivery address or their complete default delivery address.
@@ -44,7 +50,7 @@ From #46:
 13. An order moves only along the lifecycle in the [MVP](../minimum-viable-product.md#order-status-lifecycle): Placed to Accepted or Rejected, Accepted to Ready, Ready to PickedUp and PickedUp to Delivered. Any other move is refused. Each move records when the new order status was set.
 14. Only customers can place orders. Anonymous users, restaurants and delivery agents cannot.
 15. A menu item that has been ordered cannot be deleted. It is taken off the menu by making it unavailable.
-16. When `orderingEnabled` is off, orders cannot be placed and the endpoint does not exist.
+16. Ordering is always available. No feature flag hides the order endpoints.
 17. A customer can save a newly entered delivery address as their profile default after successful payment. A one-time address or a declined payment leaves the profile as it was.
 18. A customer can reuse their complete default without entering any address fields. A profile without a street, including a registration or seeded address with only a postal area, requires the customer to enter a delivery address.
 19. Each order keeps its own delivery address when the customer changes the profile default.
@@ -65,10 +71,10 @@ From #46:
 - **Channel:** OrderChannel is an enum with WEBSITE, APP and TELEPHONE. The backend sets WEBSITE; the client does not send it.
 - **API:** `POST /v1/orders` with PlaceOrderDTO: `lines` (array of `menuItemId`, `quantity`), `deliveryAddress` (`street`, `postalCode`, `city`) and `paymentToken`. Bean Validation: 1–20 lines, a positive menu item ID, quantity 1–20, street and city not blank and at most 100 characters, postal code matching exactly four digits, payment token not blank. It returns `201` with OrderDTO: `id`, `restaurantId`, `status`, `channel`, `placedAt`, `total`, `deliveryAddress` (`street`, `postalCode`, `city`, `country`) and `lines` (`menuItemId`, `name`, `unitPrice`, `quantity`, `subtotal`). The `Location` header contains the relative URL `/v1/customer/orders/{id}` for the order.
 - **Address selection:** `deliveryAddress` is required for manual entry. Send `useDefaultAddress: true` and omit `deliveryAddress` to reuse the saved address. Send `saveAsDefault: true` with a newly entered address to save it. Both flags default to false. Invalid combinations and a missing complete default return `400`.
-- **Errors:** ProblemDetail through the existing GlobalExceptionHandler. `400` for invalid input, unknown or repeated menu items and menu items from more than one restaurant. `401` without a valid token. `402` for a declined payment, from a new PaymentRequiredException with the detail "The payment was declined". `403` for users who are not customers. `404` when `orderingEnabled` is off. `409` for an unavailable item, an inactive menu or a restaurant that does not accept orders.
+- **Errors:** ProblemDetail through the existing GlobalExceptionHandler. `400` for invalid input, unknown or repeated menu items and menu items from more than one restaurant. `401` without a valid token. `402` for a declined payment, from a new PaymentRequiredException with the detail "The payment was declined". `403` for users who are not customers. `409` for an unavailable item, an inactive menu or a restaurant that does not accept orders.
 - **Access:** SecurityConfig restricts `POST /v1/orders` to CUSTOMER users, and the controller declares the same with `@PreAuthorize`. The order's customer is the authenticated user, never a request field.
 - **Schema:** one Flyway migration adds a nullable `street` column to addresses (existing profile addresses have none) and creates orders, order lines and order status changes. Orders reference the customer, the restaurant and their own delivery address row, and store the order total as NUMERIC(10, 2), the channel and the current status. Order lines reference the order and the menu item with a restricting foreign key, and copy the name and the unit price as NUMERIC(10, 2), with a check that quantity is 1–20 and the unit price is not negative. Order status changes reference the order and store the status and when it was set. The delivery address stores the country as `Denmark`.
-- **Flag:** a new `orderingEnabled` flag (`FEATURE_ORDERING_ENABLED`, property `app.ordering-enabled`), off by default, in AppProperties, `application.properties`, `.env.example` and FeatureFlagsDTO, as described in the [coding standards](../coding-standards.md#feature-flags). `GET /v1/features` reports it. Placing an order also needs `authEnabled`, since it requires a customer token. The order feature declares a FeatureGate for `/v1/orders`, so FeatureGateFilter answers `404` before authentication while the flag is off. #44 removes the flag.
+- **Flag:** none. #15 released ordering behind a temporary `orderingEnabled` flag, and #44 removed it as described in the [coding standards](../coding-standards.md#feature-flags). `GET /v1/features` no longer reports it, and the order endpoints have no FeatureGate. Placing an order still needs `authEnabled`, since it requires a customer token.
 - **Default address:** checkout stores the default in the existing profile address and stores the delivery address separately on each order. Saving the default and placing the order share one transaction. #61 adds no feature flag.
 - **Delivery agent list:** `GET /v1/delivery-agent/orders` returns the order's `deliveryAddress` with street, postal code, city and country for every item in the existing agent-scoped list.
 - **Status names:** OrderStatus holds a Danish and an English status name next to each code. Every order response DTO (OrderDTO, CustomerOrderSummaryDTO, CustomerOrderDTO, RestaurantOrderDTO and DeliveryAgentOrderDTO) returns `status` (the code) and `statusName` as a StatusNameDTO object `{ "danish": "Bestilt", "english": "Placed" }`. It replaces the Danish `statusName` string from #18. The keys are words, not language codes, so a later language is one more key. This covers `POST /v1/orders`, `GET /v1/customer/orders` and `/{id}`, `GET` and `PATCH /v1/restaurant/orders`, and `GET` and `PATCH /v1/delivery-agent/orders`.
@@ -76,8 +82,8 @@ From #46:
 - **Delivery agent order:** DeliveryAgentOrderDTO adds `lines` (the existing OrderLineDTO) and `total`, and drops `deliveryCity`, which repeated `deliveryAddress.city`. Its boolean is the Java field `isAssignedToMe`, mapped to the unchanged JSON name `assignedToMe` with `@JsonProperty`, like the other response booleans. The PATCH response uses the same DTO.
 - **Mapper:** OrderMapper builds DeliveryAddressDTO, StatusNameDTO and the order lines in one place each, and every order DTO uses them.
 - **Contract:** removing `deliveryCity` and turning `statusName` into an object break the contract, so #66 ships together with Kanban4sem/MTOGO-Frontend#50. Swagger describes StatusNameDTO and the new fields with `@Schema`.
-- **Flag for #66:** none of its own. The changed endpoints are already hidden behind `orderingEnabled`, which #44 removes shortly after #66.
-- **Flag for #46:** none. #44 handles removal of `orderingEnabled`.
+- **Flag for #66:** none of its own. The changed endpoints were hidden behind `orderingEnabled` until #44 removed it.
+- **Flag for #46:** none.
 - **ADRs:** [ADR-001](../adr/001-feature-flags.md), [ADR-004](../adr/004-backend-structure.md) and [ADR-005](../adr/005-account-authentication.md) apply. No new ADR: the mocked payment behind an interface is decided in the MVP.
 
 ## Testing decisions
@@ -85,12 +91,11 @@ From #46:
 - **OrderTest** (plain JUnit): `moveTo` as a decision table over the current and the requested order status; `move-to-transitions`. The six allowed moves succeed and record a status change; the rest are refused.
 - **MockPaymentProviderTest** (plain JUnit): `charge` with EP over the payment token, `decline`, blank and any other; `charge-token`.
 - **OrderServiceTest** (`@SpringBootTest`, `@SharedDatabase`): `place` with EP over the menu items: unknown, repeated, unavailable, inactive menu, restaurant not accepting orders, items from two restaurants and a valid order; `place-items`. `place` with EP over the payment outcome, where a declined payment leaves no order, order line or address; `place-payment`. Ordinary `@Test` methods cover the copied name and unit price, the order total over several order lines, the channel WEBSITE, the Placed entry and its time, the owning customer and restaurant, and that a later menu price change leaves the order unchanged.
-- **OrderControllerTest** (REST Assured, `@SharedDatabase`): EP and BVA on PlaceOrderDTO, with 0/1/2/19/20/21 lines and quantities, a menu item ID of 0 and -1, street and city blank, 100 and 101 characters, postal code `123`, `1234`, `12345` and `12a4`, and a blank payment token; `place-fields`. Access as a decision table, with anonymous 401, restaurant and delivery agent 403, customer 201 and the flag off 404; `place-access`. One case each proves the 400, 402 and 409 error mapping. Copy the setup from UserControllerTest and RestaurantControllerTest.
+- **OrderControllerTest** (REST Assured, `@SharedDatabase`): EP and BVA on PlaceOrderDTO, with 0/1/2/19/20/21 lines and quantities, a menu item ID of 0 and -1, street and city blank, 100 and 101 characters, postal code `123`, `1234`, `12345` and `12a4`, and a blank payment token; `place-fields`. Access as a decision table, with anonymous 401, restaurant and delivery agent 403, customer 201; `place-access`. One case each proves the 400, 402 and 409 error mapping. Copy the setup from UserControllerTest and RestaurantControllerTest.
 - **OrderSchemaTest** (`@DataJpaTest`, `@SharedDatabase`): deleting a menu item that an order line references is refused. Copy RestaurantSchemaTest.
 - **OrderServiceTest** covers the checkout address decision table in `place-delivery-address`. **OrderControllerTest** verifies that a seeded customer can save, read, reuse and replace a default while earlier orders retain their addresses.
-- **AppPropertiesTest**: EP over `app.ordering-enabled`, unset, true, false and invalid; `bind-ordering-enabled`.
 - **FeatureGateTest** (plain JUnit): `isClosedFor` as a decision table over the flag and the request path; `is-closed-for`.
-- **FeatureFlagControllerTest** and **FeatureFlagServiceTest**: update them so `GET /v1/features` reports `orderingEnabled`.
+- **FeatureFlagControllerTest** and **FeatureFlagServiceTest** (#44): `GET /v1/features` reports only `authEnabled`. The order controller tests leave `FEATURE_ORDERING_ENABLED` unset, so their happy paths show that a customer can order without it.
 - **CustomerOrderControllerTest** (#66): `get-current-status` has the columns `status`, `danishName`, `englishName`, `expected` (the HTTP status code) and `reason`, so EP over the six order statuses checks both status names on the order list and the order detail. The get-all and get-by-id happy paths change the profile default after placing and check that `deliveryAddress` is still the order's own address.
 - **OrderControllerTest** (#66): the place happy path checks `statusName.danish` and `statusName.english` for Placed.
 - **OrderControllerTest** (#46) checks the `Location` URL against the ID returned by `POST /v1/orders` and follows it with the same customer token to verify the order can be read.
@@ -105,7 +110,6 @@ From #46:
 - Storing payments, refunds and pay on delivery.
 - Validating postal codes against the real Danish list: #45.
 - Delivery fees, service fees and commission: #23.
-- Removing the flag: #44.
 - The frontend side of #66: Kanban4sem/MTOGO-Frontend#50.
 
 ## Further notes
@@ -158,6 +162,13 @@ Issue #18 exposed a Danish `statusName` alongside the status code on customer or
 - **Tests:** The place happy path in OrderControllerTest verifies the relative URL and retrieves the order at that URL with the same customer token. Test execution is left to the developer.
 - **Follow-up:** None.
 
+### Spec 5.0 - 2026-11-25 - #44
+
+- **Built:** The `orderingEnabled` flag is gone from AppProperties, `application.properties`, `.env.example`, `deploy/backend.env.example`, FeatureFlagsDTO, FeatureFlagService, `docs/local-development.md` and the `.http` files. OrderGateConfig is deleted, so the order endpoints and the admin dashboard from #26 have no FeatureGate (spec 26, version 2.0). The OpenAPI `404` responses no longer mention disabled ordering, and the order, restaurant, delivery agent and notification lists no longer document a `404`. FeatureGate, FeatureGateFilter and UserGateConfig stay for `authEnabled`. The coding standards name UserGateConfig as the FeatureGate example (9.2). Notes for earlier versions that mention the flag are historical.
+- **Deviations:** None.
+- **Tests:** The `WhenOrderingIsDisabled` classes in OrderControllerTest, CustomerOrderControllerTest, RestaurantOrderControllerTest and DeliveryAgentOrderControllerTest, their `*-disabled.csv` files and `bind-ordering-enabled` in AppPropertiesTest are removed. The order tests no longer set `FEATURE_ORDERING_ENABLED`. FeatureFlagServiceTest and FeatureFlagControllerTest check that `authEnabled` is the only flag. FeatureGateTest uses `/v1/users`, the path UserGateConfig gates, as its sample. The five order endpoint test classes share their startup properties through `@AuthenticatedEndpointTest` in `mtogo.testsupport`.
+- **Follow-up:** `FEATURE_ORDERING_ENABLED` is removed from each environment's `.env` together with `FEATURE_AUTH_ENABLED` in #31. The frontend side is Kanban4sem/MTOGO-Frontend#34.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -168,3 +179,4 @@ Issue #18 exposed a Danish `statusName` alongside the status code on customer or
 | 2.0     | 2026-11-22 | Save, reuse and display delivery addresses                      | #61   |
 | 3.0     | 2026-11-24 | Status names in Danish and English, complete order responses    | #66   |
 | 4.0     | 2026-11-25 | Return the order URL in the `Location` header                   | #46   |
+| 5.0     | 2026-11-25 | Remove the ordering feature flag                                | #44   |

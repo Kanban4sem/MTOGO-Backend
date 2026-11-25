@@ -15,17 +15,16 @@ import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.request.UpdateDeliveryAgentOrderDTO;
 import mtogo.feature.order.presentation.dto.request.UpdateRestaurantOrderStatusDTO;
 import mtogo.security.JwtService;
+import mtogo.testsupport.AuthenticatedEndpointTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.support.TransactionTemplate;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
-        "FEATURE_ORDERING_ENABLED=true", "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef"})
+@AuthenticatedEndpointTest
 class OrderNotificationControllerTest extends OrderTestData
 {
     private static final String NOTIFICATIONS = "/v1/customer/orders/notifications";

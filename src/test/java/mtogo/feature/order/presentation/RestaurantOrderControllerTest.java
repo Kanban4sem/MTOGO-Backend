@@ -12,18 +12,15 @@ import mtogo.feature.order.domain.OrderService;
 import mtogo.feature.order.domain.OrderStatus;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.security.JwtService;
+import mtogo.testsupport.AuthenticatedEndpointTest;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
-        "FEATURE_ORDERING_ENABLED=true", "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef"})
+@AuthenticatedEndpointTest
 class RestaurantOrderControllerTest extends OrderTestData
 {
     private static final String ORDERS_PATH = "/v1/restaurant/orders";
@@ -158,22 +155,5 @@ class RestaurantOrderControllerTest extends OrderTestData
     private Response patch(RequestSpecification request, Object orderId, String body)
     {
         return request.contentType("application/json").body(body).patch(ORDERS_PATH + "/{id}", orderId);
-    }
-
-    @Nested
-    @TestPropertySource(properties = "FEATURE_ORDERING_ENABLED=false")
-    class WhenOrderingIsDisabled
-    {
-        @LocalServerPort
-        int disabledPort;
-
-        @ParameterizedTest(name = "[{index}] {3}")
-        @CsvFileSource(resources = "/testcases/order/restaurant-order-controller/get-all-and-update-status-disabled.csv", numLinesToSkip = 1)
-        @DisplayName("Restaurant orders - both endpoints are hidden before authentication when ordering is disabled")
-        void endpointsAreNotFound(String method, String path, int expected, String reason)
-        {
-            given().port(disabledPort).request(method, path).then().statusCode(expected)
-                    .contentType("application/problem+json").body("detail", is("Ordering is not available"));
-        }
     }
 }

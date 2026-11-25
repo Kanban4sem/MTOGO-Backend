@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:8080
 
-# Enable FEATURE_AUTH_ENABLED and FEATURE_ORDERING_ENABLED in the local profile.
+# Enable FEATURE_AUTH_ENABLED in the local profile.
 # Set SEED_CUSTOMER_PASSWORD before startup. In JetBrains HTTP Client, select
 # an environment with seedCustomerPassword and availableMenuItemId defined.
 # Find an available menu item in Swagger with GET /v1/restaurants/{id}/menus.

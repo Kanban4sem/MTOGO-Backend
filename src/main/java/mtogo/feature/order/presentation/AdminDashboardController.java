@@ -32,7 +32,6 @@ public class AdminDashboardController
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Show the dashboard's figures for all of MTOGO and every restaurant over the last days")
     @ApiResponse(responseCode = "400", description = "The period is not a whole number from 1 to 365")
-    @ApiResponse(responseCode = "404", description = "Ordering is disabled")
     public DashboardDTO get(
             @RequestParam(defaultValue = "7") @Min(1) @Max(365) @Parameter(description = "The period in days, ending now", example = "7") int days)
     {

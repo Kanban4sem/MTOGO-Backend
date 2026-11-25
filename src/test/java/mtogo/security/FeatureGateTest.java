@@ -14,7 +14,7 @@ class FeatureGateTest
     @DisplayName("Is closed for - closes the gated path and the paths below it while the flag is off")
     void isClosedForDependsOnFlagAndPath(boolean isEnabled, String requestPath, boolean expected, String reason)
     {
-        FeatureGate gate = new FeatureGate("/v1/orders", () -> isEnabled, "Ordering is not available");
+        FeatureGate gate = new FeatureGate("/v1/users", () -> isEnabled, "Authentication is not available");
 
         assertThat(gate.isClosedFor(requestPath), is(expected));
     }

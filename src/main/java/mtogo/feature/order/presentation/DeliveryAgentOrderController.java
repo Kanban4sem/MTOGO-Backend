@@ -34,7 +34,6 @@ public class DeliveryAgentOrderController
     @GetMapping
     @PreAuthorize("hasRole('DELIVERY_AGENT')")
     @Operation(summary = "List unassigned ready orders and the authenticated agent's own orders, newest first")
-    @ApiResponse(responseCode = "404", description = "Ordering is disabled")
     public List<DeliveryAgentOrderDTO> getAll(Principal principal)
     {
         return orders.getDeliveryAgentOrders(Long.valueOf(principal.getName()));
@@ -44,7 +43,7 @@ public class DeliveryAgentOrderController
     @PreAuthorize("hasRole('DELIVERY_AGENT')")
     @Operation(summary = "Take a ready order, or mark an assigned order as picked up or delivered")
     @ApiResponse(responseCode = "400", description = "The order ID or action is invalid")
-    @ApiResponse(responseCode = "404", description = "The order is unavailable to the agent, or ordering is disabled")
+    @ApiResponse(responseCode = "404", description = "The order is unavailable to the agent")
     @ApiResponse(responseCode = "409", description = "The order is already assigned or its status prevents the action")
     public DeliveryAgentOrderDTO update(@PathVariable Long id, @Valid @RequestBody UpdateDeliveryAgentOrderDTO request,
             Principal principal)

@@ -31,7 +31,6 @@ public class CustomerOrderController
 
     @GetMapping
     @Operation(summary = "List the authenticated customer's orders, newest first")
-    @ApiResponse(responseCode = "404", description = "Ordering is disabled")
     public List<CustomerOrderSummaryDTO> getAll(Principal principal)
     {
         return orders.getCustomerOrders(Long.valueOf(principal.getName()));
@@ -40,7 +39,7 @@ public class CustomerOrderController
     @GetMapping("/{id}")
     @Operation(summary = "Get one of the authenticated customer's orders with its lines and current status")
     @ApiResponse(responseCode = "400", description = "The order id is not a number")
-    @ApiResponse(responseCode = "404", description = "The order is unavailable to the customer, or ordering is disabled")
+    @ApiResponse(responseCode = "404", description = "The order is unavailable to the customer")
     public CustomerOrderDTO getById(@PathVariable Long id, Principal principal)
     {
         return orders.getCustomerOrder(Long.valueOf(principal.getName()), id);

@@ -20,6 +20,6 @@ public class FeatureFlagService
      */
     public FeatureFlagsDTO getAll()
     {
-        return new FeatureFlagsDTO(appProperties.isAuthEnabled(), appProperties.isOrderingEnabled());
+        return new FeatureFlagsDTO(appProperties.isAuthEnabled());
     }
 }

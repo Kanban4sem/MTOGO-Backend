@@ -1,6 +1,6 @@
 # Test order handling at the service level and validate status and action
 
-**Version:** 1.0 · **Date:** 2026-11-24 · **Issue:** #67 · **Feature flag:** None
+**Version:** 1.1 · **Date:** 2026-11-25 · **Issue:** #67 · **Feature flag:** None
 
 ## Acceptance criteria
 
@@ -34,7 +34,7 @@ No behaviour changes for valid requests. This list records the existing rules th
 
 ## Implementation decisions
 
-- #44 is still open, so the ordering feature flag stays. This issue adds no flag-disabled tests, and #44 removes the existing ones with the flag.
+- This issue adds no flag-disabled tests. #44 has since removed the ordering feature flag and its existing flag-disabled tests.
 - **Restaurant status request:** the `status` field of the restaurant's status request is typed as **Order status**. A Bean Validation rule on the request allows only the statuses a restaurant user may set (Accepted, Rejected, Ready), backed by a method on the order status that says whether a restaurant sets it. The OpenAPI schema keeps listing only those three values. The service also refuses any other status with a 400 before it reads the order, so the rule holds without the request, and then moves the order to the requested status with no switch.
 - **Delivery action request:** a new enum `DeliveryAction` (TAKE, PICK_UP, DELIVER) in the order domain types the `action` field, which stays required. The service switches on the enum exhaustively, with no `default` and no `null` case.
 - **Enum numbers:** Jackson is configured for the whole application to refuse numbers for enum fields, so `{"status": 1}` keeps answering 400 instead of being read as the second constant. No other request DTO uses an enum yet.
@@ -93,6 +93,7 @@ The glossary gains **Delivery action**. The glossary is shared with MTOGO-Fronte
 
 ## Changelog
 
-| Version | Date       | Change        | Issue |
-| ------- | ---------- | ------------- | ----- |
-| 1.0     | 2026-11-24 | First version | #67   |
+| Version | Date       | Change                               | Issue |
+| ------- | ---------- | ------------------------------------ | ----- |
+| 1.0     | 2026-11-24 | First version                        | #67   |
+| 1.1     | 2026-11-25 | The ordering feature flag is removed | #44   |

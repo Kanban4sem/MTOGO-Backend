@@ -21,8 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 @SharedDatabase
 @ActiveProfiles("local")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
-        "FEATURE_ORDERING_ENABLED=true", "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef",
-        "app.seed.customer-password=Customer123!"})
+        "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef", "app.seed.customer-password=Customer123!"})
 class SeedOrderConflictsTest
 {
     @LocalServerPort

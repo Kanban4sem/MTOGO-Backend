@@ -8,40 +8,29 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import mtogo.Main;
 import mtogo.feature.order.OrderTestData;
 import mtogo.feature.order.domain.OrderStatus;
 import mtogo.security.JwtService;
-import mtogo.testsupport.SharedPostgres;
-import org.junit.jupiter.api.AfterAll;
+import mtogo.testsupport.AuthenticatedEndpointTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
-        "FEATURE_ORDERING_ENABLED=true", "JWT_SECRET=" + AdminDashboardControllerTest.JWT_SECRET})
+@AuthenticatedEndpointTest
 class AdminDashboardControllerTest extends OrderTestData
 {
-    static final String JWT_SECRET = "0123456789abcdef0123456789abcdef0123456789abcdef";
     private static final String PATH = "/v1/admin/dashboard";
     private static final Instant NOW = Instant.parse("2026-11-25T12:00:00Z");
-    // Backends started with ordering disabled or its flag unset, by flag state.
-    private static final Map<Ordering, ConfigurableApplicationContext> FLAG_BACKENDS = new EnumMap<>(Ordering.class);
 
     @LocalServerPort
     int port;
@@ -51,11 +40,6 @@ class AdminDashboardControllerTest extends OrderTestData
     enum Requester
     {
         ANONYMOUS, CUSTOMER, RESTAURANT, DELIVERY_AGENT, ADMIN
-    }
-
-    enum Ordering
-    {
-        ENABLED, DISABLED, UNSET
     }
 
     @TestConfiguration
@@ -69,19 +53,12 @@ class AdminDashboardControllerTest extends OrderTestData
         }
     }
 
-    @AfterAll
-    static void stopFlagBackends()
-    {
-        FLAG_BACKENDS.values().forEach(ConfigurableApplicationContext::close);
-        FLAG_BACKENDS.clear();
-    }
-
-    @ParameterizedTest(name = "[{index}] {3}")
+    @ParameterizedTest(name = "[{index}] {2}")
     @CsvFileSource(resources = "/testcases/order/admin-dashboard-controller/get-access.csv", numLinesToSkip = 1)
-    @DisplayName("Get - only admins open the dashboard, and only while ordering is enabled")
-    void getAccess(Requester role, Ordering ordering, int expected, String reason)
+    @DisplayName("Get - only admins open the dashboard")
+    void getAccess(Requester role, int expected, String reason)
     {
-        RequestSpecification requester = given().port(portFor(ordering));
+        RequestSpecification requester = given().port(port);
         Long userId = switch (role)
         {
             case ANONYMOUS -> null;
@@ -179,31 +156,5 @@ class AdminDashboardControllerTest extends OrderTestData
     private static Instant minutesAfter(Instant start, long minutes)
     {
         return start.plus(Duration.ofMinutes(minutes));
-    }
-
-    // The flag is read at startup, so each other flag state needs its own backend.
-    // Tokens from this class's backend are signed with the same secret; a backend
-    // that let the request past its feature gate would answer 401, because the
-    // user is not in its database.
-    private int portFor(Ordering ordering)
-    {
-        if (ordering == Ordering.ENABLED)
-        {
-            return port;
-        }
-        ConfigurableApplicationContext backend = FLAG_BACKENDS.computeIfAbsent(ordering, state -> {
-            List<String> arguments = new ArrayList<>();
-            SharedPostgres.datasourceProperties("test_admin_dashboard_flags")
-                    .forEach(property -> arguments.add("--" + property));
-            arguments.add("--FEATURE_AUTH_ENABLED=true");
-            arguments.add("--JWT_SECRET=" + JWT_SECRET);
-            arguments.add("--server.port=0");
-            if (state == Ordering.DISABLED)
-            {
-                arguments.add("--FEATURE_ORDERING_ENABLED=false");
-            }
-            return new SpringApplicationBuilder(Main.class).run(arguments.toArray(String[]::new));
-        });
-        return backend.getEnvironment().getRequiredProperty("local.server.port", Integer.class);
     }
 }

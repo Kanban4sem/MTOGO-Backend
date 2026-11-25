@@ -17,18 +17,15 @@ import mtogo.feature.order.domain.OrderService;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.request.UpdateRestaurantOrderStatusDTO;
 import mtogo.security.JwtService;
+import mtogo.testsupport.AuthenticatedEndpointTest;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
-        "FEATURE_ORDERING_ENABLED=true", "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef"})
+@AuthenticatedEndpointTest
 class DeliveryAgentOrderControllerTest extends OrderTestData
 {
     private static final String PATH = "/v1/delivery-agent/orders";
@@ -197,21 +194,5 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
         ready.countDown();
         start.await();
         return patch(requester, orderId, "TAKE").statusCode();
-    }
-
-    @Nested
-    @TestPropertySource(properties = "FEATURE_ORDERING_ENABLED=false")
-    class WhenOrderingIsDisabled
-    {
-        @LocalServerPort
-        int disabledPort;
-
-        @Test
-        @DisplayName("Delivery endpoints - are hidden when ordering is disabled")
-        void endpointsAreNotFound()
-        {
-            given().port(disabledPort).get(PATH).then().statusCode(404);
-            given().port(disabledPort).patch(PATH + "/1").then().statusCode(404);
-        }
     }
 }

@@ -1,3 +1,0 @@
-method,path,expected,reason
-GET,/v1/restaurant/orders,404,"EP: the order list is hidden with the flag off"
-PATCH,/v1/restaurant/orders/1,404,"EP: status updates are hidden with the flag off"

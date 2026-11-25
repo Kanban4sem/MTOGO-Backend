@@ -33,7 +33,6 @@ public class OrderNotificationController
 
     @GetMapping
     @Operation(summary = "List the customer's order notifications, newest first", description = "Includes read and unread changes after placement. Listing leaves read state unchanged.")
-    @ApiResponse(responseCode = "404", description = "Ordering is disabled")
     public List<OrderNotificationDTO> getAll(Principal principal)
     {
         return notifications.getAll(Long.valueOf(principal.getName()));
@@ -43,7 +42,7 @@ public class OrderNotificationController
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Mark one of the customer's order notifications as read", description = "Returns 204 also when the notification is already read.")
     @ApiResponse(responseCode = "400", description = "The notification id is not a number")
-    @ApiResponse(responseCode = "404", description = "The notification is unavailable to the customer, or ordering is disabled")
+    @ApiResponse(responseCode = "404", description = "The notification is unavailable to the customer")
     public void markRead(@PathVariable Long id, Principal principal)
     {
         notifications.markRead(Long.valueOf(principal.getName()), id);

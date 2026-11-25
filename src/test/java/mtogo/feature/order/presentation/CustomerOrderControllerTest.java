@@ -10,18 +10,15 @@ import mtogo.feature.order.domain.OrderService;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.security.JwtService;
+import mtogo.testsupport.AuthenticatedEndpointTest;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
-        "FEATURE_ORDERING_ENABLED=true", "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef"})
+@AuthenticatedEndpointTest
 class CustomerOrderControllerTest extends OrderTestData
 {
     private static final String ORDERS_PATH = "/v1/customer/orders";
@@ -165,22 +162,5 @@ class CustomerOrderControllerTest extends OrderTestData
     private RequestSpecification request(int serverPort, long userId)
     {
         return given().port(serverPort).auth().oauth2(tokens.issue(userId, 0).value());
-    }
-
-    @Nested
-    @TestPropertySource(properties = "FEATURE_ORDERING_ENABLED=false")
-    class WhenOrderingIsDisabled
-    {
-        @LocalServerPort
-        int disabledPort;
-
-        @ParameterizedTest(name = "[{index}] {2}")
-        @CsvFileSource(resources = "/testcases/order/customer-order-controller/get-disabled.csv", numLinesToSkip = 1)
-        @DisplayName("Read orders - with ordering disabled, both endpoints return 404 before authentication")
-        void getIsNotFound(String path, int expected, String reason)
-        {
-            given().port(disabledPort).get(path).then().statusCode(expected).contentType("application/problem+json")
-                    .body("detail", is("Ordering is not available"));
-        }
     }
 }

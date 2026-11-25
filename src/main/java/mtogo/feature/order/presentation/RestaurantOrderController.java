@@ -34,7 +34,6 @@ public class RestaurantOrderController
     @GetMapping
     @PreAuthorize("hasRole('RESTAURANT')")
     @Operation(summary = "List the authenticated restaurant's orders, newest first")
-    @ApiResponse(responseCode = "404", description = "Ordering is disabled")
     public List<RestaurantOrderDTO> getAll(Principal principal)
     {
         return orders.getRestaurantOrders(Long.valueOf(principal.getName()));
@@ -44,7 +43,7 @@ public class RestaurantOrderController
     @PreAuthorize("hasRole('RESTAURANT')")
     @Operation(summary = "Accept or reject a placed order, or mark an accepted order as ready")
     @ApiResponse(responseCode = "400", description = "The order ID or requested status is invalid")
-    @ApiResponse(responseCode = "404", description = "The order is unavailable to the restaurant, or ordering is disabled")
+    @ApiResponse(responseCode = "404", description = "The order is unavailable to the restaurant")
     @ApiResponse(responseCode = "409", description = "The order's current status does not allow the requested change")
     public RestaurantOrderDTO updateStatus(@PathVariable Long id,
             @Valid @RequestBody UpdateRestaurantOrderStatusDTO request, Principal principal)

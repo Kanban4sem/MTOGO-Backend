@@ -1,6 +1,6 @@
 # Add a management dashboard
 
-**Version:** 1.0 · **Date:** 2026-11-25 · **Issue:** #26 · **Feature flag:** None. The dashboard follows the existing ordering flag, `app.ordering-enabled`
+**Version:** 2.0 · **Date:** 2026-11-25 · **Issue:** #26 · **Feature flag:** None
 
 ## Acceptance criteria
 
@@ -15,7 +15,7 @@ Copied from #26. The issue is the source: change the issue first, then this copy
 - [ ] It shows the sales of orders delivered in the period
 - [ ] It shows the average delivery, acceptance, preparation, pickup and transit time in whole minutes, or no value when there is none
 - [ ] The period is 1–365 days, 7 by default. Any other value gives 400
-- [ ] With ordering disabled, the dashboard answers 404
+- [ ] ~~With ordering disabled, the dashboard answers 404~~ Removed by #44, which removes the ordering flag
 
 ## Behaviour
 
@@ -37,7 +37,7 @@ Copied from #26. The issue is the source: change the issue first, then this copy
 10. An admin can open the dashboard.
 11. A customer, a restaurant manager and a delivery agent cannot open the dashboard. They get 403.
 12. A request without a valid login cannot open the dashboard. It gets 401.
-13. With ordering disabled or its flag unset, the dashboard answers 404 to everyone.
+13. The dashboard does not depend on any feature flag.
 
 14. The admin picks the period as a number of days from 1 to 365. Without a choice, the period is 7 days.
 15. A period of 0, of more than 365, or that is not a whole number, is refused with 400.
@@ -104,10 +104,10 @@ Copied from #26. The issue is the source: change the issue first, then this copy
   }
   ```
 
-  `sales` is a decimal with 2 places. Each minutes field is a whole number or `null`. Status codes: 200; 400 for an invalid `days` as a problem detail; 401 without a valid token; 403 for every role except admin; 404 when ordering is disabled.
+  `sales` is a decimal with 2 places. Each minutes field is a whole number or `null`. Status codes: 200; 400 for an invalid `days` as a problem detail; 401 without a valid token; 403 for every role except admin.
 
-- **Access:** the endpoint requires the admin role through method security, and `SecurityConfig` restricts `/v1/admin/**` to the admin role, like the other role scopes. A feature gate on `/v1/admin/dashboard` only, not all of `/v1/admin`, hides it while ordering is disabled, so later admin endpoints are not tied to ordering.
-- **Feature flag:** none of its own. The developer decided on 2026-11-25 that the dashboard follows the ordering flag, since without ordering there are no figures. Seeding the admin doesn't depend on any flag (ADR-006). No removal issue is needed.
+- **Access:** the endpoint requires the admin role through method security, and `SecurityConfig` restricts `/v1/admin/**` to the admin role, like the other role scopes.
+- **Feature flag:** none. The dashboard followed the ordering flag until #44 removed it. Seeding the admin doesn't depend on any flag (ADR-006).
 - **Glossary:** settled in the grilling: Admin, Restaurant manager (renamed from restaurant user), Open order, Delivery time, Dashboard, Figure, Orders per 24 hours, Sales, Revenue, Acceptance time, Preparation time, Pickup time and Transit time.
 - **Shared documents:** the minimum viable product's account decision says every user has exactly one role: customer, restaurant, delivery agent or admin. Its _Not in the MVP_ item 4 says an admin opens the dashboard. Kanban4sem/MTOGO-Frontend#16 copies the glossary and minimum viable product changes.
 - **Domain model:** Role lists `ADMIN`, and the class note says admins have no restaurant.
@@ -129,7 +129,7 @@ All database tests use `@SharedDatabase`, real collaborators and no mocks.
   - the total's counts and sales equal the sums of the rows, and its averages are weighted over all orders
   - restaurants sorted by name, with one that doesn't accept orders
   - a step that ended in the period for an order placed before it
-- **Admin dashboard endpoint, HTTP:** a decision table over anonymous, customer, restaurant manager, delivery agent and admin × ordering flag enabled, disabled and unset, against 200, 401, 403 and 404. Rule set `dashboard-access`. Prior art: `DeliveryAgentOrderControllerTest` with `access.csv` and its `WhenOrderingIsDisabled` nested class.
+- **Admin dashboard endpoint, HTTP:** a decision table over anonymous, customer, restaurant manager, delivery agent and admin, against 200, 401 and 403. Rule set `dashboard-access`. Prior art: `DeliveryAgentOrderControllerTest` with `access.csv`.
 - **Admin dashboard endpoint, HTTP:** BVA on `days` at 0, 1, 365 and 366, plus a non-numeric value and a missing value, which means 7. Rule set `dashboard-days`.
 - **Admin dashboard endpoint, HTTP:** one scenario checks the full JSON shape of a response with orders, including `null` minutes and all four statuses at 0.
 - **Seeding:** the existing rule sets get an admin column or rows, so behaviours 2–8 are covered the same way as the other roles:
@@ -170,8 +170,16 @@ Admins keep MTOGO in order but don't run restaurants. Restaurants own their deta
 - **Tests:** `DashboardServiceTest`, with a fixed clock, with `order/dashboard-service/get-dashboard-open-orders.csv`, `get-dashboard-window.csv` (each figure at 1 µs before, on and 1 µs inside the edge of 1 and 365 days) and `get-dashboard-rounding.csv`, plus the scenarios from the spec: no orders, a restaurant with no orders, a rejected order, open orders, the total against the rows, sorting with a restaurant that doesn't accept orders, and a step of an order placed before the period. `OrderTestData.orderAt` inserts an order with a status change at each given time. `AdminDashboardControllerTest`, with a fixed clock, with `order/admin-dashboard-controller/get-access.csv`, which starts one extra backend each for ordering disabled and unset, `get-days.csv`, and a full-JSON scenario that checks `null` minutes, all four statuses at 0 and the decimal places of `sales` and `ordersPer24Hours`. Seeding: admin rows or columns in `seed-roles.csv`, `seed-lengths.csv`, `seeded-login.csv`, `bind-seed-passwords.csv` and `restaurant-link.csv`, and the admin in `UserSeedServiceTest`'s persisted-state, existing-user and second-run scenarios and in `UserSeedInitializerTest`. Moving the period's edge by 1 µs failed the 16 on-edge rows, also after the calculation moved from SQL to the service, and moving the gate's path failed the 10 disabled and unset rows.
 - **Follow-up:** None
 
+### Spec 2.0 - 2026-11-25 - #44
+
+- **Built:** The dashboard no longer follows the ordering flag, which #44 removed. Its gate in OrderGateConfig is gone with that class, so `GET /v1/admin/dashboard` never answers 404, and its OpenAPI description no longer lists one.
+- **Deviations:** #26 is closed, so its criterion about disabled ordering is struck through here rather than changed on the issue first.
+- **Tests:** `get-access.csv` keeps the five enabled rows without the `ordering` column, and `AdminDashboardControllerTest` no longer starts extra backends for ordering disabled and unset. It and `DashboardServiceTest` no longer set `FEATURE_ORDERING_ENABLED`, and `AdminDashboardControllerTest` uses `@AuthenticatedEndpointTest`.
+- **Follow-up:** None
+
 ## Changelog
 
-| Version | Date       | Change        | Issue |
-| ------- | ---------- | ------------- | ----- |
-| 1.0     | 2026-11-25 | First version | #26   |
+| Version | Date       | Change                                            | Issue |
+| ------- | ---------- | ------------------------------------------------- | ----- |
+| 1.0     | 2026-11-25 | First version                                     | #26   |
+| 2.0     | 2026-11-25 | The dashboard no longer follows the ordering flag | #44   |
