@@ -1,13 +1,13 @@
 # Add customer accounts
 
-**Version:** 3.0 · **Date:** 2026-11-25 · **Issue:** #13 · **Feature flag:** None (`authEnabled` removed in #31)
+**Version:** 3.1 · **Date:** 2026-11-25 · **Issue:** #13 · **Feature flag:** None (`authEnabled` removed in #31)
 
 ## Acceptance criteria
 
 Copied from #13. The issue is the source: change the issue first, then this copy.
 
-- [ ] A customer can register, log in and log out
-- [ ] Each user can only use the parts of the API that belong to their role
+- [x] A customer can register, log in and log out
+- [x] Each user can only use the parts of the API that belong to their role
 
 ## Behaviour
 
@@ -95,6 +95,13 @@ JWT authentication is proposed for developer review. No deployed server or exist
 - **Tests:** the disabled-auth `404` rows in `request-endpoint-access` and `bind-auth-enabled` in AppPropertiesTest are removed. `startup-secret` in JwtServiceTest drops the flag column and its decision-table rows: an unset or blank secret always stops the backend. The test `application.properties` sets a test signing key, so the test classes no longer set `FEATURE_AUTH_ENABLED` or `JWT_SECRET`. The testing decisions name `startup-secret` in place of the flag tests.
 - **Follow-up:** remove `FEATURE_AUTH_ENABLED` and `FEATURE_ORDERING_ENABLED` from each environment's `.env`, and make sure `JWT_SECRET` is set there. The frontend side is Kanban4sem/MTOGO-Frontend#22.
 
+### Spec 3.1 - 2026-11-25 - #72
+
+- **Built:** no code change. The acceptance criteria copied from #13 are ticked, as they are on the issue.
+- **Deviations:** None.
+- **Tests:** None needed.
+- **Follow-up:** None.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -104,3 +111,4 @@ JWT authentication is proposed for developer review. No deployed server or exist
 | 1.2     | 2026-11-19 | Auth flag checked only by the gate, email helper in the domain  | #53   |
 | 2.0     | 2026-11-22 | Expose the saved delivery street in the profile address         | #61   |
 | 3.0     | 2026-11-25 | Remove the auth feature flag                                    | #31   |
+| 3.1     | 2026-11-25 | Acceptance criteria ticked to match the issue                   | #72   |

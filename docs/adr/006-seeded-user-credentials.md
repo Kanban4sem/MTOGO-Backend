@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — [#52](https://github.com/Kanban4sem/MTOGO-Backend/issues/52)
+Accepted — [#52](https://github.com/Kanban4sem/MTOGO-Backend/issues/52)
 
 ## Context
 

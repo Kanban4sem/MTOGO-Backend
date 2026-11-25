@@ -24,6 +24,15 @@ Java 25 and Spring Boot 4, with PostgreSQL and Flyway for the database. The API 
 
 With the backend running, Swagger UI is at `/swagger-ui/index.html` and the OpenAPI specification at `/v3/api-docs`. Both are open without authentication, like `GET /actuator/health` and `GET /v1/features`. Every other endpoint requires a login.
 
+The order endpoints that a role uses live under that role's path, and each role sees only its own orders:
+
+- **Customer:** `POST /v1/orders` places and pays for an order. `GET /v1/customer/orders` and `GET /v1/customer/orders/{id}` show the customer's orders and their status. `/v1/customer/orders/notifications` lists the status changes and marks them as read.
+- **Restaurant:** `GET /v1/restaurant/orders` lists the restaurant's orders. `PATCH /v1/restaurant/orders/{id}` accepts or rejects a placed order, or marks an accepted order as ready.
+- **Delivery agent:** `GET /v1/delivery-agent/orders` lists the ready orders no one has taken, and the agent's own orders. `PATCH /v1/delivery-agent/orders/{id}` takes a ready order, or marks it as picked up or delivered.
+- **Admin:** `GET /v1/admin/dashboard` shows the management dashboard.
+
+Why a role's path is singular is in the [coding standards](docs/coding-standards.md).
+
 ## Getting started
 
 We work with Kanban and trunk-based development using [TakT](https://github.com/devx-cafe/gh-tt) and [InSitu](https://github.com/devx-cafe/gh-insitu). Every change starts as an issue on our [board](https://github.com/orgs/Kanban4sem/projects/1) and ends as exactly one commit on `main`.
