@@ -1,7 +1,10 @@
 package mtogo.feature.user.domain;
 
+import java.util.ArrayList;
+import java.util.List;
 import mtogo.feature.address.domain.Address;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -27,4 +30,9 @@ public class UserProfile
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "address_id", unique = true)
     private Address address;
+    @Setter(AccessLevel.NONE)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "saved_by_profile_id")
+    @OrderBy("id ASC")
+    private List<Address> savedDeliveryAddresses = new ArrayList<>();
 }

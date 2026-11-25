@@ -44,6 +44,99 @@ class UserControllerTest
         jdbc.update("DELETE FROM postal_codes WHERE id NOT IN (SELECT postal_code_id FROM addresses)");
     }
 
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/user/user-controller/update-profile.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Update profile - validates contact details and persists accepted changes")
+    void updateProfile(String firstName, String phoneNumber, int expected, String reason)
+    {
+        given().port(port).contentType(ContentType.JSON).body(registration()).post("/v1/users").then().statusCode(201);
+        String token = login("CUSTOMER");
+        Map<String, Object> profile = new HashMap<>();
+        profile.put("firstName", firstName);
+        profile.put("lastName", " Nielsen ");
+        profile.put("phoneNumber", phoneNumber);
+        given().port(port).auth().oauth2(token).contentType(ContentType.JSON).body(profile).put("/v1/users/me").then()
+                .statusCode(expected);
+        var result = given().port(port).auth().oauth2(token).get("/v1/users/me").then().statusCode(200);
+        if (expected == 200)
+        {
+            result.body("profile.firstName", equalTo(firstName.strip())).body("profile.lastName", equalTo("Nielsen"))
+                    .body("profile.phoneNumber", equalTo(phoneNumber == null ? null : phoneNumber.strip()))
+                    .body("profile.address.city", equalTo("Copenhagen"));
+        } else
+        {
+            result.body("profile.firstName", equalTo("Jonas"));
+        }
+    }
+
+    @Test
+    @DisplayName("Saved delivery addresses - a customer can create, list, change and remove their own addresses")
+    void manageDeliveryAddresses()
+    {
+        given().port(port).contentType(ContentType.JSON).body(registration()).post("/v1/users").then().statusCode(201);
+        String token = login("CUSTOMER");
+        String collection = "/v1/users/me/delivery-addresses";
+        given().port(port).auth().oauth2(token).get(collection).then().statusCode(200).body("size()", is(0));
+
+        String first = given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("street", " Testvej 67 ", "postalCode", "2900", "city", " Hellerup ")).post(collection)
+                .then().statusCode(201).body("street", is("Testvej 67")).body("city", is("Hellerup"))
+                .body("country", is("Denmark")).extract().header("Location");
+        String second = given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("street", "Other Street 2", "postalCode", "2800", "city", "Lyngby")).post(collection)
+                .then().statusCode(201).extract().header("Location");
+        given().port(port).auth().oauth2(token).get(collection).then().statusCode(200).body("street",
+                contains("Testvej 67", "Other Street 2"));
+
+        given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("street", "New Street 3", "postalCode", "2900", "city", "Hellerup")).put(first).then()
+                .statusCode(200).body("street", is("New Street 3"));
+        given().port(port).auth().oauth2(token).get(first).then().statusCode(200).body("street", is("New Street 3"));
+
+        var otherRegistration = registration();
+        otherRegistration.put("email", "other@example.test");
+        given().port(port).contentType(ContentType.JSON).body(otherRegistration).post("/v1/users").then()
+                .statusCode(201);
+        String other = given().port(port).contentType(ContentType.JSON)
+                .body(Map.of("email", "other@example.test", "password", "Customer123!")).post("/v1/users/login").then()
+                .statusCode(200).extract().path("accessToken");
+        given().port(port).auth().oauth2(other).get(collection).then().statusCode(200).body("size()", is(0));
+        given().port(port).auth().oauth2(other).get(first).then().statusCode(404);
+        given().port(port).auth().oauth2(other).contentType(ContentType.JSON)
+                .body(Map.of("street", "New Street 4", "postalCode", "2900", "city", "Hellerup")).put(first).then()
+                .statusCode(404);
+        given().port(port).auth().oauth2(other).delete(first).then().statusCode(404);
+
+        given().port(port).auth().oauth2(token).delete(first).then().statusCode(204);
+        given().port(port).auth().oauth2(token).get(first).then().statusCode(404);
+        given().port(port).auth().oauth2(token).get(second).then().statusCode(200);
+        given().port(port).auth().oauth2(token).get(collection).then().statusCode(200).body("street",
+                contains("Other Street 2"));
+    }
+
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/user/user-controller/save-delivery-address.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Save delivery address - validates a complete Danish address")
+    void saveDeliveryAddress(String field, String value, int expected, String reason)
+    {
+        given().port(port).contentType(ContentType.JSON).body(registration()).post("/v1/users").then().statusCode(201);
+        Map<String, Object> address = new HashMap<>(
+                Map.of("street", "Testvej 67", "postalCode", "2900", "city", "Hellerup"));
+        if (field.endsWith("Length"))
+        {
+            address.put(field.replace("Length", ""), "a".repeat(Integer.parseInt(value)));
+        } else
+        {
+            address.put(field, value);
+        }
+        String token = login("CUSTOMER");
+        String collection = "/v1/users/me/delivery-addresses";
+        given().port(port).auth().oauth2(token).contentType(ContentType.JSON).body(address).post(collection).then()
+                .statusCode(expected);
+        given().port(port).auth().oauth2(token).get(collection).then().statusCode(200).body("size()",
+                is(expected == 201 ? 1 : 0));
+    }
+
     @Test
     @DisplayName("Register, login and logout - persists a customer and profile and revokes all prior tokens")
     void customerLifecycle()

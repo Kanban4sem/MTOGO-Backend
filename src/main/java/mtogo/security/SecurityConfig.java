@@ -44,6 +44,8 @@ public class SecurityConfig
                         .requestMatchers(HttpMethod.GET, "/v1/restaurants", "/v1/restaurants/*/menus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
                         .permitAll().requestMatchers(HttpMethod.POST, "/v1/users", "/v1/users/login").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/v1/users/me").hasRole("CUSTOMER")
+                        .requestMatchers("/v1/users/me/delivery-addresses/**").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/v1/orders").hasRole("CUSTOMER")
                         .requestMatchers("/v1/customer/**").hasRole("CUSTOMER").requestMatchers("/v1/restaurant/**")
                         .hasRole("RESTAURANT").requestMatchers("/v1/delivery-agent/**").hasRole("DELIVERY_AGENT")

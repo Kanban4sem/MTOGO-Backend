@@ -7,7 +7,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import mtogo.feature.address.domain.Address;
+import mtogo.feature.address.domain.AddressMapper;
 import mtogo.feature.address.domain.PostalCode;
+import mtogo.feature.address.presentation.dto.response.SavedDeliveryAddressDTO;
 import mtogo.exceptions.*;
 import mtogo.feature.order.data.OrderRepository;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
@@ -22,6 +24,7 @@ import mtogo.feature.restaurant.data.MenuItemRepository;
 import mtogo.feature.restaurant.domain.MenuItem;
 import mtogo.feature.restaurant.domain.Restaurant;
 import mtogo.feature.user.data.UserRepository;
+import mtogo.feature.user.domain.CustomerDeliveryAddressService;
 import mtogo.feature.user.domain.User;
 import mtogo.feature.user.domain.UserProfile;
 import org.springframework.stereotype.Service;
@@ -31,23 +34,24 @@ import org.springframework.util.StringUtils;
 @Service
 public class OrderService
 {
-    // MTOGO delivers only in Denmark.
-    static final String DELIVERY_COUNTRY = "Denmark";
-
     private final OrderRepository orders;
     private final MenuItemRepository menuItems;
     private final UserRepository users;
     private final OrderMapper mapper;
     private final IPaymentProvider payments;
+    private final AddressMapper addresses;
+    private final CustomerDeliveryAddressService savedAddresses;
 
     public OrderService(OrderRepository orders, MenuItemRepository menuItems, UserRepository users, OrderMapper mapper,
-            IPaymentProvider payments)
+            IPaymentProvider payments, AddressMapper addresses, CustomerDeliveryAddressService savedAddresses)
     {
         this.orders = orders;
         this.menuItems = menuItems;
         this.users = users;
         this.mapper = mapper;
         this.payments = payments;
+        this.addresses = addresses;
+        this.savedAddresses = savedAddresses;
     }
 
     /**
@@ -64,12 +68,10 @@ public class OrderService
 
         // Reusing an address must see the street and postal area from the same update.
         // An authenticated customer always exists.
-        User customer = request.useDefaultAddress() || request.saveAsDefault()
+        User customer = request.useDefaultAddress() || request.saveAsDefault() || request.deliveryAddressId() != null
                 ? users.findByIdForUpdate(customerId).orElseThrow()
                 : users.getReferenceById(customerId);
-        Address address = request.useDefaultAddress()
-                ? copyDefaultAddress(customer)
-                : deliveryAddress(request.deliveryAddress());
+        Address address = deliveryAddress(customer, request);
 
         Order order = new Order();
         order.setCustomer(customer);
@@ -166,9 +168,11 @@ public class OrderService
     private static void validateDeliveryAddressChoice(PlaceOrderDTO request)
     {
         boolean hasNewAddress = request.deliveryAddress() != null;
-        if (request.useDefaultAddress() == hasNewAddress)
+        int addressChoices = (hasNewAddress ? 1 : 0) + (request.useDefaultAddress() ? 1 : 0)
+                + (request.deliveryAddressId() != null ? 1 : 0);
+        if (addressChoices != 1)
         {
-            throw new BadRequestException("Enter a delivery address or choose the default address");
+            throw new BadRequestException("Enter a delivery address or select one saved delivery address");
         }
         if (request.saveAsDefault() && !hasNewAddress)
         {
@@ -184,8 +188,7 @@ public class OrderService
             throw new BadRequestException("Your profile has no complete default delivery address");
         }
         PostalCode postalCode = address.getPostalCode();
-        return deliveryAddress(
-                new PlaceOrderDTO.DeliveryAddress(address.getStreet(), postalCode.getCode(), postalCode.getCity()));
+        return addresses.toDeliveryAddress(address.getStreet(), postalCode.getCode(), postalCode.getCity());
     }
 
     private static void saveDefaultAddress(UserProfile profile, Address deliveryAddress)
@@ -206,14 +209,19 @@ public class OrderService
         postalCode.setCountry(deliveryPostalCode.getCountry());
     }
 
-    private Address deliveryAddress(PlaceOrderDTO.DeliveryAddress request)
+    private Address deliveryAddress(User customer, PlaceOrderDTO request)
     {
-        Address address = mapper.toEntity(request);
-        address.getPostalCode().setCountry(DELIVERY_COUNTRY);
-        // Default is a profile address setting; a delivery address belongs to one
-        // order.
-        address.setDefault(false);
-        return address;
+        if (request.deliveryAddressId() != null)
+        {
+            SavedDeliveryAddressDTO saved = savedAddresses.get(customer.getId(), request.deliveryAddressId());
+            return addresses.toDeliveryAddress(saved.street(), saved.postalCode(), saved.city());
+        }
+        if (request.useDefaultAddress())
+        {
+            return copyDefaultAddress(customer);
+        }
+        PlaceOrderDTO.DeliveryAddress address = request.deliveryAddress();
+        return addresses.toDeliveryAddress(address.street(), address.postalCode(), address.city());
     }
 
     private Map<Long, MenuItem> requireMenuItems(List<PlaceOrderDTO.OrderLine> lines)

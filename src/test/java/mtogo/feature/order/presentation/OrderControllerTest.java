@@ -114,6 +114,69 @@ class OrderControllerTest extends OrderTestData
                 JOIN addresses a ON a.id = o.delivery_address_id JOIN postal_codes p ON p.id = a.postal_code_id
                 WHERE o.id IN (?, ?)
                 """, String.class, firstOrderId, reusedOrderId), contains("Testvej 67, 2900", "Testvej 67, 2900"));
+
+        String addresses = "/v1/users/me/delivery-addresses";
+        long defaultId = given().port(port).auth().oauth2(accessToken).get(addresses).then().statusCode(200)
+                .body("[0].isDefault", is(true)).body("[0].street", is("Second Street 2")).extract().jsonPath()
+                .getLong("[0].id");
+        given().port(port).auth().oauth2(accessToken).contentType(ContentType.JSON)
+                .body(Map.of("street", "Edited Street 3", "postalCode", "2900", "city", "Hellerup"))
+                .put(addresses + "/" + defaultId).then().statusCode(200);
+        given().port(port).auth().oauth2(accessToken).contentType(ContentType.JSON).body(reuse).post("/v1/orders")
+                .then().statusCode(201).body("deliveryAddress.street", is("Edited Street 3"));
+        given().port(port).auth().oauth2(accessToken).delete(addresses + "/" + defaultId).then().statusCode(204);
+        given().port(port).auth().oauth2(accessToken).get("/v1/users/me").then().statusCode(200).body("profile.address",
+                nullValue());
+        given().port(port).auth().oauth2(accessToken).contentType(ContentType.JSON).body(reuse).post("/v1/orders")
+                .then().statusCode(400);
+    }
+
+    @ParameterizedTest(name = "[{index}] {5}")
+    @CsvFileSource(resources = "/testcases/order/order-controller/place-saved-address.csv", numLinesToSkip = 1)
+    @DisplayName("Place - accepts only an owned saved address by itself")
+    void placeWithSavedAddress(String selection, boolean hasManualAddress, boolean useDefaultAddress,
+            boolean saveAsDefault, int expected, String reason)
+    {
+        String customerToken = token(customer());
+        String otherToken = token(user("other@example.test", "CUSTOMER"));
+        long itemId = item(menu(restaurant("Requested", true), "Lunch", true), "Meal", true);
+        String collection = "/v1/users/me/delivery-addresses";
+        Map<String, String> address = Map.of("street", "Saved Street 10", "postalCode", "2900", "city", "Hellerup");
+        long addressId = given().port(port).auth().oauth2(selection.equals("other") ? otherToken : customerToken)
+                .contentType(ContentType.JSON).body(address).post(collection).then().statusCode(201).extract()
+                .jsonPath().getLong("id");
+        long selectedId = switch (selection)
+        {
+            case "missing" -> addressId + 1000;
+            case "zero" -> 0;
+            case "negative" -> -1;
+            default -> addressId;
+        };
+        Map<String, Object> request = placeOrder(List.of(line(itemId, 1)));
+        if (!hasManualAddress)
+        {
+            request.remove("deliveryAddress");
+        }
+        request.put("deliveryAddressId", selectedId);
+        request.put("useDefaultAddress", useDefaultAddress);
+        request.put("saveAsDefault", saveAsDefault);
+        var result = given().port(port).auth().oauth2(customerToken).contentType(ContentType.JSON).body(request)
+                .post("/v1/orders").then().statusCode(expected);
+        if (expected == 201)
+        {
+            String location = result.body("deliveryAddress.street", is("Saved Street 10")).extract().header("Location");
+            given().port(port).auth().oauth2(customerToken).contentType(ContentType.JSON)
+                    .body(Map.of("street", "Changed Street 11", "postalCode", "2800", "city", "Lyngby"))
+                    .put(collection + "/" + addressId).then().statusCode(200);
+            given().port(port).auth().oauth2(customerToken).delete(collection + "/" + addressId).then().statusCode(204);
+            given().port(port).auth().oauth2(customerToken).get(location).then().statusCode(200)
+                    .body("deliveryAddress.street", is("Saved Street 10"))
+                    .body("deliveryAddress.postalCode", is("2900"));
+        } else
+        {
+            result.contentType("application/problem+json").body("status", is(expected));
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM orders", Long.class), is(0L));
+        }
     }
 
     @ParameterizedTest(name = "[{index}] {3}")

@@ -13,6 +13,7 @@ import mtogo.feature.user.presentation.dto.response.AuthenticatedUserDTO;
 import mtogo.feature.user.domain.UserService;
 import mtogo.feature.user.presentation.dto.request.LoginUserDTO;
 import mtogo.feature.user.presentation.dto.request.RegisterUserDTO;
+import mtogo.feature.user.presentation.dto.request.UpdateCustomerProfileDTO;
 import mtogo.feature.user.presentation.dto.response.UserDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,6 +63,16 @@ public class UserController
     public UserDTO getCurrent(Principal principal)
     {
         return users.getCurrent(Long.valueOf(principal.getName()));
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Update the current customer's name and phone number")
+    @ApiResponse(responseCode = "400", description = "Invalid name or phone number")
+    public UserDTO updateCustomerProfile(@Valid @RequestBody UpdateCustomerProfileDTO request, Principal principal)
+    {
+        return users.updateCustomerProfile(Long.valueOf(principal.getName()), request);
     }
 
     @PostMapping("/logout")

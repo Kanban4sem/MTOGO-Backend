@@ -123,9 +123,15 @@ Send the token as `Authorization: Bearer <accessToken>`. It expires after 15 min
 
 The API contract is documented in Swagger and the [account spec](docs/specs/13-add-customer-accounts.md); the authentication decision is [ADR-005](docs/adr/005-account-authentication.md). Frontend integration remains in frontend issue #6.
 
+Customers can read their name and phone number with `GET /v1/users/me` and update them with `PUT /v1/users/me`. Send `firstName`, `lastName` and `phoneNumber`. Omit the phone number or send `null` to clear it.
+
+Use `GET /v1/users/me/delivery-addresses` to list saved delivery addresses, including a complete checkout default. Use `POST` on the collection to add an address, or `GET`, `PUT` and `DELETE` on `/v1/users/me/delivery-addresses/{id}` to manage one address. Address writes take `street`, `postalCode` and `city`. The country is Denmark and the postal code has four digits.
+
 Placing orders is behind `FEATURE_ORDERING_ENABLED`, off by default, and also needs `FEATURE_AUTH_ENABLED`. A logged-in customer places and pays for an order with `POST /v1/orders`. Payment is mocked: the payment token `decline` is declined and any other token is confirmed. The contract is in Swagger and the [order spec](docs/specs/15-place-and-pay-for-an-order.md).
 
 At checkout, send `deliveryAddress` with `street`, `postalCode` and `city`. Add `saveAsDefault: true` to save it on the customer's profile after payment succeeds. To use that saved address, send `useDefaultAddress: true` and omit `deliveryAddress`. Read the current address from `GET /v1/users/me` at `profile.address`. A profile address from registration or seeding has a postal area and needs a street before it can be used as a delivery default.
+
+To use a specific saved address, send its `deliveryAddressId` as the only address selection in the order request. A missing address or one belonging to another customer returns `404`. Each order retains the address used when it was placed.
 
 The `201 Created` response includes a `Location` header with the URL of the new order, `/v1/customer/orders/{id}`.
 

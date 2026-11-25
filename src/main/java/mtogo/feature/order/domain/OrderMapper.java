@@ -3,7 +3,6 @@ package mtogo.feature.order.domain;
 import java.util.List;
 import mtogo.feature.address.domain.Address;
 import mtogo.feature.address.domain.PostalCode;
-import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.response.CustomerOrderDTO;
 import mtogo.feature.order.presentation.dto.response.CustomerOrderSummaryDTO;
 import mtogo.feature.order.presentation.dto.response.DeliveryAddressDTO;
@@ -17,17 +16,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class OrderMapper
 {
-    public Address toEntity(PlaceOrderDTO.DeliveryAddress request)
-    {
-        PostalCode postalCode = new PostalCode();
-        postalCode.setCode(request.postalCode());
-        postalCode.setCity(request.city().strip());
-        Address address = new Address();
-        address.setStreet(request.street().strip());
-        address.setPostalCode(postalCode);
-        return address;
-    }
-
     public OrderDTO toDTO(Order order)
     {
         OrderStatus status = order.getStatus();

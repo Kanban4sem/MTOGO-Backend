@@ -1,0 +1,9 @@
+firstName,phoneNumber,expected,reason
+" Ada "," +45 12345678 ",200,"EP: valid contact details are trimmed"
+Ada,NULL,200,"EP: the phone number can be removed"
+NULL,12345678,400,"EP: first name is required"
+"",12345678,400,"EP: empty first name"
+"  ",12345678,400,"EP: blank first name"
+Ada,12345678901234567890123456789,200,"BVA: phone number one below the limit"
+Ada,123456789012345678901234567890,200,"BVA: phone number at the limit"
+Ada,1234567890123456789012345678901,400,"BVA: phone number one above the limit"

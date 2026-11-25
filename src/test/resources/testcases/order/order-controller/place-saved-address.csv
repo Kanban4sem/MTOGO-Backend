@@ -1,0 +1,9 @@
+selection,hasManualAddress,useDefaultAddress,saveAsDefault,expected,reason
+own,false,false,false,201,"DT: a customer can order to their own saved address"
+other,false,false,false,404,"DT: another customer's saved address is inaccessible"
+missing,false,false,false,404,"EP: an unknown address is inaccessible"
+zero,false,false,false,400,"BVA: the address ID must be positive"
+negative,false,false,false,400,"EP: negative address ID"
+own,true,false,false,400,"DT: manual and saved address cannot both be supplied"
+own,false,true,false,400,"DT: default and saved address cannot both be selected"
+own,false,false,true,400,"DT: only a manually entered address can become the default"

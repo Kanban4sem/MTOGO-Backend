@@ -8,10 +8,11 @@ import jakarta.validation.constraints.*;
 // The customer never sends prices, a channel or who they are: the backend takes
 // those from the menu, the API and the access token.
 public record PlaceOrderDTO(@NotNull @Size(min = 1, max = 20) List<@NotNull @Valid OrderLine> lines,
-        @Valid @Schema(description = "Required when useDefaultAddress is false. Omit when using the saved address.") DeliveryAddress deliveryAddress,
+        @Valid @Schema(description = "Enter a one-time delivery address, or select a saved address using deliveryAddressId or useDefaultAddress.") DeliveryAddress deliveryAddress,
         @NotBlank @Schema(description = "Token from the payment form. The mocked payment declines the token \"decline\" and confirms any other.", example = "tok_visa") String paymentToken,
         @Schema(description = "Use the complete delivery address saved on the customer's profile.", defaultValue = "false") Boolean useDefaultAddress,
-        @Schema(description = "Save the entered deliveryAddress as the profile default after successful payment.", defaultValue = "false") Boolean saveAsDefault)
+        @Schema(description = "Save the entered deliveryAddress as the profile default after successful payment.", defaultValue = "false") Boolean saveAsDefault,
+        @Positive @Schema(description = "ID of a saved delivery address owned by the customer. Omit deliveryAddress and useDefaultAddress when selecting by ID.") Long deliveryAddressId)
 {
     public PlaceOrderDTO {
         useDefaultAddress = Boolean.TRUE.equals(useDefaultAddress);
@@ -21,6 +22,12 @@ public record PlaceOrderDTO(@NotNull @Size(min = 1, max = 20) List<@NotNull @Val
     public PlaceOrderDTO(List<OrderLine> lines, DeliveryAddress deliveryAddress, String paymentToken)
     {
         this(lines, deliveryAddress, paymentToken, false, false);
+    }
+
+    public PlaceOrderDTO(List<OrderLine> lines, DeliveryAddress deliveryAddress, String paymentToken,
+            Boolean useDefaultAddress, Boolean saveAsDefault)
+    {
+        this(lines, deliveryAddress, paymentToken, useDefaultAddress, saveAsDefault, null);
     }
 
     public record OrderLine(@NotNull @Positive Long menuItemId,

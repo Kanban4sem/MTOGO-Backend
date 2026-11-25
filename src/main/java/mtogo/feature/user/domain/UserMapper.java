@@ -2,9 +2,11 @@ package mtogo.feature.user.domain;
 
 import mtogo.feature.address.domain.AddressMapper;
 import mtogo.feature.user.presentation.dto.request.RegisterUserDTO;
+import mtogo.feature.user.presentation.dto.request.UpdateCustomerProfileDTO;
 import mtogo.feature.user.presentation.dto.response.UserDTO;
 import mtogo.feature.user.presentation.dto.response.UserProfileDTO;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class UserMapper
@@ -36,5 +38,12 @@ public class UserMapper
         return new UserDTO(user.getId(), user.getEmail(), user.getRole().getName().name(),
                 new UserProfileDTO(profile.getFirstName(), profile.getLastName(), profile.getPhoneNumber(),
                         profile.getPreferredLanguage(), addresses.toDTO(profile.getAddress())));
+    }
+
+    public void updateProfile(UserProfile profile, UpdateCustomerProfileDTO request)
+    {
+        profile.setFirstName(request.firstName().strip());
+        profile.setLastName(request.lastName().strip());
+        profile.setPhoneNumber(StringUtils.hasText(request.phoneNumber()) ? request.phoneNumber().strip() : null);
     }
 }

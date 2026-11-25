@@ -6,6 +6,7 @@ import mtogo.exceptions.*;
 import mtogo.feature.user.data.*;
 import mtogo.feature.user.presentation.dto.request.LoginUserDTO;
 import mtogo.feature.user.presentation.dto.request.RegisterUserDTO;
+import mtogo.feature.user.presentation.dto.request.UpdateCustomerProfileDTO;
 import mtogo.feature.user.presentation.dto.response.UserDTO;
 import mtogo.feature.user.presentation.dto.response.AuthenticatedUserDTO;
 import mtogo.security.JwtService;
@@ -85,6 +86,14 @@ public class UserService
     }
 
     @Transactional
+    public UserDTO updateCustomerProfile(Long userId, UpdateCustomerProfileDTO request)
+    {
+        User user = requireActiveUser(users.findByIdForUpdate(userId).orElse(null));
+        mapper.updateProfile(user.getProfile(), request);
+        return mapper.toDTO(user);
+    }
+
+    @Transactional
     public void logout(Long userId)
     {
         users.revokeSessions(userId);
@@ -92,8 +101,12 @@ public class UserService
 
     private User requireActiveUser(Long userId)
     {
-        User user = users.findById(userId).orElseThrow(() -> new UnauthorizedException("Invalid access token"));
-        if (!user.isActive())
+        return requireActiveUser(users.findById(userId).orElse(null));
+    }
+
+    private static User requireActiveUser(User user)
+    {
+        if (user == null || !user.isActive())
         {
             throw new UnauthorizedException("Invalid access token");
         }
