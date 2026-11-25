@@ -1,0 +1,10 @@
+jwtLifetimeSeconds,expected,reason
+NULL,900,"EP: an unset lifetime defaults to 15 minutes"
+0,IllegalArgumentException,"EP, BVA: a lifetime below the minimum stops the backend"
+1,1,"BVA: the minimum lifetime starts the backend"
+2,2,"BVA: just above the minimum starts the backend"
+43200,43200,"EP: a lifetime within the range starts the backend"
+86399,86399,"BVA: just below the maximum starts the backend"
+86400,86400,"BVA: the maximum lifetime starts the backend"
+86401,IllegalArgumentException,"EP, BVA: a lifetime above the maximum stops the backend"
+banana,NumberFormatException,"EP: a lifetime that isn't a number stops the backend"
