@@ -14,9 +14,9 @@ Flyway applies migrations at startup and Hibernate validates their tables. In pg
 
 ## Feature flags and login
 
-Unfinished features are behind feature flags that are off by default, as described in [CONTRIBUTING](../CONTRIBUTING.md#feature-flags). To try them locally, enable them in your own `.env` and restart the backend:
+Unfinished features are behind feature flags that are off by default, as described in [CONTRIBUTING](../CONTRIBUTING.md#feature-flags). To try them locally, enable them in your own `.env` and restart the backend. No flag is declared at the moment.
 
-- `FEATURE_AUTH_ENABLED` turns on the account endpoints. It needs `JWT_SECRET` set to a Base64 key generated with `openssl rand -base64 32`. Never commit the key.
+The backend does not start without `JWT_SECRET`, a Base64 key generated with `openssl rand -base64 32`. Set it in your `.env` and never commit the key.
 
 Send the access token from `POST /v1/users/login` as `Authorization: Bearer <accessToken>`. It expires after 15 minutes by default (`JWT_LIFETIME_SECONDS`). The backend does not use authentication cookies or sessions. The authentication decision is [ADR-005](adr/005-account-authentication.md).
 
@@ -45,7 +45,7 @@ On every startup the backend creates these users for each role whose seed passwo
 | `agent@mtogo.example`    | DELIVERY_AGENT | None         | Delivery Agent | `SEED_DELIVERY_AGENT_PASSWORD` |
 | `admin@mtogo.example`    | ADMIN          | None         | MTOGO Admin    | `SEED_ADMIN_PASSWORD`          |
 
-- **Locally:** set the variables in your `.env` and restart. Each user logs in with their email and their role's password. An unset or blank variable skips that role. A password shorter than 8 characters or longer than 72 UTF-8 bytes stops the startup. Logging in needs `FEATURE_AUTH_ENABLED`; seeding does not.
+- **Locally:** set the variables in your `.env` and restart. Each user logs in with their email and their role's password. An unset or blank variable skips that role. A password shorter than 8 characters or longer than 72 UTF-8 bytes stops the startup.
 - **On stage:** the passwords are in the droplet's `backend.env`. The team has no shared secret store yet, so ask a team member with access to the droplet.
 - **On prod:** the variables stay unset, so prod has no seeded users. `deploy.sh` refuses to deploy to prod while one is set.
 - **Existing users:** seeding never changes a user whose email already exists, including a customer who registered with a seeded email. It logs a warning and skips that user.

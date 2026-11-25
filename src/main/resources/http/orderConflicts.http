@@ -1,7 +1,6 @@
 @baseUrl = http://localhost:8080
 
-# Run against the local Spring profile with FEATURE_AUTH_ENABLED set
-# to true. Set SEED_CUSTOMER_PASSWORD before startup.
+# Run against the local Spring profile. Set SEED_CUSTOMER_PASSWORD before startup.
 # In JetBrains HTTP Client, select the order-conflicts environment and log in first.
 # Define seedCustomerPassword, unavailableItemId and closedRestaurantItemId
 # under order-conflicts in the repository root's http-client.private.env.json.

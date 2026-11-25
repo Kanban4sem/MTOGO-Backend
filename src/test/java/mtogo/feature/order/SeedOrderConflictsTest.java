@@ -20,8 +20,8 @@ import org.springframework.test.context.ActiveProfiles;
 // Java class, so the class is named after the file.
 @SharedDatabase
 @ActiveProfiles("local")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
-        "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef", "app.seed.customer-password=Customer123!"})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+        "app.seed.customer-password=Customer123!"})
 class SeedOrderConflictsTest
 {
     @LocalServerPort

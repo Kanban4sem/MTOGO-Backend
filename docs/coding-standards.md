@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 9.2 · **Date:** 2026-11-25
+**Version:** 9.3 · **Date:** 2026-11-25
 
 ## Overview
 
@@ -358,7 +358,7 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 [CONTRIBUTING](../CONTRIBUTING.md#feature-flags) says when a flag is needed and how it is tested. In the backend:
 
 - **Add:** declare the flag in `AppProperties` and `application.properties`, defaulting to false: `app.auth-enabled=${FEATURE_AUTH_ENABLED:false}`. In Java the flag takes the `is` prefix (`isAuthEnabled`). `@Name("auth-enabled")` in `AppProperties` and `@JsonProperty("authEnabled")` in `FeatureFlagsDTO` keep the property and the JSON field without it. Add the field to `FeatureFlagsDTO` and its mapping in `FeatureFlagService`, so `GET /v1/features` returns it. Add the environment variable to `.env.example` with `false`, set its value in each environment's `.env`, and make sure the startup configuration passes it to Spring Boot.
-- **Use:** keep the unfinished backend behaviour behind the flag. To hide a feature's endpoints, declare a `FeatureGate` bean for their path in the feature, as `UserGateConfig` does; `FeatureGateFilter` then answers `404` while the flag is off.
+- **Use:** keep the unfinished backend behaviour behind the flag. To hide a feature's endpoints, declare a `FeatureGate` bean for their path in the feature; `FeatureGateFilter` then answers `404` while the flag is off. No gate is declared now. For an example, run `git show 07a7060:src/main/java/mtogo/feature/user/presentation/UserGateConfig.java`.
 - **Test:** update the tests that build `AppProperties` or check `FeatureFlagsDTO`.
 - **Remove:** once the feature is fully released, remove the flag's configuration, its field in `FeatureFlagsDTO` and the mapping in `FeatureFlagService`, the conditional checks and the flag-specific tests, and update the tests that build `AppProperties` or check `FeatureFlagsDTO`.
 
@@ -384,3 +384,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 9.0     | 2026-11-25 | Tests of SQL files are named after the file                                              | #71      |
 | 9.1     | 2026-11-25 | Test JVM setup moves from the README to `docs/build-and-test.md`                         | #64      |
 | 9.2     | 2026-11-25 | `UserGateConfig` is the FeatureGate example, since the ordering flag is removed          | #44      |
+| 9.3     | 2026-11-25 | The FeatureGate example is restored from git, since the auth flag is removed             | #31      |

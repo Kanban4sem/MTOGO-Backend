@@ -1,6 +1,6 @@
 # Expose feature flags to the frontend
 
-**Version:** 2.1 · **Date:** 2026-11-18 · **Issue:** #30 · **Feature flag:** None
+**Version:** 3.0 · **Date:** 2026-11-25 · **Issue:** #30 · **Feature flag:** None
 
 ## Acceptance criteria
 
@@ -14,10 +14,10 @@ Copied from #30. The issue is the source: change the issue first, then this copy
 
 ## Behaviour
 
-1. The `authEnabled` flag is off when `FEATURE_AUTH_ENABLED` is not set.
-2. The `authEnabled` flag is on when `FEATURE_AUTH_ENABLED` is `true` when the backend starts.
-3. The `authEnabled` flag is off when `FEATURE_AUTH_ENABLED` is `false` when the backend starts.
-4. The backend refuses to start when `FEATURE_AUTH_ENABLED` has a value that isn't a boolean.
+1. A flag is off when its `FEATURE_<NAME>_ENABLED` variable is not set.
+2. A flag is on when its variable is `true` when the backend starts.
+3. A flag is off when its variable is `false` when the backend starts.
+4. The backend refuses to start when a flag's variable has a value that isn't a boolean.
 5. A changed flag value takes effect only after the backend restarts.
 6. Anyone can read every flag and its current value from `GET /v1/features`, without logging in.
 7. A browser or proxy never caches the flags response, so a page reload always gets the current values.
@@ -28,11 +28,11 @@ Copied from #30. The issue is the source: change the issue first, then this copy
 
 The module structure below records the implementation delivered for this issue. [ADR-004](../adr/004-backend-structure.md) now defines the target package structure, separate request/response DTOs and optional service interfaces. Aligning the existing feature flag code is a separate code change.
 
-- **Configuration:** each flag is a boolean on `AppProperties`, bound from `app.<name>-enabled=${FEATURE_<NAME>_ENABLED:false}` in `application.properties`, as in the CONTRIBUTING example. The flag sits directly under `app`, not in a nested group. In Java the flag takes the `is` prefix from the coding standards' boolean naming (`isAuthEnabled`), and `@Name("auth-enabled")` keeps the property without it. The first flag is `app.auth-enabled`, from `FEATURE_AUTH_ENABLED`. `.env.example` lists `FEATURE_AUTH_ENABLED=false`.
+- **Configuration:** each flag is a boolean on `AppProperties`, bound from `app.<name>-enabled=${FEATURE_<NAME>_ENABLED:false}` in `application.properties`, as in the CONTRIBUTING example. The flag sits directly under `app`, not in a nested group. In Java the flag takes the `is` prefix from the coding standards' boolean naming (`is<Name>Enabled`), and `@Name("<name>-enabled")` keeps the property without it. `.env.example` lists each flag's variable with `false`. No flag is declared, since #31 removed `authEnabled`, the last one.
 - **Invalid values:** Spring's own boolean conversion decides what's valid (`true`/`false`, and also `yes`/`no`, `on`/`off`, `1`/`0`). Anything else fails the binding, and the backend doesn't start. No custom handling.
-- **Module:** a new `featureflag` feature package following the coding standards: a `FeatureFlagController` in the presentation layer, and `IFeatureFlagService` → `FeatureFlagService` in the domain layer. The service maps `AppProperties` to `FeatureFlagsDTO` with one explicit field per flag. There's no data layer.
-- **API contract:** `GET /v1/features` → `200` with `FeatureFlagsDTO`, a flat JSON object with one camelCase boolean per flag: `{ "authEnabled": false }`. `@JsonProperty("authEnabled")` keeps the JSON field without the `is` prefix. Every flag is returned. Flags aren't marked as UI or backend-only. The response has `Cache-Control: no-store`. The endpoint is documented with `@Tag` and `@Operation`, and the DTO with `@Schema`. springdoc-openapi isn't a dependency yet, so this issue adds `springdoc-openapi-starter-webmvc-ui`, as the coding standards' API documentation section requires. The path stays `/v1/features`, as decided in ADR-001.
-- **Access:** `SecurityConfig` permits `GET /v1/features` without authentication, because the login itself is behind a flag. `SecurityConfig` also permits GET on the OpenAPI specification and Swagger UI, which springdoc adds and which would otherwise need a login that doesn't exist yet. The documentation only describes the endpoints, and the proxy only forwards `/v1/*`. All other requests keep the existing `anyRequest().authenticated()` rule. CORS already covers `/v1/**`.
+- **Module:** a new `featureflag` feature package following the coding standards: a `FeatureFlagController` in the presentation layer, and `IFeatureFlagService` → `FeatureFlagService` in the domain layer. The service maps each flag on `AppProperties` to one explicit field in `FeatureFlagsDTO`. While no flag is declared, it returns an empty `FeatureFlagsDTO` and doesn't depend on `AppProperties`. There's no data layer.
+- **API contract:** `GET /v1/features` → `200` with `FeatureFlagsDTO`, a flat JSON object with one camelCase boolean per flag: `{ "<name>Enabled": false }`. `@JsonProperty("<name>Enabled")` keeps the JSON field without the `is` prefix. Every flag is returned. No flag is declared, so the endpoint returns `{}`, and the frontend keeps its flag setup for future flags. Flags aren't marked as UI or backend-only. The response has `Cache-Control: no-store`. The endpoint is documented with `@Tag` and `@Operation`, and each flag field in the DTO with `@Schema`. springdoc-openapi isn't a dependency yet, so this issue adds `springdoc-openapi-starter-webmvc-ui`, as the coding standards' API documentation section requires. The path stays `/v1/features`, as decided in ADR-001.
+- **Access:** `SecurityConfig` permits `GET /v1/features` without authentication, because a flag can hide the login itself, as `authEnabled` did until #31. `SecurityConfig` also permits GET on the OpenAPI specification and Swagger UI, which springdoc adds and which would otherwise need a login that doesn't exist yet. The documentation only describes the endpoints, and the proxy only forwards `/v1/*`. All other requests keep the existing `anyRequest().authenticated()` rule. CORS already covers `/v1/**`.
 - **Documentation:**
   - CONTRIBUTING (version 3.0): the Add and Remove steps in the Feature flags section gain the `FeatureFlagsDTO` field, its mapping in `FeatureFlagService` and the tests to update. The Add step names the `is` prefix and the two annotations. Changing the documents says that an issue bumps a document's version once, compared with `main`. CONTRIBUTING is a shared document, and Kanban4sem/MTOGO-Frontend#21 copies these changes.
   - Coding standards (version 3.0): the Configuration test level and its `expected` values. Architecture says that DTOs live in `presentation/dto/` and are returned by the domain layer's services.
@@ -41,10 +41,10 @@ The module structure below records the implementation delivered for this issue. 
 
 ## Testing decisions
 
-- **Binding of `app.auth-enabled`:** `ApplicationContextRunner` with `withPropertyValues`, with no database and no web server. EP over the flag value: unset → off, `true` → on, `false` → off, `banana` → the context fails to start with `ConfigurationPropertiesBindException`. The rule set is `bind-auth-enabled` under `testcases/config/app-properties/`. This is the Configuration level in the coding standards. It was chosen so the four values don't need four full Spring contexts.
+- **Binding of a flag:** `ApplicationContextRunner` with `withPropertyValues`, with no database and no web server. EP over the flag value: unset → off, `true` → on, `false` → off, `banana` → the context fails to start with `ConfigurationPropertiesBindException`. Each flag has its own rule set, `bind-<name>-enabled` under `testcases/config/app-properties/`. This is the Configuration level in the coding standards. It was chosen so the four values don't need four full Spring contexts. While no flag is declared, there is no binding rule set, and behaviours 1–4 have no test.
 - **Endpoint access:** `endpoint-access.csv` in `SecurityConfigTest` gains a `method` column, so the table covers method × path. New rows: `GET /v1/features` → `200`, `POST /v1/features` → `401`, and GET on the OpenAPI specification, `/swagger-ui.html` and Swagger UI → `200`. That class is the prior art for endpoint tests with REST Assured and `@SharedDatabase`.
-- **Endpoint response:** one `@SpringBootTest` endpoint test with `FEATURE_AUTH_ENABLED=false`. It checks that the body holds exactly the flags in `FeatureFlagsDTO` with their values, and that the response has `Cache-Control: no-store`. The unset default is covered by the binding test.
-- **Mapping:** one plain JUnit test of `FeatureFlagService`, with `authEnabled` both on and off in the DTO.
+- **Endpoint response:** one `@SpringBootTest` endpoint test. It checks that the body holds exactly the flags in `FeatureFlagsDTO` with their values, and that the response has `Cache-Control: no-store`. A flag the test depends on is pinned with its environment variable, and the unset default is covered by the binding test. While no flag is declared, the body is `{}`.
+- **Mapping:** one plain JUnit test of `FeatureFlagService`, with each flag both on and off in the DTO. While no flag is declared, it checks that the DTO is empty.
 
 ## Migration in #35
 
@@ -62,7 +62,7 @@ Proposed linked frontend work: update the flag consumer and protect both authent
 
 ## Further notes
 
-This issue has no feature flag of its own, since it adds no unfinished behaviour. `authEnabled` is off everywhere until #13 starts using it.
+This issue has no feature flag of its own, since it adds no unfinished behaviour. Its first flag, `authEnabled`, guarded authentication from #13 until #31 removed it.
 
 ## Implementation notes
 
@@ -109,6 +109,13 @@ This issue has no feature flag of its own, since it adds no unfinished behaviour
 - **Tests:** the test classes above moved to `@SharedDatabase`. Earlier notes that mention a container per test class or isolated Testcontainers describe the setup at that time and are historical.
 - **Follow-up:** None.
 
+### Spec 3.0 - 2026-11-25 - #31
+
+- **Built:** #31 removed `authEnabled`, the last flag, so behaviours 1–4 are stated for any flag. `FeatureFlagsDTO` is an empty record annotated with `@JsonAutoDetect`, so Jackson serializes it as `{}`. `FeatureFlagService` no longer depends on `AppProperties`. `GET /v1/features` stays public and uncached. The decisions describe flags in general, with `<name>` in place of a flag's name.
+- **Deviations:** None.
+- **Tests:** `bind-auth-enabled` in AppPropertiesTest is removed, since no flag is left to bind, so behaviours 1–4 have no test until the next flag brings its own binding rule set. FeatureFlagControllerTest checks that the body is `{}` with `Cache-Control: no-store`, and FeatureFlagServiceTest that the mapping returns an empty FeatureFlagsDTO.
+- **Follow-up:** None.
+
 ## Changelog
 
 | Version | Date       | Change                                                                     | Issue |
@@ -120,3 +127,4 @@ This issue has no feature flag of its own, since it adds no unfinished behaviour
 | 1.4     | 2026-11-12 | Decisions match the code, rule set renamed after the review of #30         | #33   |
 | 2.0     | 2026-11-13 | Replace the login flag with the shared authentication flag                 | #35   |
 | 2.1     | 2026-11-18 | Tests use the shared test container, older notes are historical            | #48   |
+| 3.0     | 2026-11-25 | No flag is left: behaviours stated for any flag, the endpoint returns `{}` | #31   |

@@ -1,6 +1,6 @@
 # Add customer accounts
 
-**Version:** 2.0 · **Date:** 2026-11-22 · **Issue:** #13 · **Feature flag:** `authEnabled`, off by default
+**Version:** 3.0 · **Date:** 2026-11-25 · **Issue:** #13 · **Feature flag:** None (`authEnabled` removed in #31)
 
 ## Acceptance criteria
 
@@ -21,17 +21,17 @@ Copied from #13. The issue is the source: change the issue first, then this copy
 8. Logout requires authentication and invalidates all existing tokens for that account, across all devices. A new login works afterward.
 9. Invalid, altered, expired or revoked tokens and inactive accounts cannot authenticate.
 10. Customer, restaurant and delivery-agent API scopes reject other roles with 403. Account endpoints require authentication except registration and login.
-11. When authEnabled is false, account endpoints return 404 and tokens do not authenticate. The existing flags endpoint remains public.
+11. Authentication always runs: the account endpoints are always available and a valid token always authenticates. The flags endpoint remains public.
 12. The address in the profile response includes a nullable `street`. Checkout can save a complete default delivery address as described in the [order spec](15-place-and-pay-for-an-order.md).
 
 ## Implementation decisions
 
 - **Architecture:** the user, address and role features follow [ADR-004](../adr/004-backend-structure.md). User owns User and UserProfile; address owns Address and PostalCode, its validator, mapper and response DTO; role owns Role, RoleName and RoleRepository. Entities contain state and JPA mapping; repositories provide database access; services enforce rules; the mapper builds separate request/response records.
-- **Authentication:** [ADR-005](../adr/005-account-authentication.md) proposes Bearer JWT authentication and account-wide logout through a database session version. No cookie authentication, refresh tokens or additional session entity. A configured Base64 key is required when the flag is enabled.
+- **Authentication:** [ADR-005](../adr/005-account-authentication.md) proposes Bearer JWT authentication and account-wide logout through a database session version. No cookie authentication, refresh tokens or additional session entity. A configured Base64 key is always required, and the backend does not start without one.
 - **Schema:** Flyway creates the five tables, relationships, unique email/profile constraints and the three roles. A profile has an optional address and an address references its postal area. Postal area values are stored per registration; deduplication is not part of this slice.
 - **API:** POST /v1/users with RegisterUserDTO returns 201 and UserDTO. POST /v1/users/login with LoginUserDTO returns 200 with AuthenticatedUserDTO. GET /v1/users/me returns 200 with UserDTO. POST /v1/users/logout returns 204. Responses never include password hashes. Invalid input returns 400, duplicate data 409, missing/invalid credentials 401 and forbidden roles 403, using ProblemDetail.
 - **Roles:** /v1/customer/**, /v1/restaurant/** and /v1/delivery-agent/** are restricted to CUSTOMER, RESTAURANT and DELIVERY_AGENT respectively. No business endpoints are added for those future scopes.
-- **Flag:** use the existing authEnabled / FEATURE_AUTH_ENABLED flag, as confirmed by the developer and issue #35. Its removal remains issue #31.
+- **Flag:** none. #13 released authentication behind the temporary `authEnabled` / `FEATURE_AUTH_ENABLED` flag, as confirmed by the developer and issue #35, and #31 removed it as described in the [coding standards](../coding-standards.md#feature-flags).
 
 ## Testing decisions
 
@@ -41,7 +41,7 @@ Copied from #13. The issue is the source: change the issue first, then this copy
 - Authorization: role by requested scope decision table; role-access. A permitted but unimplemented scope returns 404; other roles receive 403.
 - Tokens: EP and BVA for altered, malformed, expired and incomplete tokens and inactive accounts; invalid-tokens.
 - Lifecycle: registration persists the full graph and a BCrypt hash, profile output excludes secrets, logout revokes two independent tokens and a subsequent login succeeds.
-- Default/off flag: SecurityConfigTest verifies all account endpoints are unavailable. AppPropertiesTest covers unset, enabled, disabled and invalid configuration.
+- Signing key: the backend refuses to start without a valid `JWT_SECRET`. EP for unset, blank and non-Base64 secrets, and BVA for 31, 32 and 33 bytes; startup-secret in JwtServiceTest. The account endpoints have no flag, so the endpoint tests run with no `FEATURE_*` variable set.
 - Anonymous account access is covered by account-access. The OpenAPI test checks that login input and token output use distinct schemas.
 
 ## Out of scope
@@ -55,7 +55,7 @@ Copied from #13. The issue is the source: change the issue first, then this copy
 
 ## Further notes
 
-JWT authentication is proposed for developer review. No deployed server or existing account credentials are changed. Local IntelliJ on Windows uses localhost for PostgreSQL; development containers use host.docker.internal. A missing JWT key is generated locally in the ignored .env so Main can start with authentication enabled. The backend implementation does not modify the frontend repository.
+JWT authentication is proposed for developer review. No deployed server or existing account credentials are changed. Local IntelliJ on Windows uses localhost for PostgreSQL; development containers use host.docker.internal. A missing JWT key is generated locally in the ignored .env so Main can start, since the backend refuses to start without one. The backend implementation does not modify the frontend repository.
 
 ## Implementation notes
 
@@ -88,6 +88,13 @@ JWT authentication is proposed for developer review. No deployed server or exist
 - **Tests:** the checkout flow in `OrderControllerTest` reads the saved address from `GET /v1/users/me`. Test execution is left to the developer.
 - **Follow-up:** frontend checkout integration.
 
+### Spec 3.0 - 2026-11-25 - #31
+
+- **Built:** the `authEnabled` flag is gone from AppProperties, `application.properties`, `.env.example`, `deploy/backend.env.example`, FeatureFlagsDTO, FeatureFlagService, `docs/local-development.md` and the `.http` files. UserGateConfig is deleted, so the account endpoints have no FeatureGate. `JwtAuthenticationFilter` always authenticates Bearer tokens. `JwtService` always requires `JWT_SECRET` and no longer falls back to a random key. FeatureGate and FeatureGateFilter stay for future flags, with no gate declared. ADR-005 no longer puts authentication behind a flag and requires `JWT_SECRET` always. Notes for earlier versions that mention the flag are historical.
+- **Deviations:** None.
+- **Tests:** the disabled-auth `404` rows in `request-endpoint-access` and `bind-auth-enabled` in AppPropertiesTest are removed. `startup-secret` in JwtServiceTest drops the flag column and its decision-table rows: an unset or blank secret always stops the backend. The test `application.properties` sets a test signing key, so the test classes no longer set `FEATURE_AUTH_ENABLED` or `JWT_SECRET`. The testing decisions name `startup-secret` in place of the flag tests.
+- **Follow-up:** remove `FEATURE_AUTH_ENABLED` and `FEATURE_ORDERING_ENABLED` from each environment's `.env`, and make sure `JWT_SECRET` is set there. The frontend side is Kanban4sem/MTOGO-Frontend#22.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -96,3 +103,4 @@ JWT authentication is proposed for developer review. No deployed server or exist
 | 1.1     | 2026-11-18 | Tests use the shared test container, older notes are historical | #48   |
 | 1.2     | 2026-11-19 | Auth flag checked only by the gate, email helper in the domain  | #53   |
 | 2.0     | 2026-11-22 | Expose the saved delivery street in the profile address         | #61   |
+| 3.0     | 2026-11-25 | Remove the auth feature flag                                    | #31   |

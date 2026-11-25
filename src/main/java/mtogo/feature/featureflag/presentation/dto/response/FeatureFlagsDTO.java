@@ -1,10 +1,11 @@
 package mtogo.feature.featureflag.presentation.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
-// The JSON fields are the flag names the frontend reads, without the is prefix.
-public record FeatureFlagsDTO(
-        @JsonProperty("authEnabled") @Schema(description = "Whether customers can log in and register. Off until authentication is released.", example = "false") boolean isAuthEnabled)
+// The JSON fields are the flag names the frontend reads, without the is prefix:
+// @JsonProperty("exampleEnabled") boolean isExampleEnabled. With no flags the body is
+// {}, and @JsonAutoDetect lets Jackson serialize the empty record.
+@JsonAutoDetect
+public record FeatureFlagsDTO()
 {
 }

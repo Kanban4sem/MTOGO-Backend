@@ -28,7 +28,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
-@SpringBootTest(properties = {"FEATURE_AUTH_ENABLED=false"})
+@SpringBootTest
 class DashboardServiceTest extends OrderTestData
 {
     private static final Instant NOW = Instant.parse("2026-11-25T12:00:00Z");

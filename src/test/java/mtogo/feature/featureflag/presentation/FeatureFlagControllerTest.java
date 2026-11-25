@@ -2,7 +2,7 @@ package mtogo.feature.featureflag.presentation;
 
 import mtogo.testsupport.SharedDatabase;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 
 import org.junit.jupiter.api.DisplayName;
@@ -10,8 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-// The flag is pinned so a developer's local .env cannot change the result. AppPropertiesTest covers the unset default.
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "FEATURE_AUTH_ENABLED=false")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @SharedDatabase
 class FeatureFlagControllerTest
 {
@@ -19,10 +18,10 @@ class FeatureFlagControllerTest
     int port;
 
     @Test
-    @DisplayName("Get all - returns every flag with its value and is never cached")
-    void getAllReturnsEveryFlagUncached()
+    @DisplayName("Get all - returns an empty object while no flag is declared, and is never cached")
+    void getAllReturnsNoFlagsUncached()
     {
         given().port(port).when().get("/v1/features").then().statusCode(200).header("Cache-Control", "no-store")
-                .body("authEnabled", is(false)).body("keySet()", contains("authEnabled"));
+                .body("keySet()", is(empty()));
     }
 }

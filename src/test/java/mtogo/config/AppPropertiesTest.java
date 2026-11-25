@@ -2,8 +2,6 @@ package mtogo.config;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.hasItem;
-import static mtogo.testsupport.CauseUtil.causeNames;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,26 +29,6 @@ class AppPropertiesTest
             .withInitializer(context -> isolateFromEnvironment(context.getEnvironment().getPropertySources()))
             .withConfiguration(AutoConfigurations.of(ValidationAutoConfiguration.class))
             .withUserConfiguration(AppPropertiesConfiguration.class);
-
-    @ParameterizedTest(name = "[{index}] {2}")
-    @CsvFileSource(resources = "/testcases/config/app-properties/bind-auth-enabled.csv", numLinesToSkip = 1, nullValues = "NULL")
-    @DisplayName("Auth enabled - binds only boolean values of FEATURE_AUTH_ENABLED")
-    void authEnabledBindsOnlyBooleanValues(String featureAuthEnabled, String expected, String reason)
-    {
-        ApplicationContextRunner runner = featureAuthEnabled == null
-                ? contextRunner
-                : contextRunner.withPropertyValues("FEATURE_AUTH_ENABLED=" + featureAuthEnabled);
-
-        runner.run(context -> {
-            if (expected.equals("true") || expected.equals("false"))
-            {
-                assertThat(context.getBean(AppProperties.class).isAuthEnabled(), is(Boolean.parseBoolean(expected)));
-            } else
-            {
-                assertThat(causeNames(context.getStartupFailure()), hasItem(expected));
-            }
-        });
-    }
 
     @ParameterizedTest(name = "[{index}] {3}")
     @CsvFileSource(resources = "/testcases/config/app-properties/bind-seed-passwords.csv", numLinesToSkip = 1, nullValues = "NULL")

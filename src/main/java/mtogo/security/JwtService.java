@@ -9,7 +9,6 @@ import mtogo.exceptions.UnauthorizedException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import mtogo.config.AppProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,19 +18,18 @@ public class JwtService
     private final SecretKey key;
     private final long lifetimeSeconds;
 
-    public JwtService(AppProperties properties, @Value("${app.jwt.secret:}") String secret,
+    public JwtService(@Value("${app.jwt.secret:}") String secret,
             @Value("${app.jwt.lifetime-seconds:900}") long lifetimeSeconds)
     {
         if (lifetimeSeconds < 1 || lifetimeSeconds > 86400)
         {
             throw new IllegalArgumentException("JWT lifetime must be between 1 and 86400 seconds");
         }
-        if (properties.isAuthEnabled() && secret.isBlank())
+        if (secret.isBlank())
         {
-            throw new IllegalArgumentException(
-                    "JWT_SECRET must contain a Base64 signing key when authentication is enabled");
+            throw new IllegalArgumentException("JWT_SECRET must contain a Base64 signing key");
         }
-        this.key = secret.isBlank() ? Jwts.SIG.HS256.key().build() : Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
         this.lifetimeSeconds = lifetimeSeconds;
     }
 

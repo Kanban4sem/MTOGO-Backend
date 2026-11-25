@@ -1,6 +1,6 @@
 # Place and pay for an order
 
-**Version:** 5.0 · **Date:** 2026-11-25 · **Issue:** #15 · **Feature flag:** None
+**Version:** 5.1 · **Date:** 2026-11-25 · **Issue:** #15 · **Feature flag:** None
 
 ## Acceptance criteria
 
@@ -74,7 +74,7 @@ From #44:
 - **Errors:** ProblemDetail through the existing GlobalExceptionHandler. `400` for invalid input, unknown or repeated menu items and menu items from more than one restaurant. `401` without a valid token. `402` for a declined payment, from a new PaymentRequiredException with the detail "The payment was declined". `403` for users who are not customers. `409` for an unavailable item, an inactive menu or a restaurant that does not accept orders.
 - **Access:** SecurityConfig restricts `POST /v1/orders` to CUSTOMER users, and the controller declares the same with `@PreAuthorize`. The order's customer is the authenticated user, never a request field.
 - **Schema:** one Flyway migration adds a nullable `street` column to addresses (existing profile addresses have none) and creates orders, order lines and order status changes. Orders reference the customer, the restaurant and their own delivery address row, and store the order total as NUMERIC(10, 2), the channel and the current status. Order lines reference the order and the menu item with a restricting foreign key, and copy the name and the unit price as NUMERIC(10, 2), with a check that quantity is 1–20 and the unit price is not negative. Order status changes reference the order and store the status and when it was set. The delivery address stores the country as `Denmark`.
-- **Flag:** none. #15 released ordering behind a temporary `orderingEnabled` flag, and #44 removed it as described in the [coding standards](../coding-standards.md#feature-flags). `GET /v1/features` no longer reports it, and the order endpoints have no FeatureGate. Placing an order still needs `authEnabled`, since it requires a customer token.
+- **Flag:** none. #15 released ordering behind a temporary `orderingEnabled` flag, and #44 removed it as described in the [coding standards](../coding-standards.md#feature-flags). `GET /v1/features` no longer reports it, and the order endpoints have no FeatureGate. Placing an order requires a customer token, and authentication has no flag since #31.
 - **Default address:** checkout stores the default in the existing profile address and stores the delivery address separately on each order. Saving the default and placing the order share one transaction. #61 adds no feature flag.
 - **Delivery agent list:** `GET /v1/delivery-agent/orders` returns the order's `deliveryAddress` with street, postal code, city and country for every item in the existing agent-scoped list.
 - **Status names:** OrderStatus holds a Danish and an English status name next to each code. Every order response DTO (OrderDTO, CustomerOrderSummaryDTO, CustomerOrderDTO, RestaurantOrderDTO and DeliveryAgentOrderDTO) returns `status` (the code) and `statusName` as a StatusNameDTO object `{ "danish": "Bestilt", "english": "Placed" }`. It replaces the Danish `statusName` string from #18. The keys are words, not language codes, so a later language is one more key. This covers `POST /v1/orders`, `GET /v1/customer/orders` and `/{id}`, `GET` and `PATCH /v1/restaurant/orders`, and `GET` and `PATCH /v1/delivery-agent/orders`.
@@ -95,7 +95,7 @@ From #44:
 - **OrderSchemaTest** (`@DataJpaTest`, `@SharedDatabase`): deleting a menu item that an order line references is refused. Copy RestaurantSchemaTest.
 - **OrderServiceTest** covers the checkout address decision table in `place-delivery-address`. **OrderControllerTest** verifies that a seeded customer can save, read, reuse and replace a default while earlier orders retain their addresses.
 - **FeatureGateTest** (plain JUnit): `isClosedFor` as a decision table over the flag and the request path; `is-closed-for`.
-- **FeatureFlagControllerTest** and **FeatureFlagServiceTest** (#44): `GET /v1/features` reports only `authEnabled`. The order controller tests leave `FEATURE_ORDERING_ENABLED` unset, so their happy paths show that a customer can order without it.
+- **FeatureFlagControllerTest** and **FeatureFlagServiceTest** (#44): `GET /v1/features` no longer reports `orderingEnabled`. Since #31 it reports no flag. The order controller tests leave `FEATURE_ORDERING_ENABLED` unset, so their happy paths show that a customer can order without it.
 - **CustomerOrderControllerTest** (#66): `get-current-status` has the columns `status`, `danishName`, `englishName`, `expected` (the HTTP status code) and `reason`, so EP over the six order statuses checks both status names on the order list and the order detail. The get-all and get-by-id happy paths change the profile default after placing and check that `deliveryAddress` is still the order's own address.
 - **OrderControllerTest** (#66): the place happy path checks `statusName.danish` and `statusName.english` for Placed.
 - **OrderControllerTest** (#46) checks the `Location` URL against the ID returned by `POST /v1/orders` and follows it with the same customer token to verify the order can be read.
@@ -169,6 +169,13 @@ Issue #18 exposed a Danish `statusName` alongside the status code on customer or
 - **Tests:** The `WhenOrderingIsDisabled` classes in OrderControllerTest, CustomerOrderControllerTest, RestaurantOrderControllerTest and DeliveryAgentOrderControllerTest, their `*-disabled.csv` files and `bind-ordering-enabled` in AppPropertiesTest are removed. The order tests no longer set `FEATURE_ORDERING_ENABLED`. FeatureFlagServiceTest and FeatureFlagControllerTest check that `authEnabled` is the only flag. FeatureGateTest uses `/v1/users`, the path UserGateConfig gates, as its sample. The five order endpoint test classes share their startup properties through `@AuthenticatedEndpointTest` in `mtogo.testsupport`.
 - **Follow-up:** `FEATURE_ORDERING_ENABLED` is removed from each environment's `.env` together with `FEATURE_AUTH_ENABLED` in #31. The frontend side is Kanban4sem/MTOGO-Frontend#34.
 
+### Spec 5.1 - 2026-11-25 - #31
+
+- **Built:** no change to ordering. #31 removed `authEnabled`, so placing an order needs a customer token but no flag, and `GET /v1/features` reports no flag. UserGateConfig is deleted, so the coding standards point to it in git history as the FeatureGate example (9.3).
+- **Deviations:** None.
+- **Tests:** FeatureFlagServiceTest and FeatureFlagControllerTest check that no flag is reported. The order endpoint tests no longer set `FEATURE_AUTH_ENABLED` through `@AuthenticatedEndpointTest`. The JWT signing key comes from the test `application.properties`. FeatureGateTest keeps `/v1/users` as sample data, though no gate is declared for it.
+- **Follow-up:** None. Removing both flags from each environment's `.env` is tracked in spec 13's note for #31.
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -180,3 +187,4 @@ Issue #18 exposed a Danish `statusName` alongside the status code on customer or
 | 3.0     | 2026-11-24 | Status names in Danish and English, complete order responses    | #66   |
 | 4.0     | 2026-11-25 | Return the order URL in the `Location` header                   | #46   |
 | 5.0     | 2026-11-25 | Remove the ordering feature flag                                | #44   |
+| 5.1     | 2026-11-25 | Authentication has no flag                                      | #31   |

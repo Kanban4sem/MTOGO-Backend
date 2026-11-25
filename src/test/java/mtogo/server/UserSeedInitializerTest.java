@@ -24,10 +24,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"FEATURE_AUTH_ENABLED=true",
-        "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef", "app.seed.customer-password=Customer123!",
-        "app.seed.restaurant-password=Restaurant123!", "app.seed.delivery-agent-password=Agent123!",
-        "app.seed.admin-password=Admin123!"})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+        "app.seed.customer-password=Customer123!", "app.seed.restaurant-password=Restaurant123!",
+        "app.seed.delivery-agent-password=Agent123!", "app.seed.admin-password=Admin123!"})
 @SharedDatabase
 class UserSeedInitializerTest
 {
@@ -94,7 +93,6 @@ class UserSeedInitializerTest
         List<String> arguments = new ArrayList<>();
         SharedPostgres.datasourceProperties(database).forEach(property -> arguments.add("--" + property));
         arguments.add("--app.seed.customer-password=" + customerPassword);
-        arguments.add("--FEATURE_AUTH_ENABLED=false");
         arguments.add("--server.port=0");
         return new SpringApplicationBuilder(Main.class).run(arguments.toArray(String[]::new));
     }

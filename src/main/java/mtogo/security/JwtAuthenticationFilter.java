@@ -6,7 +6,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mtogo.config.AppProperties;
 import mtogo.exceptions.UnauthorizedException;
 import mtogo.feature.user.domain.UserService;
 import mtogo.feature.user.presentation.dto.response.UserDTO;
@@ -19,13 +18,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter
 {
     private final UserService users;
-    private final AppProperties properties;
     private final SecurityProblemHandler problems;
 
-    public JwtAuthenticationFilter(UserService users, AppProperties properties, SecurityProblemHandler problems)
+    public JwtAuthenticationFilter(UserService users, SecurityProblemHandler problems)
     {
         this.users = users;
-        this.properties = properties;
         this.problems = problems;
     }
 
@@ -34,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter
             throws ServletException, IOException
     {
         String authorization = request.getHeader("Authorization");
-        if (properties.isAuthEnabled() && authorization != null)
+        if (authorization != null)
         {
             if (!authorization.startsWith("Bearer ") || authorization.length() == 7)
             {

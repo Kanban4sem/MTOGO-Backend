@@ -1,7 +1,6 @@
 package mtogo.security;
 
 import java.util.List;
-import mtogo.config.AppProperties;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import mtogo.feature.user.domain.UserService;
@@ -30,7 +29,7 @@ public class SecurityConfig
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserService users, AppProperties properties,
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserService users,
             SecurityProblemHandler problems, List<FeatureGate> gates) throws Exception
     {
         // Credentials are accepted only as explicit Bearer headers; no cookie or
@@ -55,7 +54,7 @@ public class SecurityConfig
                                 HttpStatus.UNAUTHORIZED, "Authentication is required"))
                         .accessDeniedHandler((request, response, exception) -> problems.write(request, response,
                                 HttpStatus.FORBIDDEN, "Access is denied")))
-                .addFilterBefore(new JwtAuthenticationFilter(users, properties, problems),
+                .addFilterBefore(new JwtAuthenticationFilter(users, problems),
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new FeatureGateFilter(gates, problems), JwtAuthenticationFilter.class).build();
     }

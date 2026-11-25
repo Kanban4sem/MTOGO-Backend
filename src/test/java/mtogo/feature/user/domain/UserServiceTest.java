@@ -17,8 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@SpringBootTest(properties = {"FEATURE_AUTH_ENABLED=true",
-        "JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef"})
+@SpringBootTest
 @SharedDatabase
 class UserServiceTest
 {

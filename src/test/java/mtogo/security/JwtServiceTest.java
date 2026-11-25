@@ -14,12 +14,10 @@ import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import mtogo.config.AppProperties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.boot.validation.autoconfigure.ValidationAutoConfiguration;
 import org.springframework.context.annotation.Configuration;
@@ -45,6 +43,7 @@ class JwtServiceTest
     void startsOnlyWithLifetimeInRange(String jwtLifetimeSeconds, String expected, String reason)
     {
         Map<String, Object> variables = new HashMap<>();
+        variables.put("JWT_SECRET", "a2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s=");
         if (jwtLifetimeSeconds != null)
         {
             variables.put("JWT_LIFETIME_SECONDS", jwtLifetimeSeconds);
@@ -66,13 +65,12 @@ class JwtServiceTest
         });
     }
 
-    @ParameterizedTest(name = "[{index}] {3}")
+    @ParameterizedTest(name = "[{index}] {2}")
     @CsvFileSource(resources = "/testcases/security/jwt-service/startup-secret.csv", numLinesToSkip = 1, nullValues = "NULL")
-    @DisplayName("Startup secret - requires a signing secret only when authentication is enabled, and a set secret must be a Base64 key of at least 32 bytes")
-    void requiresSecretOnlyWhenAuthEnabled(String featureAuthEnabled, String jwtSecret, String expected, String reason)
+    @DisplayName("Startup secret - requires a signing secret that is a Base64 key of at least 32 bytes")
+    void requiresBase64SecretOfAtLeast32Bytes(String jwtSecret, String expected, String reason)
     {
         Map<String, Object> variables = new HashMap<>();
-        variables.put("FEATURE_AUTH_ENABLED", featureAuthEnabled);
         if (jwtSecret != null)
         {
             variables.put("JWT_SECRET", jwtSecret);
@@ -113,7 +111,6 @@ class JwtServiceTest
     }
 
     @Configuration
-    @EnableConfigurationProperties(AppProperties.class)
     @Import(JwtService.class)
     static class JwtServiceConfiguration
     {

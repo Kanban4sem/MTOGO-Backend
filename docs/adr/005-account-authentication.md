@@ -14,7 +14,7 @@ Use the existing Spring Security and JJWT dependencies. Passwords are hashed wit
 
 Each authenticated request checks the account's current active state, role and session version in the database. Logout increments the version atomically, invalidating all previous tokens for that account on every device. There is no refresh token in this slice.
 
-Public registration always assigns CUSTOMER. Protect authentication behaviour with authEnabled, off by default. Follow [ADR-004](004-backend-structure.md) for package responsibilities.
+Public registration always assigns CUSTOMER. Authentication always runs. It was released behind the temporary authEnabled feature flag, which [#31](https://github.com/Kanban4sem/MTOGO-Backend/issues/31) removed. Follow [ADR-004](004-backend-structure.md) for package responsibilities.
 
 ## Alternatives
 
@@ -23,7 +23,7 @@ Public registration always assigns CUSTOMER. Protect authentication behaviour wi
 
 ## Consequences
 
-- JWT_SECRET must be a Base64 signing key with at least 32 random bytes when authentication is enabled.
+- JWT_SECRET must be a Base64 signing key with at least 32 random bytes. The backend does not start without it.
 - Every authenticated request performs a database lookup; logout affects every device.
 - The frontend must handle token expiration and clear its token on logout. Its integration is separate work in frontend issue #6.
 - The account model has five entities: User, UserProfile, Address, PostalCode and Role. City is a field on PostalCode. Street addresses and multiple saved addresses remain outside this slice.
