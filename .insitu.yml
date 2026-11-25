@@ -86,6 +86,8 @@ inventory:
 
   - id: backend-verify
     name: Backend build and tests (Maven wrapper)
+    # Docker Desktop's Windows bind mount slows Maven compilation and test startup.
+    timeout: 15m
     command: ./mvnw -q -B clean verify
 
   - id: fix-markdown

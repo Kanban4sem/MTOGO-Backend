@@ -22,11 +22,18 @@ public class OrderStatusChange
     private OrderStatus status;
     @Column(name = "changed_at", nullable = false)
     private Instant changedAt;
+    @Column(name = "is_read", nullable = false)
+    private boolean isRead;
 
     OrderStatusChange(Order order, OrderStatus status, Instant changedAt)
     {
         this.order = order;
         this.status = status;
         this.changedAt = changedAt;
+    }
+
+    public void markRead()
+    {
+        isRead = true;
     }
 }

@@ -1,0 +1,5 @@
+phoneNumber,language,isRolledBack,expected,reason
++4512345678,da,false,Ordre %d: Accepteret,"DT: committed transition with a Danish customer number"
++4512345678,en,false,Order %d: Accepted,"DT: committed transition with English selected"
+NULL,da,false,NULL,"DT: committed transition without a phone number"
++4512345678,da,true,NULL,"DT: rolled-back transition is never sent"

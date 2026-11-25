@@ -1,0 +1,3 @@
+isRejected,statuses,expected,reason
+false,DELIVERED|PICKED_UP|READY|ACCEPTED,200,"EP: accepted order through delivery with no notification for agent assignment"
+true,REJECTED,200,"EP: the restaurant rejects the order"

@@ -27,6 +27,7 @@ import mtogo.feature.user.data.UserRepository;
 import mtogo.feature.user.domain.CustomerDeliveryAddressService;
 import mtogo.feature.user.domain.User;
 import mtogo.feature.user.domain.UserProfile;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -41,9 +42,11 @@ public class OrderService
     private final IPaymentProvider payments;
     private final AddressMapper addresses;
     private final CustomerDeliveryAddressService savedAddresses;
+    private final ApplicationEventPublisher events;
 
     public OrderService(OrderRepository orders, MenuItemRepository menuItems, UserRepository users, OrderMapper mapper,
-            IPaymentProvider payments, AddressMapper addresses, CustomerDeliveryAddressService savedAddresses)
+            IPaymentProvider payments, AddressMapper addresses, CustomerDeliveryAddressService savedAddresses,
+            ApplicationEventPublisher events)
     {
         this.orders = orders;
         this.menuItems = menuItems;
@@ -52,6 +55,7 @@ public class OrderService
         this.payments = payments;
         this.addresses = addresses;
         this.savedAddresses = savedAddresses;
+        this.events = events;
     }
 
     /**
@@ -123,7 +127,7 @@ public class OrderService
         }
         Order order = orders.findByIdAndRestaurantId(orderId, getRestaurantId(userId))
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
-        order.moveTo(request.status());
+        changeStatus(order, request.status());
         return mapper.toRestaurantOrderDTO(order);
     }
 
@@ -149,13 +153,27 @@ public class OrderService
         return mapper.toDeliveryAgentOrderDTO(order, agentId);
     }
 
-    private static void moveDeliveryOrder(Order order, Long agentId, OrderStatus status)
+    private void moveDeliveryOrder(Order order, Long agentId, OrderStatus status)
     {
         if (!order.isAssignedTo(agentId))
         {
             throw new NotFoundException("Order not found with id: " + order.getId());
         }
+        changeStatus(order, status);
+    }
+
+    private void changeStatus(Order order, OrderStatus status)
+    {
         order.moveTo(status);
+        UserProfile profile = order.getCustomer().getProfile();
+        String phoneNumber = profile.getPhoneNumber();
+        if (StringUtils.hasText(phoneNumber))
+        {
+            String message = "en".equals(profile.getPreferredLanguage())
+                    ? "Order %d: %s".formatted(order.getId(), status.getEnglishName())
+                    : "Ordre %d: %s".formatted(order.getId(), status.getDanishName());
+            events.publishEvent(new OrderStatusSmsSender.OrderStatusSms(phoneNumber, message));
+        }
     }
 
     // Every restaurant user has a restaurant: the role cannot be assigned without

@@ -9,6 +9,7 @@ import mtogo.feature.order.presentation.dto.response.DeliveryAddressDTO;
 import mtogo.feature.order.presentation.dto.response.DeliveryAgentOrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderLineDTO;
+import mtogo.feature.order.presentation.dto.response.OrderNotificationDTO;
 import mtogo.feature.order.presentation.dto.response.RestaurantOrderDTO;
 import mtogo.feature.order.presentation.dto.response.StatusNameDTO;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,12 @@ public class OrderMapper
         return new DeliveryAgentOrderDTO(order.getId(), order.getRestaurant().getId(), order.getRestaurant().getName(),
                 status, toStatusNameDTO(status), order.isAssignedTo(agentId), toDeliveryAddressDTO(order),
                 order.getTotal(), toLineDTOs(order));
+    }
+
+    public OrderNotificationDTO toOrderNotificationDTO(OrderStatusChange change)
+    {
+        return new OrderNotificationDTO(change.getId(), change.getOrder().getId(), change.getStatus(),
+                toStatusNameDTO(change.getStatus()), change.getChangedAt(), change.isRead());
     }
 
     private StatusNameDTO toStatusNameDTO(OrderStatus status)
