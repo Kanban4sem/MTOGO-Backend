@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 7.3 · **Date:** 2026-11-24
+**Version:** 8.0 · **Date:** 2026-11-25
 
 ## Overview
 
@@ -51,6 +51,7 @@ Spring Data repositories are interfaces without the `I` prefix, because Spring g
 ### REST API and JSON
 
 - **Paths:** lowercase plural nouns, kebab-case for more than one word (`/orders`, `/menu-items/{id}`). The HTTP method carries the action.
+- **Path exceptions:** a role scope is singular, because it names whose view this is, not a collection (`/v1/customer/orders`, `/v1/delivery-agent/orders`). Login and logout are actions on the session, not resources (`/v1/users/login`, `/v1/users/logout`).
 - **JSON fields:** camelCase (`deliveryAddress`).
 - **Enum values:** UPPER_SNAKE_CASE (`IN_DELIVERY`).
 - **Dates:** `YYYY-MM-DD`. **Timestamps:** ISO-8601.
@@ -377,3 +378,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 7.1     | 2026-11-18 | Entity ↔ DTO mappers live in the `domain` layer                                          | #40      |
 | 7.2     | 2026-11-24 | Test classes run in several JVMs, each with its own PostgreSQL container, from `target/` | #74      |
 | 7.3     | 2026-11-24 | Tests run in one JVM by default, more with `MTOGO_TEST_FORKS`                            | #84      |
+| 8.0     | 2026-11-25 | REST paths: singular role scopes, login and logout as session actions                    | #73      |
