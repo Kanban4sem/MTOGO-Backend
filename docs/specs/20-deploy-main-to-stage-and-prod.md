@@ -6,10 +6,10 @@
 
 Copied from #20. The issue is the source: change the issue first, then this copy.
 
-- [ ] A commit on `main` is running on stage without any manual steps
-- [ ] Prod is only deployed when someone starts it
-- [ ] The deployed health check responds after each deployment
-- [ ] A deployment can be rolled back to the previous image
+- [x] A commit on `main` is running on stage without any manual steps
+- [x] Prod is only deployed when someone starts it
+- [x] The deployed health check responds after each deployment
+- [x] A deployment can be rolled back to the previous image
 
 ## Behaviour
 
@@ -76,11 +76,16 @@ The issue closes automatically when the delivery lands on `main`, so these check
 
 <!-- Written by /mtogo-implement and /mtogo-review. -->
 
-### Spec 1.0 - 2026-11-13 - #20
+### Spec 1.0 - 2026-11-25 - #20
 
 - **Built:** "Deploy to stage" has two jobs. Build runs for every commit on `main` outside any concurrency group, and pushes the image unless one already exists for the commit, so a re-run deploys the existing image. Deploy runs one at a time in `deploy-stage`, and GitHub may skip waiting deployments in favour of the newest. "Release to prod" runs on a version tag or by hand from `main` with a version: it refuses a manual start from any other branch before checkout, checks the version, tags or finds the image and deploys it without a rebuild. A shared deploy action holds the SSH call to `deploy.sh` and the check from outside, so both workflows deploy the same way. It removes the deploy key right after the SSH step, before the check from outside. `deploy.sh` puts the previous tag back and logs `failed, could not pull image` when the pull fails. The README describes deploying, releasing, rolling back and making a new package public.
 - **Deviations:** Additions the spec didn't ask for: each workflow's GitHub environment links to its public URL, the version rule also runs on tag pushes, and `actionlint` and `shellcheck` were added to the repository dictionary. The workflow files follow the existing `on_<trigger>` naming.
-- **Tests:** No Java changes. actionlint 1.7.7 passes on the workflows after the review fixes and shellcheck on `deploy.sh`. `deploy.sh` was run in a Linux container with a fake `docker`: a failed pull exits 1, keeps the previous tag in `.env` and logs `failed, could not pull image`, and a successful pull logs `ok`. The version rule accepts `1.2.3`, `v1.2.3` and `0.1.0`, and rejects `1.2`, `1.2.3.4`, `V1.2.3`, `1.2.3-rc1`, an empty value and `1.2.3;x`. The manual checks on the server and after delivery under Testing decisions are still to do, and their results go here and in a comment on #20.
+- **Tests:** No Java changes. actionlint 1.7.7 passes on the workflows after the review fixes and shellcheck on `deploy.sh`. `deploy.sh` was run in a Linux container with a fake `docker`: a failed pull exits 1, keeps the previous tag in `.env` and logs `failed, could not pull image`, and a successful pull logs `ok`. The version rule accepts `1.2.3`, `v1.2.3` and `0.1.0`, and rejects `1.2`, `1.2.3.4`, `V1.2.3`, `1.2.3-rc1`, an empty value and `1.2.3;x`. The rollback checks under Testing decisions were run by hand (#68), and their results are also in a comment on #20:
+  - **Releases 0.1.0 and 0.1.1 (step 4), 2026-11-13:** the tag runs [0.1.0](https://github.com/Kanban4sem/MTOGO-Backend/actions/runs/43445533556) and [0.1.1](https://github.com/Kanban4sem/MTOGO-Backend/actions/runs/43446152768) succeeded, with `14:45:15 prod backend 0.1.0 ok` and `14:49:05 prod backend 0.1.1 ok` in `deploy.log`.
+  - **Prod rollback (step 5), 2026-11-13:** the [manual start from `main` with `0.1.0`](https://github.com/Kanban4sem/MTOGO-Backend/actions/runs/43446527779) logged `14:51:08 prod backend 0.1.0 ok`. Prod was healthy and `/v1/features` answered. The [manual start with `1.2`](https://github.com/Kanban4sem/MTOGO-Backend/actions/runs/43446940488) failed at "Read the version" before it deployed, and `deploy.log` got no new line.
+  - **Prod rollback across migrations, 2026-11-24:** the tag run [0.2.0](https://github.com/Kanban4sem/MTOGO-Backend/actions/runs/45363762620) brought migrations V4 to V6 and logged `09:18:48Z prod backend 0.2.0 ok`. The [manual start with `0.1.0`](https://github.com/Kanban4sem/MTOGO-Backend/actions/runs/45364533432) logged `09:23:23Z prod backend 0.1.0 ok`, and `prod-backend-1` has stayed healthy on 0.1.0 on the migrated database. As the spec says, a rollback only switches the image.
+  - **Manual start from another branch (step 5), 2026-11-25:** the [start from `68-Verify_rollback_of_a_deployment_on_stage_and_prod` with `0.1.0`](https://github.com/Kanban4sem/MTOGO-Backend/actions/runs/45592836329) failed at "Allow manual starts from main only" with `Start Release to prod from main, not from refs/heads/68-…`. Checkout and deploy were skipped.
+  - **Stage rollback (step 3), 2026-11-25:** stage ran `db1e78b` (#70). Re-running the earlier [run for `b46c9d4`](https://github.com/Kanban4sem/MTOGO-Backend/actions/runs/45577557322) (#73) skipped the build because the image existed, and the deploy logged `10:01:59Z stage backend b46c9d4ce54aab1f7523bb8a9d791ab88e55641b ok`. `stage-backend-1` ran that image and was healthy, and `/v1/features` answered. The two commits differ only in tests, with no migrations between them. Re-running the [run for `db1e78b`](https://github.com/Kanban4sem/MTOGO-Backend/actions/runs/45581449814) rolled stage forward again: `10:07:46Z stage backend db1e78bf48ef4d765c56bc44d6443d2e619843d2 ok`, healthy. A re-run also re-runs the analysis job, as spec 21's Further notes describe.
 - **Follow-up:** None.
 
 ## Changelog
