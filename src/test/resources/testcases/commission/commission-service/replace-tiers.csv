@@ -1,0 +1,9 @@
+minimums,hasInvalidScale,expected,reason
+0.00,false,ACCEPT,"BVA: 1 tier, the default scale from 0.00"
+0.01,false,BadRequestException,"BVA: the first tier's minimum cannot be 0.01"
+"",false,BadRequestException,"EP: a list without tiers has no default scale"
+0.00;5000.00,false,ACCEPT,"EP: tiers with ascending minimums"
+0.00;5000.00;5000.00,false,BadRequestException,"BVA: two tiers cannot have the same minimum"
+0.00;5000.00;5000.01,false,ACCEPT,"BVA: a minimum 0.01 above the one before it"
+0.00;5000.00;4999.99,false,BadRequestException,"BVA: a minimum cannot be 0.01 below the one before it"
+0.00;5000.00,true,BadRequestException,"EP: a tier whose scale breaks the rules of a scale"

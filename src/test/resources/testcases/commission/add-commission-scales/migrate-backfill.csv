@@ -1,0 +1,9 @@
+status,total,expectedCommission,expectedServiceFee,reason
+DELIVERED,0.00,0.00,5.00,"EP, BVA: a delivered order of 0.00 DKK gets no commission and the full service fee"
+DELIVERED,100.00,4.80,5.00,"EP: a delivered order within the first bracket"
+DELIVERED,125.00,6.00,5.00,"BVA: a delivered order at the first bracket edge, 100 DKK excluding VAT"
+DELIVERED,1251.25,46.03,5.00,"BVA: a delivered order 1 DKK above the last bracket edge, 1,000 DKK excluding VAT"
+DELIVERED,99999999.99,2400016.00,5.00,"BVA: the largest delivered order total"
+PLACED,125.00,NULL,NULL,"EP: a placed order gets no amounts"
+REJECTED,125.00,NULL,NULL,"EP: a rejected order gets no amounts"
+PICKED_UP,125.00,NULL,NULL,"EP: a picked-up order gets no amounts"

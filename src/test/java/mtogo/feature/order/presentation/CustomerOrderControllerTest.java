@@ -79,7 +79,7 @@ class CustomerOrderControllerTest extends OrderTestData
         long customerId = customer();
         long itemId = item(menu(restaurant("Lunch restaurant", true), "Lunch", true), "Kebab", true);
         long orderId = place(customerId, itemId).id();
-        jdbc.update("UPDATE orders SET status = ? WHERE id = ?", status, orderId);
+        setOrder(orderId, status, null);
 
         request(port, customerId).get(ORDERS_PATH).then().statusCode(expected).body("[0].status", is(status))
                 .body("[0].statusName.danish", is(danishName)).body("[0].statusName.english", is(englishName));

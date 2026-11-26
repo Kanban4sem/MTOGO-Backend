@@ -1,5 +1,6 @@
 package mtogo.feature.order.data;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -49,4 +50,19 @@ public interface OrderRepository extends JpaRepository<Order, Long>
             """)
     List<Order> findAllByStatusInOrChangedBetween(@Param("statuses") Collection<OrderStatus> statuses,
             @Param("from") Instant from, @Param("until") Instant until);
+
+    /**
+     * Sums the totals of the restaurant's delivered orders whose move to Delivered
+     * lies between {@code from} and {@code until}, both included.
+     */
+    @Query("""
+            select coalesce(sum(o.total), 0) from Order o
+            where o.restaurant.id = :restaurantId
+              and o.status = mtogo.feature.order.domain.OrderStatus.DELIVERED
+              and exists (select c from OrderStatusChange c
+                          where c.order = o and c.status = mtogo.feature.order.domain.OrderStatus.DELIVERED
+                            and c.changedAt between :from and :until)
+            """)
+    BigDecimal sumSalesDeliveredBetween(@Param("restaurantId") Long restaurantId, @Param("from") Instant from,
+            @Param("until") Instant until);
 }

@@ -1,0 +1,12 @@
+brackets,expected,reason
+0.00:6.00;100.00:5.00;500.00:4.00;1000.00:3.00,ACCEPT,"EP: the default scale is valid"
+0.00:6.00,ACCEPT,"BVA: a scale with 1 bracket"
+"",BadRequestException,"EP: a scale without brackets has no first bracket at 0.00"
+0.01:6.00,BadRequestException,"BVA: the first lower limit cannot be 0.01"
+-0.01:6.00,BadRequestException,"BVA: the first lower limit cannot be below 0.00"
+0.00:6.00;100.00:5.00;100.00:4.00,BadRequestException,"BVA: two brackets cannot have the same lower limit"
+0.00:6.00;100.00:5.00;100.01:4.00,ACCEPT,"BVA: a lower limit 0.01 above the one before it"
+0.00:6.00;100.00:5.00;99.99:4.00,BadRequestException,"BVA: a lower limit cannot be 0.01 below the one before it"
+0.00:5.00;100.00:5.01,BadRequestException,"BVA: a rate cannot rise from one bracket to the next"
+0.00:5.00;100.00:5.00,ACCEPT,"BVA: a rate can stay the same from one bracket to the next"
+0.00:5.00;100.00:4.99,ACCEPT,"BVA: a rate 0.01 below the one before it"

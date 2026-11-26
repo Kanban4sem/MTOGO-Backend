@@ -128,3 +128,33 @@ _Avoid_: Waiting time
 **Transit time**:
 The time from an order being picked up to it being delivered.
 _Avoid_: Delivery time, driving time
+
+### Fees
+
+**Order value excluding VAT**:
+An order's total without the 25% VAT that menu prices include.
+_Avoid_: Net total, order amount, ex-VAT amount
+
+**Commission**:
+The share of a delivered order's value excluding VAT that the restaurant pays MTOGO.
+_Avoid_: Fee, cut, provision
+
+**Commission bracket**:
+A band of the order value excluding VAT with its own commission rate. Each part of an order's value pays the rate of the bracket it falls in.
+_Avoid_: Tier, step, level
+
+**Service fee**:
+A fixed amount the restaurant pays MTOGO for each delivered order, whatever the order's value.
+_Avoid_: Delivery charge, order fee, base fee
+
+**Commission scale**:
+The commission brackets and service fee that apply to a restaurant's delivered orders.
+_Avoid_: Fee plan, rate card, pricing
+
+**Sales tier**:
+A commission scale for restaurants whose sales in the last 30 days reach its minimum. A restaurant gets the tier with the highest minimum it reaches, unless an admin has given it its own scale.
+_Avoid_: Volume tier, level, discount tier
+
+**Default scale**:
+The sales tier from 0 DKK, which applies to every restaurant without its own scale or a higher tier.
+_Avoid_: Standard rate, base scale

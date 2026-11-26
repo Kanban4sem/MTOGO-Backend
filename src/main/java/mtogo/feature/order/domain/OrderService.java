@@ -1,5 +1,10 @@
 package mtogo.feature.order.domain;
 
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +16,8 @@ import mtogo.feature.address.domain.AddressMapper;
 import mtogo.feature.address.domain.PostalCode;
 import mtogo.feature.address.presentation.dto.response.SavedDeliveryAddressDTO;
 import mtogo.exceptions.*;
+import mtogo.feature.commission.domain.CommissionAmounts;
+import mtogo.feature.commission.domain.CommissionService;
 import mtogo.feature.order.data.OrderRepository;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.request.UpdateDeliveryAgentOrderDTO;
@@ -35,6 +42,9 @@ import org.springframework.util.StringUtils;
 @Service
 public class OrderService
 {
+    // The sales that decide a restaurant's sales tier.
+    private static final Duration SALES_PERIOD = Duration.ofDays(30);
+
     private final OrderRepository orders;
     private final MenuItemRepository menuItems;
     private final UserRepository users;
@@ -43,10 +53,12 @@ public class OrderService
     private final AddressMapper addresses;
     private final CustomerDeliveryAddressService savedAddresses;
     private final ApplicationEventPublisher events;
+    private final CommissionService commissions;
+    private final Clock clock;
 
     public OrderService(OrderRepository orders, MenuItemRepository menuItems, UserRepository users, OrderMapper mapper,
             IPaymentProvider payments, AddressMapper addresses, CustomerDeliveryAddressService savedAddresses,
-            ApplicationEventPublisher events)
+            ApplicationEventPublisher events, CommissionService commissions, Clock clock)
     {
         this.orders = orders;
         this.menuItems = menuItems;
@@ -56,6 +68,8 @@ public class OrderService
         this.addresses = addresses;
         this.savedAddresses = savedAddresses;
         this.events = events;
+        this.commissions = commissions;
+        this.clock = clock;
     }
 
     /**
@@ -92,7 +106,7 @@ public class OrderService
         {
             saveDefaultAddress(customer.getProfile(), address);
         }
-        order.moveTo(OrderStatus.PLACED);
+        order.moveTo(OrderStatus.PLACED, now());
         Order placed = orders.save(order);
         events.publishEvent(OrderMetrics.OrderStatusChanged.of(placed));
         return mapper.toDTO(placed);
@@ -166,7 +180,13 @@ public class OrderService
 
     private void changeStatus(Order order, OrderStatus status)
     {
-        order.moveTo(status);
+        if (status == OrderStatus.DELIVERED)
+        {
+            deliver(order);
+        } else
+        {
+            order.moveTo(status, now());
+        }
         events.publishEvent(OrderMetrics.OrderStatusChanged.of(order));
         UserProfile profile = order.getCustomer().getProfile();
         String phoneNumber = profile.getPhoneNumber();
@@ -177,6 +197,27 @@ public class OrderService
                     : "Ordre %d: %s".formatted(order.getId(), status.getDanishName());
             events.publishEvent(new OrderStatusSmsSender.OrderStatusSms(phoneNumber, message));
         }
+    }
+
+    // The amounts are calculated before the move. The sales query would otherwise
+    // flush a delivered order without them, which the database refuses. It also
+    // means the order isn't delivered yet, so it can't count towards its own sales.
+    // The window ends at the time the move records.
+    private void deliver(Order order)
+    {
+        Instant deliveredAt = now();
+        Long restaurantId = order.getRestaurant().getId();
+        BigDecimal sales = orders.sumSalesDeliveredBetween(restaurantId, deliveredAt.minus(SALES_PERIOD), deliveredAt);
+        CommissionAmounts amounts = commissions.calculate(restaurantId, sales, order.getTotal());
+        order.moveTo(OrderStatus.DELIVERED, deliveredAt);
+        order.recordCommission(amounts);
+    }
+
+    // PostgreSQL keeps microseconds, so a time compared with stored times is cut to
+    // that precision.
+    private Instant now()
+    {
+        return clock.instant().truncatedTo(ChronoUnit.MICROS);
     }
 
     // Every restaurant user has a restaurant: the role cannot be assigned without

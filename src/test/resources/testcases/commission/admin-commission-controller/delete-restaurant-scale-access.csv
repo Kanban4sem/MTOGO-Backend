@@ -1,0 +1,6 @@
+role,expected,reason
+ANONYMOUS,401,"Decision table: a request without a login cannot remove a restaurant's own scale"
+CUSTOMER,403,"Decision table: a customer cannot remove a restaurant's own scale"
+RESTAURANT,403,"Decision table: a restaurant manager cannot remove a restaurant's own scale"
+DELIVERY_AGENT,403,"Decision table: a delivery agent cannot remove a restaurant's own scale"
+ADMIN,204,"Decision table: an admin can remove a restaurant's own scale"

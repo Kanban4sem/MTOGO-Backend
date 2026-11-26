@@ -5,7 +5,7 @@
 
 The draft was made by Jonas and Jesper. Daniel and Dino have not approved it yet. It was moved here from `MTOGO/docs/brainstorm/domainmodel.md`. An online copy is on [mermaid.ai](https://mermaid.ai/d/4f7b7a63-16a6-4759-bc76-0d6c9b800673).
 
-The account model is split into user (User and UserProfile), address (Address and PostalCode) and role (Role) features. The account portion is now implemented for [issue #13](specs/13-add-customer-accounts.md), with five entities and one optional profile address. The restaurant feature implements Restaurant, Menu and MenuItem for [issue #14](specs/14-show-restaurants-and-their-menus.md). The order feature implements Order, OrderLine, the OrderStatus enum and the status history for [issue #15](specs/15-place-and-pay-for-an-order.md). An order line copies the menu item's name and unit price when the order is placed. Payment is mocked and not stored. A restaurant user accepts or rejects its restaurant's placed orders and marks accepted orders as ready, for [issue #16](https://github.com/Kanban4sem/MTOGO-Backend/issues/16). A delivery agent takes a ready order that no one has taken, which records the agent on the order, and then marks it as picked up and delivered, for [issue #17](https://github.com/Kanban4sem/MTOGO-Backend/issues/17). The DeliveryAction enum names these three actions. The delivery agent is a User with the delivery-agent role, so the DeliveryAgent and Delivery classes are not used. A customer sees their orders and each order's current status, with Danish and English status names, for [issue #18](https://github.com/Kanban4sem/MTOGO-Backend/issues/18). Each status change after Placed is an order notification: the customer reads it in the app and can mark it as read, and it is sent by SMS through a mocked SMS provider when the customer has a phone number, for [issue #27](https://github.com/Kanban4sem/MTOGO-Backend/issues/27). The remaining domains are still drafts. PostalCode stores city, code and country; Role uses CUSTOMER, RESTAURANT, DELIVERY_AGENT or ADMIN, where ADMIN was added for [issue #26](specs/26-add-a-management-dashboard.md). A restaurant user belongs to exactly one restaurant, and a restaurant can have several restaurant users, for [issue #52](specs/52-seed-restaurant-and-delivery-agent-users.md). Other roles, including admins, have no restaurant. Restaurant addresses remain a draft relationship.
+The account model is split into user (User and UserProfile), address (Address and PostalCode) and role (Role) features. The account portion is now implemented for [issue #13](specs/13-add-customer-accounts.md), with five entities and one optional profile address. The restaurant feature implements Restaurant, Menu and MenuItem for [issue #14](specs/14-show-restaurants-and-their-menus.md). The order feature implements Order, OrderLine, the OrderStatus enum and the status history for [issue #15](specs/15-place-and-pay-for-an-order.md). An order line copies the menu item's name and unit price when the order is placed. Payment is mocked and not stored. A restaurant user accepts or rejects its restaurant's placed orders and marks accepted orders as ready, for [issue #16](https://github.com/Kanban4sem/MTOGO-Backend/issues/16). A delivery agent takes a ready order that no one has taken, which records the agent on the order, and then marks it as picked up and delivered, for [issue #17](https://github.com/Kanban4sem/MTOGO-Backend/issues/17). The DeliveryAction enum names these three actions. The delivery agent is a User with the delivery-agent role, so the DeliveryAgent and Delivery classes are not used. A customer sees their orders and each order's current status, with Danish and English status names, for [issue #18](https://github.com/Kanban4sem/MTOGO-Backend/issues/18). Each status change after Placed is an order notification: the customer reads it in the app and can mark it as read, and it is sent by SMS through a mocked SMS provider when the customer has a phone number, for [issue #27](https://github.com/Kanban4sem/MTOGO-Backend/issues/27). The remaining domains are still drafts. PostalCode stores city, code and country; Role uses CUSTOMER, RESTAURANT, DELIVERY_AGENT or ADMIN, where ADMIN was added for [issue #26](specs/26-add-a-management-dashboard.md). A restaurant user belongs to exactly one restaurant, and a restaurant can have several restaurant users, for [issue #52](specs/52-seed-restaurant-and-delivery-agent-users.md). Other roles, including admins, have no restaurant. A delivered order stores its commission and service fee, calculated from the commission scale that applied to its restaurant at delivery: the restaurant's own scale, or the sales tier its sales reach, for [issue #23](https://github.com/Kanban4sem/MTOGO-Backend/issues/23). Restaurant addresses remain a draft relationship.
 
 ```mermaid
 classDiagram
@@ -97,8 +97,11 @@ class Order {
     +OrderChannel channel
     +OrderStatus status
     +User deliveryAgent
-    +moveTo(OrderStatus)
+    +BigDecimal commission
+    +BigDecimal serviceFee
+    +moveTo(OrderStatus, Instant)
     +assignDeliveryAgent(User)
+    +recordCommission(CommissionAmounts)
 }
 
 class OrderLine {
@@ -153,12 +156,19 @@ class Payment {
     +failPayment()
 }
 
-class Commission {
+class CommissionScale {
     +Long id
-    +BigDecimal orderAmountExVat
-    +BigDecimal commissionAmount
+    +Restaurant restaurant
+    +BigDecimal minimumSales
     +BigDecimal serviceFee
-    +calculateTotalFee()
+    +calculate(BigDecimal orderTotal)
+}
+note for CommissionScale "Either a sales tier (minimumSales) or a restaurant's own scale (restaurant), never both.\nThe tier from 0 DKK is the default scale."
+
+class CommissionBracket {
+    +Long id
+    +BigDecimal lowerLimit
+    +BigDecimal ratePercent
 }
 
 %% ######################################################
@@ -248,7 +258,8 @@ Delivery "1" --> "0..1" Bonus : earns
 DeliveryAgent "1" --> "0..*" Bonus : receives
 
 %% Commissions
-Order "1" --> "0..1" Commission : generates
+CommissionScale "1" *-- "1..10" CommissionBracket : contains
+Restaurant "1" --> "0..1" CommissionScale : hasOwn
 
 %% Address
 Order "1" --> "1" Address : deliveredTo

@@ -6,11 +6,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import mtogo.exceptions.ApiException;
-import mtogo.feature.order.OrderTestData;
+import mtogo.feature.commission.domain.CommissionService;
+import mtogo.feature.commission.presentation.dto.request.ReplaceSalesTiersDTO;
+import mtogo.feature.commission.presentation.dto.request.SaveCommissionScaleDTO;
+import mtogo.feature.commission.CommissionTestData;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.request.UpdateDeliveryAgentOrderDTO;
 import mtogo.feature.order.presentation.dto.request.UpdateRestaurantOrderStatusDTO;
@@ -26,12 +36,54 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 @SpringBootTest
-class OrderServiceTest extends OrderTestData
+class OrderServiceTest extends CommissionTestData
 {
+    // Every move in these tests is recorded at this time.
+    private static final Instant NOW = Instant.parse("2026-11-25T12:00:00Z");
+    private static final String SECOND_TIER_MINIMUM = "1000.00";
+
     @Autowired
     OrderService orders;
+    @Autowired
+    CommissionService commissions;
+
+    // The scales a delivery can get, or none. With an order total of 125.00 DKK,
+    // each gives different amounts.
+    enum Scale
+    {
+        NONE(null, null), DEFAULT("6.00", "5.00"), SECOND_TIER("3.00", "4.00"), OWN("1.00", "2.00");
+
+        final Map<String, Object> amounts = new HashMap<>();
+
+        Scale(String commission, String serviceFee)
+        {
+            amounts.put("commission", commission == null ? null : new BigDecimal(commission));
+            amounts.put("service_fee", serviceFee == null ? null : new BigDecimal(serviceFee));
+        }
+    }
+
+    // The sales window runs from 30 days before the delivery to the delivery, both
+    // included.
+    enum WindowEdge
+    {
+        START, END
+    }
+
+    @TestConfiguration
+    static class FixedClock
+    {
+        @Bean
+        @Primary
+        Clock fixedClock()
+        {
+            return Clock.fixed(NOW, ZoneOffset.UTC);
+        }
+    }
 
     @ParameterizedTest(name = "[{index}] {2}")
     @CsvFileSource(resources = "/testcases/order/order-service/place-items.csv", numLinesToSkip = 1)
@@ -190,14 +242,13 @@ class OrderServiceTest extends OrderTestData
     {
         long customerId = customer();
         long itemId = item(menu(restaurant("Requested", true), "Lunch", true), "Meal", true);
-        Instant before = Instant.now().minusSeconds(1);
 
         OrderDTO result = orders.place(customerId,
                 placeOrder(List.of(new PlaceOrderDTO.OrderLine(itemId, 1)), "tok_visa"));
 
         assertThat(result.channel(), is(OrderChannel.WEBSITE));
         assertThat(result.status(), is(OrderStatus.PLACED));
-        assertThat(result.placedAt(), is(both(greaterThan(before)).and(lessThan(Instant.now().plusSeconds(1)))));
+        assertThat(result.placedAt(), is(NOW));
         assertThat(jdbc.queryForMap("SELECT channel, status FROM orders WHERE id = ?", result.id()),
                 allOf(hasEntry("channel", (Object) "WEBSITE"), hasEntry("status", (Object) "PLACED")));
         var changes = jdbc.queryForList("SELECT status, changed_at FROM order_status_changes WHERE order_id = ?",
@@ -342,6 +393,178 @@ class OrderServiceTest extends OrderTestData
         List<Long> listed = orders.getDeliveryAgentOrders(agentId).stream().map(DeliveryAgentOrderDTO::id).toList();
 
         assertThat(listed.contains(orderId), is(expected.equals("LISTED")));
+    }
+
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/order/order-service/deliver-scale-choice.csv", numLinesToSkip = 1)
+    @DisplayName("Deliver - stores the amounts from the restaurant's own scale, or else the highest sales tier its sales reach")
+    void deliverChoosesTheScale(boolean hasOwnScale, String sales, Scale expected, String reason)
+    {
+        long restaurantId = restaurant("Requested", true);
+        long customerId = customer();
+        addSecondTier();
+        if (hasOwnScale)
+        {
+            commissions.saveRestaurantScale(restaurantId, ownScale());
+        }
+        if (new BigDecimal(sales).signum() > 0)
+        {
+            deliveredAt(restaurantId, customerId, sales, NOW.minus(Duration.ofDays(1)));
+        }
+
+        long orderId = deliver(restaurantId, customerId, "125.00", "me");
+
+        assertThat(amounts(orderId), is(expected.amounts));
+    }
+
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/order/order-service/deliver-sales-window.csv", numLinesToSkip = 1)
+    @DisplayName("Deliver - counts the orders delivered in the 30 days before the delivery towards the sales, both edges included")
+    void deliverCountsSalesInThe30DaysBefore(WindowEdge edge, long offsetMicros, Scale expected, String reason)
+    {
+        long restaurantId = restaurant("Requested", true);
+        long customerId = customer();
+        addSecondTier();
+        Instant edgeTime = edge == WindowEdge.START ? NOW.minus(Duration.ofDays(30)) : NOW;
+        deliveredAt(restaurantId, customerId, "1000.00", edgeTime.plus(offsetMicros, ChronoUnit.MICROS));
+
+        long orderId = deliver(restaurantId, customerId, "125.00", "me");
+
+        assertThat(amounts(orderId), is(expected.amounts));
+    }
+
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/order/order-service/deliver-amounts.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Change status - only the move to Delivered stores a commission and a service fee")
+    void onlyDeliveryStoresAmounts(OrderStatus currentStatus, OrderStatus nextStatus, Scale expected, String reason)
+    {
+        long restaurantId = restaurant("Requested", true);
+        long restaurantUserId = restaurantUser("restaurant@example.test", restaurantId);
+        long agentId = deliveryAgent("me");
+        long orderId = placeOrder(restaurantId, customer(), "125.00");
+        if (currentStatus != null)
+        {
+            setOrder(orderId, currentStatus.name(), agentId);
+            switch (nextStatus)
+            {
+                case PICKED_UP -> orders.updateDeliveryAgentOrder(agentId, orderId,
+                        new UpdateDeliveryAgentOrderDTO(DeliveryAction.PICK_UP));
+                case DELIVERED -> orders.updateDeliveryAgentOrder(agentId, orderId,
+                        new UpdateDeliveryAgentOrderDTO(DeliveryAction.DELIVER));
+                default -> orders.updateRestaurantOrderStatus(restaurantUserId, orderId,
+                        new UpdateRestaurantOrderStatusDTO(nextStatus));
+            }
+        }
+
+        assertThat(readStatus(orderId), is(nextStatus.name()));
+        assertThat(amounts(orderId), is(expected.amounts));
+    }
+
+    @Test
+    @DisplayName("Deliver - rejected orders and orders that aren't delivered don't count towards the sales")
+    void deliverCountsOnlyDeliveredOrders()
+    {
+        long restaurantId = restaurant("Requested", true);
+        long customerId = customer();
+        addSecondTier();
+        Instant placedAt = NOW.minus(Duration.ofDays(1));
+        orderAt(restaurantId, customerId, "1000.00",
+                new EnumMap<>(Map.of(OrderStatus.PLACED, placedAt, OrderStatus.REJECTED, placedAt.plusSeconds(60))));
+        orderAt(restaurantId, customerId, "1000.00",
+                new EnumMap<>(Map.of(OrderStatus.PLACED, placedAt, OrderStatus.ACCEPTED, placedAt.plusSeconds(60),
+                        OrderStatus.READY, placedAt.plusSeconds(120), OrderStatus.PICKED_UP,
+                        placedAt.plusSeconds(180))));
+
+        long orderId = deliver(restaurantId, customerId, "125.00", "me");
+
+        assertThat(amounts(orderId), is(Scale.DEFAULT.amounts));
+    }
+
+    @Test
+    @DisplayName("Deliver - the order being delivered doesn't count towards its own sales")
+    void deliverLeavesTheOrderOutOfItsOwnSales()
+    {
+        long restaurantId = restaurant("Requested", true);
+        addSecondTier();
+
+        long orderId = deliver(restaurantId, customer(), "1000.00", "me");
+
+        // The default scale gives 38.00 on 800.00 DKK excluding VAT. The second tier
+        // would give 24.00 and 4.00.
+        assertThat(amounts(orderId),
+                is(Map.of("commission", (Object) new BigDecimal("38.00"), "service_fee", new BigDecimal("5.00"))));
+    }
+
+    @Test
+    @DisplayName("Deliver - changing a tier, replacing a restaurant's own scale and removing it don't change amounts already stored")
+    void storedAmountsNeverChange()
+    {
+        long restaurantId = restaurant("Requested", true);
+        commissions.saveRestaurantScale(restaurantId, ownScale());
+        long orderId = deliver(restaurantId, customer(), "125.00", "me");
+
+        commissions.replaceTiers(new ReplaceSalesTiersDTO(List.of(tier("0.00", scale("9.00", "0.00:10.00")))));
+        commissions.saveRestaurantScale(restaurantId, scale("8.00", "0.00:9.00"));
+        assertThat(amounts(orderId), is(Scale.OWN.amounts));
+        commissions.removeRestaurantScale(restaurantId);
+
+        assertThat(amounts(orderId), is(Scale.OWN.amounts));
+    }
+
+    @Test
+    @DisplayName("Deliver - an order placed before its restaurant's own scale is removed gets the sales tiers")
+    void deliverAfterTheOwnScaleIsRemovedUsesTheTiers()
+    {
+        long restaurantId = restaurant("Requested", true);
+        long agentId = deliveryAgent("me");
+        commissions.saveRestaurantScale(restaurantId, ownScale());
+        long orderId = placeOrder(restaurantId, customer(), "125.00");
+        setOrder(orderId, OrderStatus.PICKED_UP.name(), agentId);
+
+        commissions.removeRestaurantScale(restaurantId);
+        orders.updateDeliveryAgentOrder(agentId, orderId, new UpdateDeliveryAgentOrderDTO(DeliveryAction.DELIVER));
+
+        assertThat(amounts(orderId), is(Scale.DEFAULT.amounts));
+    }
+
+    // Adds a second tier from 1,000.00 DKK of sales after the default scale.
+    private void addSecondTier()
+    {
+        commissions.replaceTiers(new ReplaceSalesTiersDTO(List.of(tier("0.00", scale("5.00", DEFAULT_BRACKETS)),
+                tier(SECOND_TIER_MINIMUM, scale("4.00", "0.00:3.00")))));
+    }
+
+    private static SaveCommissionScaleDTO ownScale()
+    {
+        return scale("2.00", "0.00:1.00");
+    }
+
+    private void deliveredAt(long restaurantId, long customerId, String total, Instant deliveredAt)
+    {
+        orderAt(restaurantId, customerId, total, new EnumMap<>(Map.of(OrderStatus.PLACED,
+                deliveredAt.minus(Duration.ofHours(1)), OrderStatus.DELIVERED, deliveredAt)));
+    }
+
+    // Places an order with the given total and delivers it through the delivery
+    // agent's move.
+    private long deliver(long restaurantId, long customerId, String total, String agentName)
+    {
+        long agentId = deliveryAgent(agentName);
+        long orderId = placeOrder(restaurantId, customerId, total);
+        setOrder(orderId, OrderStatus.PICKED_UP.name(), agentId);
+        orders.updateDeliveryAgentOrder(agentId, orderId, new UpdateDeliveryAgentOrderDTO(DeliveryAction.DELIVER));
+        return orderId;
+    }
+
+    private long placeOrder(long restaurantId, long customerId, String total)
+    {
+        long itemId = item(menu(restaurantId, "Lunch", true), "Meal", total);
+        return orders.place(customerId, placeOrder(List.of(new PlaceOrderDTO.OrderLine(itemId, 1)), "tok_visa")).id();
+    }
+
+    private Map<String, Object> amounts(long orderId)
+    {
+        return jdbc.queryForMap("SELECT commission, service_fee FROM orders WHERE id = ?", orderId);
     }
 
     private static Long assignedAgent(String assignedTo, long agentId, long otherAgentId)

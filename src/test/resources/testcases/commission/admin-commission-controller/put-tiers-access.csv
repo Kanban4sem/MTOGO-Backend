@@ -1,0 +1,6 @@
+role,expected,reason
+ANONYMOUS,401,"Decision table: a request without a login cannot replace the sales tiers"
+CUSTOMER,403,"Decision table: a customer cannot replace the sales tiers"
+RESTAURANT,403,"Decision table: a restaurant manager cannot replace the sales tiers"
+DELIVERY_AGENT,403,"Decision table: a delivery agent cannot replace the sales tiers"
+ADMIN,200,"Decision table: an admin can replace the sales tiers"

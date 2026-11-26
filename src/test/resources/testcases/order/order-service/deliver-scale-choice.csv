@@ -1,0 +1,8 @@
+hasOwnScale,sales,expected,reason
+false,0.00,DEFAULT,"Decision table: a restaurant without sales or its own scale gets the default scale"
+false,999.99,DEFAULT,"Decision table, BVA: sales just below the second tier's minimum give the default scale"
+false,1000.00,SECOND_TIER,"Decision table, BVA: sales exactly at the second tier's minimum reach it"
+false,1000.01,SECOND_TIER,"Decision table, BVA: sales just above the second tier's minimum give the second tier"
+true,999.99,OWN,"Decision table: a restaurant's own scale applies below the second tier's minimum"
+true,1000.00,OWN,"Decision table: a restaurant's own scale applies at the second tier's minimum"
+true,1000.01,OWN,"Decision table: a restaurant's own scale applies above the second tier's minimum"

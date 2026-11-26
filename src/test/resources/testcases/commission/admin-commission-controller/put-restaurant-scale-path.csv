@@ -1,0 +1,5 @@
+restaurant,expected,reason
+abc,400,"EP: a nonnumeric path ID cannot be bound"
+0,404,"EP: zero does not identify a restaurant"
+UNKNOWN,404,"EP: a restaurant that doesn't exist cannot get a scale"
+WITHOUT_OWN_SCALE,200,"EP: an existing restaurant without its own scale gets one"

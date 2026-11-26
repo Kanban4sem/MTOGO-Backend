@@ -1,0 +1,7 @@
+status,hasAmounts,expected,reason
+DELIVERED,false,ACCEPT,"Decision table: a delivered order without amounts gets them"
+DELIVERED,true,IllegalStateException,"Decision table: a delivered order keeps the amounts it already has"
+PICKED_UP,false,IllegalStateException,"Decision table: an order picked up but not yet delivered gets no amounts"
+PLACED,false,IllegalStateException,"Decision table: a placed order gets no amounts"
+REJECTED,false,IllegalStateException,"Decision table: a rejected order is never delivered and gets no amounts"
+NULL,false,IllegalStateException,"Decision table: a new order without a status gets no amounts"

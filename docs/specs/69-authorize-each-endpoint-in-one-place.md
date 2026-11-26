@@ -6,11 +6,11 @@
 
 Copied from #69. The issue is the source: change the issue first, then this copy.
 
-- [ ] `SecurityConfig` has no role-based URL matchers; it keeps only public paths, the default authenticated rule, authentication and the filters
-- [ ] Every endpoint method declares its access with its own `@PreAuthorize`, public ones with `permitAll()`
-- [ ] A test fails when an endpoint method has no `@PreAuthorize` of its own
-- [ ] An authenticated user without the required role gets `403`, not `500`
-- [ ] Every existing endpoint access test passes without changing its expected status codes; the URL scope test is deleted with the URL scopes
+- [x] `SecurityConfig` has no role-based URL matchers; it keeps only public paths, the default authenticated rule, authentication and the filters
+- [x] Every endpoint method declares its access with its own `@PreAuthorize`, public ones with `permitAll()`
+- [x] A test fails when an endpoint method has no `@PreAuthorize` of its own
+- [x] An authenticated user without the required role gets `403`, not `500`
+- [x] Every existing endpoint access test passes without changing its expected status codes; the URL scope test is deleted with the URL scopes
 
 ## Behaviour
 

@@ -1,0 +1,7 @@
+edge,offsetMicros,expected,reason
+START,-1,DEFAULT,"BVA: an order delivered 1 µs more than 30 days before doesn't count towards the sales"
+START,0,SECOND_TIER,"BVA: an order delivered exactly 30 days before counts towards the sales"
+START,1,SECOND_TIER,"BVA: an order delivered 1 µs less than 30 days before counts towards the sales"
+END,-1,SECOND_TIER,"BVA: an order delivered 1 µs before the delivery counts towards the sales"
+END,0,SECOND_TIER,"BVA: an order delivered at the same time as the delivery counts towards the sales"
+END,1,DEFAULT,"BVA: an order delivered 1 µs after the delivery doesn't count towards the sales"

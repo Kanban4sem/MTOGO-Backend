@@ -1,0 +1,7 @@
+currentStatus,nextStatus,expected,reason
+NULL,PLACED,NONE,"EP: a placed order has no commission or service fee"
+PLACED,ACCEPTED,NONE,"EP: an accepted order has no commission or service fee"
+PLACED,REJECTED,NONE,"EP: a rejected order has no commission or service fee"
+ACCEPTED,READY,NONE,"EP: a ready order has no commission or service fee"
+READY,PICKED_UP,NONE,"EP: a picked-up order has no commission or service fee"
+PICKED_UP,DELIVERED,DEFAULT,"EP: a delivered order stores its commission and service fee"

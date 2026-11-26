@@ -62,8 +62,9 @@ public abstract class OrderTestData extends RestaurantTestData
     // change a real move records.
     protected void setOrder(long orderId, String status, Long deliveryAgentId)
     {
-        jdbc.update("UPDATE orders SET status = ?, delivery_agent_id = ? WHERE id = ?", status, deliveryAgentId,
-                orderId);
+        BigDecimal amount = deliveredAmount(status);
+        jdbc.update("UPDATE orders SET status = ?, delivery_agent_id = ?, commission = ?, service_fee = ? WHERE id = ?",
+                status, deliveryAgentId, amount, amount, orderId);
     }
 
     // Inserts an order with a status change at each given time, so a test controls
@@ -78,10 +79,13 @@ public abstract class OrderTestData extends RestaurantTestData
         long addressId = jdbc.queryForObject(
                 "INSERT INTO addresses (street, postal_code_id, is_default) VALUES ('Test Street 10', ?, false) RETURNING id",
                 Long.class, postalCodeId);
+        BigDecimal amount = deliveredAmount(currentStatus.name());
         long orderId = jdbc.queryForObject("""
-                INSERT INTO orders (customer_id, restaurant_id, delivery_address_id, channel, total, status)
-                VALUES (?, ?, ?, 'WEBSITE', ?, ?) RETURNING id
-                """, Long.class, customerId, restaurantId, addressId, new BigDecimal(total), currentStatus.name());
+                INSERT INTO orders (customer_id, restaurant_id, delivery_address_id, channel, total, status,
+                    commission, service_fee)
+                VALUES (?, ?, ?, 'WEBSITE', ?, ?, ?, ?) RETURNING id
+                """, Long.class, customerId, restaurantId, addressId, new BigDecimal(total), currentStatus.name(),
+                amount, amount);
         statusTimes.forEach((status, changedAt) -> jdbc.update(
                 "INSERT INTO order_status_changes (order_id, status, changed_at) VALUES (?, ?, ?)", orderId,
                 status.name(), Timestamp.from(changedAt)));
@@ -146,5 +150,12 @@ public abstract class OrderTestData extends RestaurantTestData
         request.put("deliveryAddress", deliveryAddress());
         request.put("paymentToken", "tok_visa");
         return request;
+    }
+
+    // The database requires a commission and service fee on a delivered order and
+    // refuses them on any other, so a delivered test order gets 0.00 for both.
+    private static BigDecimal deliveredAmount(String status)
+    {
+        return OrderStatus.DELIVERED.name().equals(status) ? BigDecimal.ZERO : null;
     }
 }

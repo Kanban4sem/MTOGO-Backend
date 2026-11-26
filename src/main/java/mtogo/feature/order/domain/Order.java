@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import mtogo.exceptions.ConflictException;
+import mtogo.feature.commission.domain.CommissionAmounts;
 import mtogo.feature.address.domain.Address;
 import mtogo.feature.restaurant.domain.Restaurant;
 import mtogo.feature.user.domain.User;
@@ -47,6 +48,11 @@ public class Order
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private OrderStatus status;
+    // Set when the order is delivered, from the commission scale that applied then.
+    @Column(precision = 10, scale = 2)
+    private BigDecimal commission;
+    @Column(name = "service_fee", precision = 10, scale = 2)
+    private BigDecimal serviceFee;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id")
     private List<OrderLine> lines = new ArrayList<>();
@@ -76,13 +82,13 @@ public class Order
     }
 
     /**
-     * Moves the order along the lifecycle from the MVP and records when the new
+     * Moves the order along the lifecycle from the MVP and records the time the new
      * status was set. A new order can only move to Placed.
      *
      * @throws ConflictException
      *             when the lifecycle does not allow the move
      */
-    public void moveTo(OrderStatus next)
+    public void moveTo(OrderStatus next, Instant at)
     {
         if (status == null)
         {
@@ -94,7 +100,25 @@ public class Order
         status = next;
         // PostgreSQL keeps microseconds, so the time returned now matches the time
         // read back later.
-        statusChanges.add(new OrderStatusChange(this, next, Instant.now().truncatedTo(ChronoUnit.MICROS)));
+        statusChanges.add(new OrderStatusChange(this, next, at.truncatedTo(ChronoUnit.MICROS)));
+    }
+
+    /**
+     * Stores what the restaurant pays for this order. Only a delivered order has
+     * these amounts, and they never change once stored, whatever later happens to
+     * the commission scale.
+     *
+     * @throws IllegalStateException
+     *             when the order isn't delivered or already has the amounts
+     */
+    public void recordCommission(CommissionAmounts amounts)
+    {
+        if (status != OrderStatus.DELIVERED || commission != null)
+        {
+            throw new IllegalStateException("Only a delivered order without amounts can get a commission");
+        }
+        commission = amounts.commission();
+        serviceFee = amounts.serviceFee();
     }
 
     private static void requireMove(boolean isAllowed, String from, OrderStatus next)
