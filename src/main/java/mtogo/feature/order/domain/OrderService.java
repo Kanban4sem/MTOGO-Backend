@@ -93,7 +93,9 @@ public class OrderService
             saveDefaultAddress(customer.getProfile(), address);
         }
         order.moveTo(OrderStatus.PLACED);
-        return mapper.toDTO(orders.save(order));
+        Order placed = orders.save(order);
+        events.publishEvent(OrderMetrics.OrderStatusChanged.of(placed));
+        return mapper.toDTO(placed);
     }
 
     @Transactional(readOnly = true)
@@ -165,6 +167,7 @@ public class OrderService
     private void changeStatus(Order order, OrderStatus status)
     {
         order.moveTo(status);
+        events.publishEvent(OrderMetrics.OrderStatusChanged.of(order));
         UserProfile profile = order.getCustomer().getProfile();
         String phoneNumber = profile.getPhoneNumber();
         if (StringUtils.hasText(phoneNumber))

@@ -22,7 +22,7 @@ Java 25 and Spring Boot 4, with PostgreSQL and Flyway for the database. The API 
 
 ## API documentation
 
-With the backend running, Swagger UI is at `/swagger-ui/index.html` and the OpenAPI specification at `/v3/api-docs`. Both are open without authentication, like `GET /actuator/health` and `GET /v1/features`. Every other endpoint requires a login.
+With the backend running, Swagger UI is at `/swagger-ui/index.html` and the OpenAPI specification at `/v3/api-docs`. Both are open without authentication, like `GET /v1/features`. Every other endpoint requires a login. Health and metrics are not on the API port: `GET /actuator/health` and `GET /actuator/prometheus` are on management port 8081, open without a login and reachable only on the Docker network (ADR-007).
 
 The order endpoints that a role uses live under that role's path, and each role sees only its own orders:
 

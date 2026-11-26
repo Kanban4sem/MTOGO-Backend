@@ -71,6 +71,10 @@ _Avoid_: Source, platform, origin
 An order whose status is not final: Placed, Accepted, Ready or PickedUp. Rejected and Delivered are final.
 _Avoid_: Active order, pending order, current order
 
+**Unassigned order**:
+An order in Ready that no delivery agent has taken.
+_Avoid_: Free order, unclaimed order, waiting order
+
 **Delivery time**:
 The time from an order being placed to it being delivered. Only a delivered order has one.
 _Avoid_: Processing time, lead time, turnaround
@@ -82,8 +86,12 @@ The page that shows figures about MTOGO's operations, calculated from the orders
 _Avoid_: Overview, report, statistics page
 
 **Figure**:
-One number on the dashboard, such as the number of open orders.
-_Avoid_: Metric, KPI, statistic, key figure
+One number on the dashboard, such as the number of open orders. A figure is calculated from the orders when the dashboard is shown, unlike a metric.
+_Avoid_: KPI, statistic, key figure
+
+**Metric**:
+A measurement the backend exposes to Prometheus to monitor MTOGO while it runs, such as the number of orders placed or how long requests take.
+_Avoid_: Figure, KPI, statistic
 
 **Orders per 24 hours**:
 The average number of orders placed per 24 hours over a recent period. Rejected orders count, because they were placed.

@@ -94,6 +94,7 @@ class UserSeedInitializerTest
         SharedPostgres.datasourceProperties(database).forEach(property -> arguments.add("--" + property));
         arguments.add("--app.seed.customer-password=" + customerPassword);
         arguments.add("--server.port=0");
+        arguments.add("--management.server.port=0");
         return new SpringApplicationBuilder(Main.class).run(arguments.toArray(String[]::new));
     }
 }

@@ -27,7 +27,7 @@ Two services are mocked locally:
 
 ## Try the API
 
-Every endpoint, request and response is documented in Swagger UI at `/swagger-ui/index.html`, and the OpenAPI specification is at `/v3/api-docs`. Both are open without authentication, like `GET /actuator/health` and `GET /v1/features`. Every other endpoint requires a login.
+Every endpoint, request and response is documented in Swagger UI at `/swagger-ui/index.html`, and the OpenAPI specification is at `/v3/api-docs`. Both are open without authentication, like `GET /v1/features`. Every other endpoint requires a login. Health and metrics are not on the API port: `GET /actuator/health` and `GET /actuator/prometheus` are on management port 8081, open without a login and reachable only on the Docker network (ADR-007).
 
 The behaviour behind the endpoints is in the specs in [`docs/specs/`](specs/), such as [customer accounts](specs/13-add-customer-accounts.md) and [placing and paying for an order](specs/15-place-and-pay-for-an-order.md).
 
@@ -58,6 +58,8 @@ Start the backend with the `local` Spring profile against your development datab
 ```bash
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
+The dev container forwards only port 8080 to your machine. To read the health or the metrics on management port 8081, run `curl http://localhost:8081/actuator/prometheus` in a terminal inside the dev container.
 
 The profile seeds **Sold-out kebab** in the MTOGO Kebab menu and **Closed restaurant meal** at MTOGO Closed Restaurant. To try both `409` responses, enable authentication, seed a customer, and open [orderConflicts.http](../src/main/resources/http/orderConflicts.http) in JetBrains HTTP Client.
 
@@ -118,4 +120,4 @@ docker run -p 8080:8080 \
   mtogo-backend
 ```
 
-After about a minute `docker ps` shows the container as `healthy`. Docker checks `GET /actuator/health`, which is open without authentication.
+After about a minute `docker ps` shows the container as `healthy`. Docker checks `GET /actuator/health` on management port 8081 inside the container, which is open without authentication. To read the health or the metrics from your machine, add `-p 8081:8081` and open `http://localhost:8081/actuator/health` or `http://localhost:8081/actuator/prometheus`.

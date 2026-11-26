@@ -1,0 +1,8 @@
+portName,path,token,expected,reason
+MANAGEMENT,/actuator/health,NONE,200,"Decision table: the health check on the management port is public"
+MANAGEMENT,/actuator/prometheus,NONE,200,"Decision table: the metrics on the management port are public"
+MANAGEMENT,/actuator/info,NONE,401,"Decision table: any other actuator path on the management port requires authentication"
+MANAGEMENT,/actuator/info,ADMIN,404,"Decision table: any other actuator endpoint is not exposed on the management port"
+SERVER,/actuator/health,NONE,404,"Decision table: the API port serves no health check, and the permit makes a missing handler answer 404"
+SERVER,/actuator/prometheus,NONE,404,"Decision table: the API port serves no metrics, and the permit makes a missing handler answer 404"
+SERVER,/actuator/prometheus,ADMIN,404,"Decision table: the API port serves no metrics, even with a token"

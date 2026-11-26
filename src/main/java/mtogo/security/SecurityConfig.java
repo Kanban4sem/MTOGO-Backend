@@ -38,7 +38,12 @@ public class SecurityConfig
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(cache -> cache.disable()).formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable()).logout(logout -> logout.disable())
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/health").permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        // One chain guards both ports. Only the management port serves these two, and
+                        // it
+                        // is unreachable from outside, so on the API port they answer 404 (ADR-007).
+                        // An actuator endpoint exposed later needs its own decision.
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/features").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/restaurants", "/v1/restaurants/*/menus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")

@@ -1,0 +1,3 @@
+status,expected,reason
+REJECTED,1,"EP: rejecting an order is counted"
+ACCEPTED,0,"EP: accepting an order is not counted"

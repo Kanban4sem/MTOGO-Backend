@@ -1,0 +1,4 @@
+request,expected,reason
+confirmed,1,"EP: an order placed with a confirmed payment is counted"
+declined,0,"EP: a declined payment is not counted"
+twoRestaurants,0,"EP: a refused request to place an order is not counted"

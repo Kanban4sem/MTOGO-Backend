@@ -29,6 +29,8 @@ public interface OrderRepository extends JpaRepository<Order, Long>
     List<Order> findAllByDeliveryAgentIdOrStatusAndDeliveryAgentIsNullOrderByIdDesc(Long deliveryAgentId,
             OrderStatus status);
 
+    long countByStatusAndDeliveryAgentIsNull(OrderStatus status);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from Order o where o.id = :id")
     Optional<Order> findByIdForUpdate(@Param("id") Long id);

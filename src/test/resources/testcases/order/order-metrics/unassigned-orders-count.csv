@@ -1,0 +1,8 @@
+status,hasDeliveryAgent,expected,reason
+READY,false,1,"EP, decision table: a ready order no delivery agent has taken is unassigned"
+READY,true,0,"Decision table: a ready order a delivery agent has taken is not unassigned"
+PLACED,false,0,"EP, decision table: a placed order is not unassigned"
+ACCEPTED,false,0,"EP, decision table: an accepted order is not unassigned"
+PICKED_UP,true,0,"EP, decision table: a picked-up order is not unassigned"
+DELIVERED,true,0,"EP, decision table: a delivered order is not unassigned"
+REJECTED,false,0,"EP, decision table: a rejected order is not unassigned"

@@ -33,3 +33,4 @@ actionlint
 shellcheck
 JPQL
 wrapup
+prometheus
