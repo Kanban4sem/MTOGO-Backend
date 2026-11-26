@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/v1/customer/orders/notifications")
-@PreAuthorize("hasRole('CUSTOMER')")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Order notifications", description = "In-app notifications about the authenticated customer's orders")
 public class OrderNotificationController
@@ -32,6 +31,7 @@ public class OrderNotificationController
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     @Operation(summary = "List the customer's order notifications, newest first", description = "Includes read and unread changes after placement. Listing leaves read state unchanged.")
     public List<OrderNotificationDTO> getAll(Principal principal)
     {
@@ -39,6 +39,7 @@ public class OrderNotificationController
     }
 
     @PutMapping("/{id}/read")
+    @PreAuthorize("hasRole('CUSTOMER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Mark one of the customer's order notifications as read", description = "Returns 204 also when the notification is already read.")
     @ApiResponse(responseCode = "400", description = "The notification id is not a number")

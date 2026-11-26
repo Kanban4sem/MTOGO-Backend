@@ -294,23 +294,6 @@ class UserControllerTest
                 .body("password", nullValue()).body("sessionVersion", nullValue());
     }
 
-    @ParameterizedTest(name = "[{index}] {3}")
-    @CsvFileSource(resources = "/testcases/user/user-controller/get-scope-access.csv", numLinesToSkip = 1)
-    @DisplayName("Role access - accounts only enter their assigned API scope")
-    void roleAccess(String role, String path, int expected, String reason)
-    {
-        Map<String, Object> request = registration();
-        String email = emailForRole(role);
-        request.put("email", email);
-        given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users").then().statusCode(201);
-        // Roles other than CUSTOMER are test fixtures, not publicly provisioned
-        // accounts.
-        jdbc.update("UPDATE users SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE email = ?", role, email);
-        String token = login(role);
-        given().port(port).auth().oauth2(token).get("/v1/users/me").then().statusCode(200).body("role", equalTo(role));
-        given().port(port).auth().oauth2(token).get(path).then().statusCode(expected);
-    }
-
     @ParameterizedTest(name = "[{index}] {2}")
     @CsvFileSource(resources = "/testcases/user/user-controller/get-profile-tokens.csv", numLinesToSkip = 1)
     @DisplayName("Token validation - rejects expired, tampered, missing-claim, malformed and disabled-user tokens")
@@ -347,6 +330,30 @@ class UserControllerTest
     void accountAccess(String method, String path, int expected, String reason)
     {
         given().port(port).when().request(method, path).then().statusCode(expected);
+    }
+
+    @ParameterizedTest(name = "[{index}] {4}")
+    @CsvFileSource(resources = "/testcases/user/user-controller/request-customer-access.csv", numLinesToSkip = 1)
+    @DisplayName("Customer access - only customers can update a profile and manage saved delivery addresses")
+    void customerAccess(String role, String method, String path, int expected, String reason)
+    {
+        Map<String, Object> request = registration();
+        String email = emailForRole(role);
+        request.put("email", email);
+        given().port(port).contentType(ContentType.JSON).body(request).post("/v1/users").then().statusCode(201);
+        // Roles other than CUSTOMER are test fixtures, not publicly provisioned
+        // accounts.
+        jdbc.update("UPDATE users SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE email = ?", role, email);
+        // A well-formed body, so the role check decides the status.
+        Map<String, Object> body = path.equals("/v1/users/me")
+                ? Map.of("firstName", "Jonas", "lastName", "Tester", "phoneNumber", "12345678")
+                : Map.of("street", "Testvej 67", "postalCode", "2900", "city", "Hellerup");
+        var call = given().port(port).auth().oauth2(login(role));
+        if (method.equals("PUT") || method.equals("POST"))
+        {
+            call = call.contentType(ContentType.JSON).body(body);
+        }
+        call.when().request(method, path).then().statusCode(expected);
     }
 
     @Test
@@ -386,6 +393,7 @@ class UserControllerTest
         {
             case "RESTAURANT" -> "restaurant@example.test";
             case "DELIVERY_AGENT" -> "agent@example.test";
+            case "ADMIN" -> "admin@example.test";
             default -> "customer@example.test";
         };
     }

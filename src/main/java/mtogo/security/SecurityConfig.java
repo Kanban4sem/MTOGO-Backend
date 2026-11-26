@@ -3,6 +3,7 @@ package mtogo.security;
 import java.util.List;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import mtogo.exceptions.GlobalExceptionHandler;
 import mtogo.feature.user.domain.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,17 +49,12 @@ public class SecurityConfig
                         .requestMatchers(HttpMethod.GET, "/v1/restaurants", "/v1/restaurants/*/menus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
                         .permitAll().requestMatchers(HttpMethod.POST, "/v1/users", "/v1/users/login").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/v1/users/me").hasRole("CUSTOMER")
-                        .requestMatchers("/v1/users/me/delivery-addresses/**").hasRole("CUSTOMER")
-                        .requestMatchers(HttpMethod.POST, "/v1/orders").hasRole("CUSTOMER")
-                        .requestMatchers("/v1/customer/**").hasRole("CUSTOMER").requestMatchers("/v1/restaurant/**")
-                        .hasRole("RESTAURANT").requestMatchers("/v1/delivery-agent/**").hasRole("DELIVERY_AGENT")
-                        .requestMatchers("/v1/admin/**").hasRole("ADMIN").anyRequest().authenticated())
+                        .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) -> problems.write(request, response,
                                 HttpStatus.UNAUTHORIZED, "Authentication is required"))
                         .accessDeniedHandler((request, response, exception) -> problems.write(request, response,
-                                HttpStatus.FORBIDDEN, "Access is denied")))
+                                HttpStatus.FORBIDDEN, GlobalExceptionHandler.ACCESS_DENIED)))
                 .addFilterBefore(new JwtAuthenticationFilter(users, problems),
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new FeatureGateFilter(gates, problems), JwtAuthenticationFilter.class).build();

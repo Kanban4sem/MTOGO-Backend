@@ -2,20 +2,27 @@ package mtogo.security;
 
 import mtogo.testsupport.SharedDatabase;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.not;
 
+import java.util.List;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @SharedDatabase
@@ -31,6 +38,9 @@ class SecurityConfigTest
     JdbcTemplate jdbc;
     @Autowired
     JwtService tokens;
+    @Autowired
+    @Qualifier("requestMappingHandlerMapping")
+    RequestMappingHandlerMapping handlerMapping;
 
     @BeforeEach
     void cleanDatabase()
@@ -75,5 +85,21 @@ class SecurityConfigTest
                 INSERT INTO users (email, password_hash, role_id, profile_id)
                 VALUES ('admin@example.test', 'not-used', (SELECT id FROM roles WHERE name = 'ADMIN'), ?) RETURNING id
                 """, Long.class, profileId);
+    }
+
+    // SecurityConfig holds no role rules, so an endpoint without its own
+    // @PreAuthorize would be open to every logged-in user. A class-level
+    // annotation doesn't count: each method declares it.
+    @Test
+    @DisplayName("Endpoint access - every endpoint method declares its access with its own @PreAuthorize")
+    void everyEndpointMethodDeclaresItsAccess()
+    {
+        List<String> undeclared = handlerMapping.getHandlerMethods().values().stream()
+                .filter(handler -> handler.getBeanType().getPackageName().startsWith("mtogo."))
+                .filter(handler -> !handler.getMethod().isAnnotationPresent(PreAuthorize.class))
+                .map(handler -> handler.getBeanType().getSimpleName() + "." + handler.getMethod().getName()).sorted()
+                .toList();
+
+        assertThat("Endpoint methods without their own @PreAuthorize", undeclared, empty());
     }
 }

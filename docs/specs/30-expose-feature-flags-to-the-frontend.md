@@ -1,16 +1,16 @@
 # Expose feature flags to the frontend
 
-**Version:** 3.0 · **Date:** 2026-11-25 · **Issue:** #30 · **Feature flag:** None
+**Version:** 3.1 · **Date:** 2026-11-26 · **Issue:** #30 · **Feature flag:** None
 
 ## Acceptance criteria
 
 Copied from #30. The issue is the source: change the issue first, then this copy.
 
-- [ ] A flag that isn't set is off
-- [ ] A flag set to `true` is on after a restart, and a flag set to `false` is off
-- [ ] An invalid flag value stops the backend at startup
-- [ ] `GET /v1/features` returns every flag with its current value, without a login
-- [ ] The response is never cached
+- [x] A flag that isn't set is off
+- [x] A flag set to `true` is on after a restart, and a flag set to `false` is off
+- [x] An invalid flag value stops the backend at startup
+- [x] `GET /v1/features` returns every flag with its current value, without a login
+- [x] The response is never cached
 
 ## Behaviour
 
@@ -116,6 +116,13 @@ This issue has no feature flag of its own, since it adds no unfinished behaviour
 - **Tests:** `bind-auth-enabled` in AppPropertiesTest is removed, since no flag is left to bind, so behaviours 1–4 have no test until the next flag brings its own binding rule set. FeatureFlagControllerTest checks that the body is `{}` with `Cache-Control: no-store`, and FeatureFlagServiceTest that the mapping returns an empty FeatureFlagsDTO.
 - **Follow-up:** None.
 
+### Spec 3.1 - 2026-11-26 - #69
+
+- **Built:** nothing. The acceptance criteria are ticked to match #30, which was delivered with its issue boxes ticked (found in #72). In #69, `GET /v1/features` also gains `@PreAuthorize("permitAll()")` on its method, as every endpoint now declares its access, while `SecurityConfig` still permits it without a login.
+- **Deviations:** None.
+- **Tests:** unchanged.
+- **Follow-up:** None.
+
 ## Changelog
 
 | Version | Date       | Change                                                                     | Issue |
@@ -128,3 +135,4 @@ This issue has no feature flag of its own, since it adds no unfinished behaviour
 | 2.0     | 2026-11-13 | Replace the login flag with the shared authentication flag                 | #35   |
 | 2.1     | 2026-11-18 | Tests use the shared test container, older notes are historical            | #48   |
 | 3.0     | 2026-11-25 | No flag is left: behaviours stated for any flag, the endpoint returns `{}` | #31   |
+| 3.1     | 2026-11-26 | Acceptance criteria ticked to match the delivered #30                      | #69   |

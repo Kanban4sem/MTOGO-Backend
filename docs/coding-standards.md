@@ -1,6 +1,6 @@
 # Coding Standards
 
-**Version:** 9.3 · **Date:** 2026-11-25
+**Version:** 9.4 · **Date:** 2026-11-26
 
 ## Overview
 
@@ -140,13 +140,13 @@ Errors are returned as [`ProblemDetail`](https://docs.spring.io/spring-framework
 
 ### Backend errors
 
-| Where                        | Does                                                                                                               |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **Presentation**             | Validates the request shape with `@Valid`. Never builds error responses.                                           |
-| **Domain**                   | Enforces business rules and throws `ApiException` subclasses.                                                      |
-| **Data**                     | Does not catch persistence exceptions. Spring translates them to `DataAccessException`.                            |
-| **`GlobalExceptionHandler`** | Extends `ResponseEntityExceptionHandler`. Handles unexpected exceptions, adds `errorId` to 5xx responses and logs. |
-| **`SecurityConfig`**         | Returns `ProblemDetail` for `401` and `403`, which are raised before a controller is reached.                      |
+| Where                        | Does                                                                                                                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Presentation**             | Validates the request shape with `@Valid`. Never builds error responses.                                                                                                |
+| **Domain**                   | Enforces business rules and throws `ApiException` subclasses.                                                                                                           |
+| **Data**                     | Does not catch persistence exceptions. Spring translates them to `DataAccessException`.                                                                                 |
+| **`GlobalExceptionHandler`** | Extends `ResponseEntityExceptionHandler`. Handles unexpected exceptions, adds `errorId` to 5xx responses and logs. Returns `403` when `@PreAuthorize` denies a request. |
+| **`SecurityConfig`**         | Returns `ProblemDetail` for `401`, and for `403` raised before a controller is reached.                                                                                 |
 
 | Exception                  | Status | Use when                                     |
 | -------------------------- | ------ | -------------------------------------------- |
@@ -385,3 +385,4 @@ The API documentation is generated from the code with springdoc-openapi. The spe
 | 9.1     | 2026-11-25 | Test JVM setup moves from the README to `docs/build-and-test.md`                         | #64      |
 | 9.2     | 2026-11-25 | `UserGateConfig` is the FeatureGate example, since the ordering flag is removed          | #44      |
 | 9.3     | 2026-11-25 | The FeatureGate example is restored from git, since the auth flag is removed             | #31      |
+| 9.4     | 2026-11-26 | `GlobalExceptionHandler` returns the `403` when `@PreAuthorize` denies a request         | #69      |

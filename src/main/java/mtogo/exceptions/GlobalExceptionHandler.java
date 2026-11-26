@@ -7,6 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -15,6 +16,10 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler
 {
+    // Shared with SecurityConfig, so a 403 looks the same whether the filter
+    // chain or method security denies the request.
+    public static final String ACCESS_DENIED = "Access is denied";
+
     private static final Logger LOG = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ApiException.class)
@@ -22,6 +27,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler
     {
         LOG.warn("Request failed with {}: {}", exception.getStatusCode().value(), exception.getBody().getDetail());
         return handleErrorResponseException(exception, exception.getHeaders(), exception.getStatusCode(), request);
+    }
+
+    // Method security throws inside the controller call, so this handler sees
+    // the denial before Spring Security's own 403 handler could.
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException exception)
+    {
+        LOG.warn("Request failed with 403: {}", exception.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ACCESS_DENIED);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

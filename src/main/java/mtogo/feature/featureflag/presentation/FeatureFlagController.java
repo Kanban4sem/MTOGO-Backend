@@ -6,6 +6,7 @@ import mtogo.feature.featureflag.domain.FeatureFlagService;
 import mtogo.feature.featureflag.presentation.dto.response.FeatureFlagsDTO;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,7 @@ public class FeatureFlagController
 
     // no-store, so a page reload always gets the values the backend started with.
     @GetMapping
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get every feature flag and whether it is on. Needs no login.")
     public ResponseEntity<FeatureFlagsDTO> getAll()
     {

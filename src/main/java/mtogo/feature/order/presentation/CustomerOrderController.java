@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/v1/customer/orders")
-@PreAuthorize("hasRole('CUSTOMER')")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Customer orders", description = "Reading orders and their current status as a customer")
 public class CustomerOrderController
@@ -30,6 +29,7 @@ public class CustomerOrderController
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     @Operation(summary = "List the authenticated customer's orders, newest first")
     public List<CustomerOrderSummaryDTO> getAll(Principal principal)
     {
@@ -37,6 +37,7 @@ public class CustomerOrderController
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     @Operation(summary = "Get one of the authenticated customer's orders with its lines and current status")
     @ApiResponse(responseCode = "400", description = "The order id is not a number")
     @ApiResponse(responseCode = "404", description = "The order is unavailable to the customer")
