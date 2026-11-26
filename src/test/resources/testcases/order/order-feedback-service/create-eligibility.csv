@@ -1,0 +1,7 @@
+order,status,hasFeedback,expected,reason
+OWN,DELIVERED,false,ACCEPT,"DT: an owner can rate a delivered order and save a comment"
+OWN,DELIVERED,true,ConflictException,"DT: a second submission cannot overwrite the saved feedback"
+OWN,PICKED_UP,false,ConflictException,"DT and BVA: feedback is unavailable at the last step before delivery"
+OWN,REJECTED,false,ConflictException,"DT and EP: an order that will never be delivered cannot get feedback"
+OTHER,DELIVERED,false,NotFoundException,"DT: even a delivered order is hidden from another customer"
+UNKNOWN,DELIVERED,false,NotFoundException,"DT and EP: feedback cannot be saved for an order that does not exist"

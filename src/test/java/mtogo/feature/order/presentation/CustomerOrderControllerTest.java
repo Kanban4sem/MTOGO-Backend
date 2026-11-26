@@ -2,11 +2,18 @@ package mtogo.feature.order.presentation;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import io.restassured.specification.RequestSpecification;
 import mtogo.feature.order.OrderTestData;
 import mtogo.feature.order.domain.OrderService;
+import mtogo.feature.order.domain.OrderStatus;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import mtogo.security.JwtService;
@@ -22,6 +29,11 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 class CustomerOrderControllerTest extends OrderTestData
 {
     private static final String ORDERS_PATH = "/v1/customer/orders";
+    private static final String FEEDBACK_PATH = ORDERS_PATH + "/{id}/feedback";
+    private static final String NOTIFICATIONS_PATH = ORDERS_PATH + "/notifications";
+    private static final Instant ORDER_TIME = Instant.parse("2026-11-25T12:00:00Z");
+    private static final Map<String, Object> VALID_FEEDBACK = Map.of("foodRating", 3, "overallRating", 4,
+            "deliveryRating", 5);
 
     @LocalServerPort
     int port;
@@ -129,6 +141,84 @@ class CustomerOrderControllerTest extends OrderTestData
         {
             response.body("detail", is("Order not found with id: " + requestedId));
         }
+    }
+
+    @ParameterizedTest(name = "[{index}] {3}")
+    @CsvFileSource(resources = "/testcases/order/customer-order-controller/create-feedback-access.csv", numLinesToSkip = 1)
+    @DisplayName("Create feedback - rejected requests return a problem and store no feedback")
+    void createFeedbackAccess(String role, String order, int expected, String reason)
+    {
+        long customerId = customer();
+        OrderStatus status = order.equals("UNDELIVERED") ? OrderStatus.PICKED_UP : OrderStatus.DELIVERED;
+        long orderId = orderForFeedback(customerId, status);
+        String requestedId = switch (order)
+        {
+            case "OTHER", "UNDELIVERED" -> Long.toString(orderId);
+            case "UNKNOWN" -> Long.toString(orderId + 1);
+            default -> order;
+        };
+        RequestSpecification actor = role.equals("OWNER") ? request(port, customerId) : requestForRole(port, role);
+
+        actor.contentType("application/json").body(VALID_FEEDBACK).post(FEEDBACK_PATH, requestedId).then()
+                .statusCode(expected).contentType("application/problem+json").body("status", is(expected));
+        assertEquals(0, feedbackCount());
+    }
+
+    @ParameterizedTest(name = "[{index}] {6}")
+    @CsvFileSource(resources = "/testcases/order/customer-order-controller/create-feedback-fields.csv", numLinesToSkip = 1, nullValues = "NULL")
+    @DisplayName("Create feedback - validates the boundaries of each rating and the optional text")
+    void createFeedbackFields(BigDecimal foodRating, BigDecimal overallRating, BigDecimal deliveryRating,
+            Integer titleLength, Integer descriptionLength, int expected, String reason)
+    {
+        long customerId = customer();
+        long orderId = orderForFeedback(customerId, OrderStatus.DELIVERED);
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("foodRating", foodRating);
+        payload.put("overallRating", overallRating);
+        payload.put("deliveryRating", deliveryRating);
+        payload.put("title", titleLength == null ? null : "t".repeat(titleLength));
+        payload.put("description", descriptionLength == null ? null : "d".repeat(descriptionLength));
+
+        var response = request(port, customerId).contentType("application/json").body(payload)
+                .post(FEEDBACK_PATH, orderId).then().statusCode(expected);
+        if (expected == 400)
+        {
+            response.contentType("application/problem+json").body("status", is(expected));
+            assertEquals(0, feedbackCount());
+        } else
+        {
+            assertEquals(1, feedbackCount());
+        }
+    }
+
+    @Test
+    @DisplayName("Give feedback - only the delivery notification offers feedback and stops after submission")
+    void deliveryNotificationOffersFeedbackUntilSubmitted()
+    {
+        long customerId = customer();
+        long orderId = orderForFeedback(customerId, OrderStatus.DELIVERED);
+
+        request(port, customerId).get(NOTIFICATIONS_PATH).then().statusCode(200)
+                .body("status", contains("DELIVERED", "READY")).body("canGiveFeedback", contains(true, false));
+
+        request(port, customerId).contentType("application/json").body(VALID_FEEDBACK).post(FEEDBACK_PATH, orderId)
+                .then().statusCode(201);
+
+        request(port, customerId).get(NOTIFICATIONS_PATH).then().statusCode(200)
+                .body("status", contains("DELIVERED", "READY")).body("canGiveFeedback", contains(false, false));
+    }
+
+    private long orderForFeedback(long customerId, OrderStatus status)
+    {
+        EnumMap<OrderStatus, Instant> statusTimes = new EnumMap<>(OrderStatus.class);
+        statusTimes.put(OrderStatus.READY, ORDER_TIME.minusSeconds(60));
+        statusTimes.put(status, ORDER_TIME);
+        return orderAt(restaurant("Lunch restaurant", true), customerId, "90.00", statusTimes);
+    }
+
+    private long feedbackCount()
+    {
+        return jdbc.queryForObject("SELECT COUNT(*) FROM order_feedback", Long.class);
     }
 
     private OrderDTO place(long customerId, long itemId)

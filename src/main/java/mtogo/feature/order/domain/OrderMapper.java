@@ -54,10 +54,10 @@ public class OrderMapper
                 order.getTotal(), toLineDTOs(order));
     }
 
-    public OrderNotificationDTO toOrderNotificationDTO(OrderStatusChange change)
+    public OrderNotificationDTO toOrderNotificationDTO(OrderStatusChange change, boolean canGiveFeedback)
     {
         return new OrderNotificationDTO(change.getId(), change.getOrder().getId(), change.getStatus(),
-                toStatusNameDTO(change.getStatus()), change.getChangedAt(), change.isRead());
+                toStatusNameDTO(change.getStatus()), change.getChangedAt(), change.isRead(), canGiveFeedback);
     }
 
     private StatusNameDTO toStatusNameDTO(OrderStatus status)

@@ -21,6 +21,10 @@ public interface OrderRepository extends JpaRepository<Order, Long>
 
     Optional<Order> findByIdAndCustomerId(Long id, Long customerId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select o from Order o where o.id = :id and o.customer.id = :customerId")
+    Optional<Order> findCustomerOrderForUpdate(@Param("id") Long id, @Param("customerId") Long customerId);
+
     List<Order> findAllByRestaurantIdOrderByIdDesc(Long restaurantId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

@@ -1,7 +1,9 @@
 package mtogo.feature.order.domain;
 
 import java.util.List;
+import java.util.Set;
 import mtogo.exceptions.NotFoundException;
+import mtogo.feature.order.data.OrderFeedbackRepository;
 import mtogo.feature.order.data.OrderStatusChangeRepository;
 import mtogo.feature.order.presentation.dto.response.OrderNotificationDTO;
 import org.springframework.stereotype.Service;
@@ -11,20 +13,26 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderNotificationService
 {
     private final OrderStatusChangeRepository statusChanges;
+    private final OrderFeedbackRepository feedback;
     private final OrderMapper mapper;
 
-    public OrderNotificationService(OrderStatusChangeRepository statusChanges, OrderMapper mapper)
+    public OrderNotificationService(OrderStatusChangeRepository statusChanges, OrderFeedbackRepository feedback,
+            OrderMapper mapper)
     {
         this.statusChanges = statusChanges;
+        this.feedback = feedback;
         this.mapper = mapper;
     }
 
     @Transactional(readOnly = true)
     public List<OrderNotificationDTO> getAll(Long customerId)
     {
+        Set<Long> ordersWithFeedback = feedback.findOrderIdsByCustomerId(customerId);
         return statusChanges
                 .findAllByOrderCustomerIdAndStatusNotOrderByChangedAtDescIdDesc(customerId, OrderStatus.PLACED).stream()
-                .map(mapper::toOrderNotificationDTO).toList();
+                .map(change -> mapper.toOrderNotificationDTO(change, change.getStatus() == OrderStatus.DELIVERED
+                        && !ordersWithFeedback.contains(change.getOrder().getId())))
+                .toList();
     }
 
     @Transactional
