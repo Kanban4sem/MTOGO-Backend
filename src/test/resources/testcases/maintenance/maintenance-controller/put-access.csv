@@ -1,0 +1,6 @@
+role,expected,reason
+ANONYMOUS,401,"Decision table: a request without a token must authenticate"
+CUSTOMER,403,"Decision table: a customer cannot pause a feature"
+RESTAURANT,403,"Decision table: a restaurant cannot pause a feature"
+DELIVERY_AGENT,403,"Decision table: a delivery agent cannot pause a feature"
+ADMIN,204,"Decision table: an admin can pause a feature"

@@ -14,6 +14,8 @@ import mtogo.feature.order.domain.OrderService;
 import mtogo.feature.order.presentation.dto.request.PlaceOrderDTO;
 import mtogo.feature.order.presentation.dto.response.OrderDTO;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +41,7 @@ public class OrderController
     @ApiResponse(responseCode = "402", description = "The payment was declined. No order was placed")
     @ApiResponse(responseCode = "404", description = "The selected saved delivery address was not found")
     @ApiResponse(responseCode = "409", description = "A menu item is unavailable, on an inactive menu or from a restaurant that does not accept orders")
+    @ApiResponse(responseCode = "503", description = "Placing orders is temporarily paused", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class)))
     public ResponseEntity<OrderDTO> place(@Valid @RequestBody PlaceOrderDTO request, Principal principal)
     {
         OrderDTO order = orders.place(Long.valueOf(principal.getName()), request);

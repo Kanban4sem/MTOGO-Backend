@@ -1,5 +1,7 @@
 # Glossary
 
+**Version:** 1.0 · **Date:** 2026-11-27
+
 The domain language of MTOGO. Code, issues, specs and documentation call each concept by the name recorded here, as described in [CONTRIBUTING](../CONTRIBUTING.md#language). Terms are added while an issue is grilled.
 
 ## Language
@@ -81,6 +83,10 @@ _Avoid_: Processing time, lead time, turnaround
 
 ### Operations
 
+**Maintenance mode**:
+A temporary pause of a released feature while MTOGO continues operating. People who try to use the paused feature see a message explaining that it is temporarily unavailable.
+_Avoid_: Feature flag, outage
+
 **Dashboard**:
 The page that shows figures about MTOGO's operations, calculated from the orders. Not the Grafana dashboard, which shows metrics.
 _Avoid_: Overview, report, statistics page
@@ -158,3 +164,9 @@ _Avoid_: Volume tier, level, discount tier
 **Default scale**:
 The sales tier from 0 DKK, which applies to every restaurant without its own scale or a higher tier.
 _Avoid_: Standard rate, base scale
+
+## Changelog
+
+| Version | Date       | Change               | Issue |
+| ------- | ---------- | -------------------- | ----- |
+| 1.0     | 2026-11-27 | Add maintenance mode | #99   |

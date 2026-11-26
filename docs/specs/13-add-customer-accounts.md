@@ -1,6 +1,6 @@
 # Add customer accounts
 
-**Version:** 3.1 · **Date:** 2026-11-25 · **Issue:** #13 · **Feature flag:** None (`authEnabled` removed in #31)
+**Version:** 4.0 · **Date:** 2026-11-27 · **Issue:** #13 · **Feature flag:** None (`authEnabled` removed in #31)
 
 ## Acceptance criteria
 
@@ -18,10 +18,10 @@ Copied from #13. The issue is the source: change the issue first, then this copy
 5. A user logs in with email and password. Unknown emails, incorrect passwords and inactive accounts return the same 401 detail.
 6. Login returns an accessToken, tokenType (Bearer), expiresAt and user profile. A token is valid for 15 minutes by default.
 7. A user can read only their own profile through the current-user endpoint.
-8. Logout requires authentication and invalidates all existing tokens for that account, across all devices. A new login works afterward.
+8. Logout requires authentication and invalidates all existing tokens for that account, across all devices. The user can log in again when login is available.
 9. Invalid, altered, expired or revoked tokens and inactive accounts cannot authenticate.
 10. Customer, restaurant and delivery-agent API scopes reject other roles with 403. Account endpoints require authentication except registration and login.
-11. Authentication always runs: the account endpoints are always available and a valid token always authenticates. The flags endpoint remains public.
+11. During an authentication pause, registration and login return `503` with a message explaining that they are temporarily unavailable. Existing tokens continue to authenticate under their normal expiration and revocation rules. See [ADR-010](../adr/010-maintenance-mode.md).
 12. The address in the profile response includes a nullable `street`. Checkout can save a complete default delivery address as described in the [order spec](15-place-and-pay-for-an-order.md).
 
 ## Implementation decisions
@@ -43,6 +43,7 @@ Copied from #13. The issue is the source: change the issue first, then this copy
 - Lifecycle: registration persists the full graph and a BCrypt hash, profile output excludes secrets, logout revokes two independent tokens and a subsequent login succeeds.
 - Signing key: the backend refuses to start without a valid `JWT_SECRET`. EP for unset, blank and non-Base64 secrets, and BVA for 31, 32 and 33 bytes; startup-secret in JwtServiceTest. The account endpoints have no flag, so the endpoint tests run with no `FEATURE_*` variable set.
 - Anonymous account access is covered by account-access. The OpenAPI test checks that login input and token output use distinct schemas.
+- Authentication pause is covered by the `post-paused-endpoint` decision table in `MaintenanceControllerTest`. It also checks that an existing token can still read the current profile.
 
 ## Out of scope
 
@@ -102,6 +103,13 @@ JWT authentication is proposed for developer review. No deployed server or exist
 - **Tests:** None needed.
 - **Follow-up:** None.
 
+### Spec 4.0 - 2026-11-27 - #99
+
+- **Built** — Maintenance mode pauses login and registration together. Each returns a `503` problem detail while paused. Valid existing tokens still authenticate.
+- **Deviations** — None.
+- **Tests** — `MaintenanceControllerTest` covers the pause and resumption. The tests are unrun.
+- **Follow-up** — [MTOGO-Frontend#69](https://github.com/Kanban4sem/MTOGO-Frontend/issues/69).
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -112,3 +120,4 @@ JWT authentication is proposed for developer review. No deployed server or exist
 | 2.0     | 2026-11-22 | Expose the saved delivery street in the profile address         | #61   |
 | 3.0     | 2026-11-25 | Remove the auth feature flag                                    | #31   |
 | 3.1     | 2026-11-25 | Acceptance criteria ticked to match the issue                   | #72   |
+| 4.0     | 2026-11-27 | Pause login and registration at runtime                         | #99   |

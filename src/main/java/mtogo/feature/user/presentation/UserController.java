@@ -15,6 +15,8 @@ import mtogo.feature.user.presentation.dto.request.LoginUserDTO;
 import mtogo.feature.user.presentation.dto.request.RegisterUserDTO;
 import mtogo.feature.user.presentation.dto.request.UpdateCustomerProfileDTO;
 import mtogo.feature.user.presentation.dto.response.UserDTO;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +39,7 @@ public class UserController
     @ApiResponse(responseCode = "201", description = "Customer created", content = @Content(schema = @Schema(implementation = UserDTO.class)))
     @ApiResponse(responseCode = "400", description = "Invalid registration fields or incomplete address")
     @ApiResponse(responseCode = "409", description = "Email already exists")
-    @ApiResponse(responseCode = "404", description = "Authentication is disabled")
+    @ApiResponse(responseCode = "503", description = "Registration is temporarily paused", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class)))
     public ResponseEntity<UserDTO> register(@Valid @RequestBody RegisterUserDTO request)
     {
         UserDTO user = users.register(request);
@@ -50,7 +52,7 @@ public class UserController
     @ApiResponse(responseCode = "200", description = "Authenticated", content = @Content(schema = @Schema(implementation = AuthenticatedUserDTO.class)))
     @ApiResponse(responseCode = "400", description = "Invalid login fields")
     @ApiResponse(responseCode = "401", description = "Invalid email or password")
-    @ApiResponse(responseCode = "404", description = "Authentication is disabled")
+    @ApiResponse(responseCode = "503", description = "Login is temporarily paused", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class)))
     public AuthenticatedUserDTO login(@Valid @RequestBody LoginUserDTO request)
     {
         return users.login(request);

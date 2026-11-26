@@ -1,0 +1,4 @@
+feature,path,otherFeature,expected,reason
+ORDERING,/v1/orders,AUTHENTICATION,503,"Decision table: pause and resume placing orders"
+AUTHENTICATION,/v1/users/login,ORDERING,503,"Decision table: pause and resume login"
+AUTHENTICATION,/v1/users,ORDERING,503,"Decision table: pause and resume registration"

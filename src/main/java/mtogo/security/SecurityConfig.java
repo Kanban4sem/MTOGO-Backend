@@ -4,6 +4,8 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import mtogo.exceptions.GlobalExceptionHandler;
+import mtogo.feature.maintenance.domain.MaintenanceService;
+import mtogo.feature.maintenance.presentation.MaintenanceFilter;
 import mtogo.feature.user.domain.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +33,7 @@ public class SecurityConfig
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, UserService users,
-            SecurityProblemHandler problems, List<FeatureGate> gates) throws Exception
+            SecurityProblemHandler problems, List<FeatureGate> gates, MaintenanceService maintenance) throws Exception
     {
         // Credentials are accepted only as explicit Bearer headers; no cookie or
         // session authentication is enabled.
@@ -45,7 +47,7 @@ public class SecurityConfig
                         // is unreachable from outside, so on the API port they answer 404 (ADR-007).
                         // An actuator endpoint exposed later needs its own decision.
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/prometheus").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/v1/features").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/features", "/v1/maintenance").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/restaurants", "/v1/restaurants/*/menus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
                         .permitAll().requestMatchers(HttpMethod.POST, "/v1/users", "/v1/users/login").permitAll()
@@ -57,6 +59,7 @@ public class SecurityConfig
                                 HttpStatus.FORBIDDEN, GlobalExceptionHandler.ACCESS_DENIED)))
                 .addFilterBefore(new JwtAuthenticationFilter(users, problems),
                         UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new FeatureGateFilter(gates, problems), JwtAuthenticationFilter.class).build();
+                .addFilterBefore(new MaintenanceFilter(maintenance, problems), JwtAuthenticationFilter.class)
+                .addFilterBefore(new FeatureGateFilter(gates, problems), MaintenanceFilter.class).build();
     }
 }

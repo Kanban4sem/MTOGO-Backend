@@ -1,6 +1,6 @@
 # Authorize each endpoint in one place
 
-**Version:** 1.0 · **Date:** 2026-11-26 · **Issue:** #69 · **Feature flag:** None
+**Version:** 2.0 · **Date:** 2026-11-27 · **Issue:** #69 · **Feature flag:** None
 
 ## Acceptance criteria
 
@@ -14,13 +14,13 @@ Copied from #69. The issue is the source: change the issue first, then this copy
 
 ## Behaviour
 
-1. Anyone can use a public endpoint without logging in: the health check, reading the feature flags, the API documentation, registration, login, the restaurant list and a restaurant's menus.
-2. An anonymous user who calls any other endpoint gets `401`.
+1. Anyone can read the health check, feature flags, maintenance status, API documentation, restaurant list and restaurant menus. Registration and login are public when available.
+2. An anonymous user who calls a protected endpoint gets `401` while the endpoint is available. A paused endpoint returns `503` before authentication under [ADR-010](../adr/010-maintenance-mode.md).
 3. An anonymous user who calls a path that has no endpoint gets `401`.
 4. A customer can use the customer endpoints: updating their own profile, managing their saved delivery addresses, placing an order, and reading their orders and order notifications.
 5. A restaurant user can list and update their restaurant's orders.
 6. A delivery agent can list and update the orders they deliver.
-7. An admin can read the management dashboard.
+7. An admin can read the management dashboard and set the pause state of a released feature.
 8. Any logged-in user can read their own profile and log out.
 9. A logged-in user who sends a well-formed request to an endpoint their role doesn't allow gets `403` with a problem detail, never `500`.
 10. A logged-in user without the role gets the request-shape error before the role check (see Further notes):
@@ -97,8 +97,16 @@ While the URL matchers existed, method security never denied a request, because 
 - **Tests:** the guard test `SecurityConfigTest.everyEndpointMethodDeclaresItsAccess` reads every `mtogo` handler from `RequestMappingHandlerMapping` and lists the methods without their own `@PreAuthorize`. Before the controller changes it named the five expected methods. Without the mapping, the 21 wrong-role rows in the controllers' `*-access.csv` files returned `500`. They now return `403`. `security-config/request-endpoint-access.csv` is unchanged. `user-controller/request-customer-access.csv` adds the restaurant, delivery agent and admin `403` rows and the customer rows for `PUT /v1/users/me` and the five saved delivery address methods.
 - **Follow-up:** None
 
+### Spec 2.0 - 2026-11-27 - #99
+
+- **Built** — `GET /v1/maintenance` is public. Only admins can call `PUT /v1/maintenance/{feature}`. The maintenance filter returns `503` for the paused endpoints defined in ADR-010.
+- **Deviations** — None.
+- **Tests** — `MaintenanceControllerTest` covers public reads, role-based writes and paused endpoint responses. The tests are unrun.
+- **Follow-up** — [MTOGO-Frontend#69](https://github.com/Kanban4sem/MTOGO-Frontend/issues/69).
+
 ## Changelog
 
-| Version | Date       | Change        | Issue |
-| ------- | ---------- | ------------- | ----- |
-| 1.0     | 2026-11-26 | First version | #69   |
+| Version | Date       | Change                    | Issue |
+| ------- | ---------- | ------------------------- | ----- |
+| 1.0     | 2026-11-26 | First version             | #69   |
+| 2.0     | 2026-11-27 | Define maintenance access | #99   |

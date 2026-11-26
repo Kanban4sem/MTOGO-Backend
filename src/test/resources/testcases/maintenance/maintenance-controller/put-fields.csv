@@ -1,0 +1,4 @@
+feature,body,expected,reason
+UNKNOWN,"{""paused"":true}",400,"EP: an unsupported feature cannot be paused"
+ORDERING,{},400,"EP: the pause state must be present"
+AUTHENTICATION,"{""paused"":null}",400,"EP: the pause state must be a boolean"

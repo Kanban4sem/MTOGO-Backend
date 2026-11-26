@@ -1,6 +1,6 @@
 # Place and pay for an order
 
-**Version:** 5.1 · **Date:** 2026-11-25 · **Issue:** #15 · **Feature flag:** None
+**Version:** 6.0 · **Date:** 2026-11-27 · **Issue:** #15 · **Feature flag:** None
 
 ## Acceptance criteria
 
@@ -50,7 +50,7 @@ From #44:
 13. An order moves only along the lifecycle in the [MVP](../minimum-viable-product.md#order-status-lifecycle): Placed to Accepted or Rejected, Accepted to Ready, Ready to PickedUp and PickedUp to Delivered. Any other move is refused. Each move records when the new order status was set.
 14. Only customers can place orders. Anonymous users, restaurants and delivery agents cannot.
 15. A menu item that has been ordered cannot be deleted. It is taken off the menu by making it unavailable.
-16. Ordering is always available. No feature flag hides the order endpoints.
+16. During an ordering pause, placing a new order returns `503` with a message explaining that it is temporarily unavailable. Customers can read existing orders, and restaurant managers and delivery agents can continue handling them. See [ADR-010](../adr/010-maintenance-mode.md).
 17. A customer can save a newly entered delivery address as their profile default after successful payment. A one-time address or a declined payment leaves the profile as it was.
 18. A customer can reuse their complete default without entering any address fields. A profile without a street, including a registration or seeded address with only a postal area, requires the customer to enter a delivery address.
 19. Each order keeps its own delivery address when the customer changes the profile default.
@@ -72,7 +72,7 @@ From #44:
 - **API:** `POST /v1/orders` with PlaceOrderDTO: `lines` (array of `menuItemId`, `quantity`), `deliveryAddress` (`street`, `postalCode`, `city`) and `paymentToken`. Bean Validation: 1–20 lines, a positive menu item ID, quantity 1–20, street and city not blank and at most 100 characters, postal code matching exactly four digits, payment token not blank. It returns `201` with OrderDTO: `id`, `restaurantId`, `status`, `channel`, `placedAt`, `total`, `deliveryAddress` (`street`, `postalCode`, `city`, `country`) and `lines` (`menuItemId`, `name`, `unitPrice`, `quantity`, `subtotal`). The `Location` header contains the relative URL `/v1/customer/orders/{id}` for the order.
 - **Address selection:** `deliveryAddress` is required for manual entry. Send `useDefaultAddress: true` and omit `deliveryAddress` to reuse the saved address. Send `saveAsDefault: true` with a newly entered address to save it. Both flags default to false. Invalid combinations and a missing complete default return `400`.
 - **Errors:** ProblemDetail through the existing GlobalExceptionHandler. `400` for invalid input, unknown or repeated menu items and menu items from more than one restaurant. `401` without a valid token. `402` for a declined payment, from a new PaymentRequiredException with the detail "The payment was declined". `403` for users who are not customers. `409` for an unavailable item, an inactive menu or a restaurant that does not accept orders.
-- **Access:** SecurityConfig restricts `POST /v1/orders` to CUSTOMER users, and the controller declares the same with `@PreAuthorize`. The order's customer is the authenticated user, never a request field.
+- The controller restricts `POST /v1/orders` to customers with `@PreAuthorize`. The order belongs to the authenticated customer.
 - **Schema:** one Flyway migration adds a nullable `street` column to addresses (existing profile addresses have none) and creates orders, order lines and order status changes. Orders reference the customer, the restaurant and their own delivery address row, and store the order total as NUMERIC(10, 2), the channel and the current status. Order lines reference the order and the menu item with a restricting foreign key, and copy the name and the unit price as NUMERIC(10, 2), with a check that quantity is 1–20 and the unit price is not negative. Order status changes reference the order and store the status and when it was set. The delivery address stores the country as `Denmark`.
 - **Flag:** none. #15 released ordering behind a temporary `orderingEnabled` flag, and #44 removed it as described in the [coding standards](../coding-standards.md#feature-flags). `GET /v1/features` no longer reports it, and the order endpoints have no FeatureGate. Placing an order requires a customer token, and authentication has no flag since #31.
 - **Default address:** checkout stores the default in the existing profile address and stores the delivery address separately on each order. Saving the default and placing the order share one transaction. #61 adds no feature flag.
@@ -88,6 +88,7 @@ From #44:
 
 ## Testing decisions
 
+- Ordering pause is covered by the `post-paused-endpoint` decision table in `MaintenanceControllerTest`, which also checks that a restaurant manager and a delivery agent can complete an existing order during the pause.
 - **OrderTest** (plain JUnit): `moveTo` as a decision table over the current and the requested order status; `move-to-transitions`. The six allowed moves succeed and record a status change; the rest are refused.
 - **MockPaymentProviderTest** (plain JUnit): `charge` with EP over the payment token, `decline`, blank and any other; `charge-token`.
 - **OrderServiceTest** (`@SpringBootTest`, `@SharedDatabase`): `place` with EP over the menu items: unknown, repeated, unavailable, inactive menu, restaurant not accepting orders, items from two restaurants and a valid order; `place-items`. `place` with EP over the payment outcome, where a declined payment leaves no order, order line or address; `place-payment`. Ordinary `@Test` methods cover the copied name and unit price, the order total over several order lines, the channel WEBSITE, the Placed entry and its time, the owning customer and restaurant, and that a later menu price change leaves the order unchanged.
@@ -176,6 +177,13 @@ Issue #18 exposed a Danish `statusName` alongside the status code on customer or
 - **Tests:** FeatureFlagServiceTest and FeatureFlagControllerTest check that no flag is reported. The order endpoint tests no longer set `FEATURE_AUTH_ENABLED` through `@AuthenticatedEndpointTest`. The JWT signing key comes from the test `application.properties`. FeatureGateTest keeps `/v1/users` as sample data, though no gate is declared for it.
 - **Follow-up:** None. Removing both flags from each environment's `.env` is tracked in spec 13's note for #31.
 
+### Spec 6.0 - 2026-11-27 - #99
+
+- **Built** — Maintenance mode can pause new orders at runtime. Placing an order while paused returns a `503` problem detail. Existing orders continue through the lifecycle.
+- **Deviations** — None.
+- **Tests** — `MaintenanceControllerTest` covers the pause, resumption and completion of an existing order. The tests are unrun.
+- **Follow-up** — [MTOGO-Frontend#69](https://github.com/Kanban4sem/MTOGO-Frontend/issues/69).
+
 ## Changelog
 
 | Version | Date       | Change                                                          | Issue |
@@ -188,3 +196,4 @@ Issue #18 exposed a Danish `statusName` alongside the status code on customer or
 | 4.0     | 2026-11-25 | Return the order URL in the `Location` header                   | #46   |
 | 5.0     | 2026-11-25 | Remove the ordering feature flag                                | #44   |
 | 5.1     | 2026-11-25 | Authentication has no flag                                      | #31   |
+| 6.0     | 2026-11-27 | Pause new orders at runtime                                     | #99   |
