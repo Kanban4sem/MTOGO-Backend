@@ -82,7 +82,7 @@ _Avoid_: Processing time, lead time, turnaround
 ### Operations
 
 **Dashboard**:
-The page that shows figures about MTOGO's operations, calculated from the orders.
+The page that shows figures about MTOGO's operations, calculated from the orders. Not the Grafana dashboard, which shows metrics.
 _Avoid_: Overview, report, statistics page
 
 **Figure**:
@@ -92,6 +92,14 @@ _Avoid_: KPI, statistic, key figure
 **Metric**:
 A measurement the backend exposes to Prometheus to monitor MTOGO while it runs, such as the number of orders placed or how long requests take.
 _Avoid_: Figure, KPI, statistic
+
+**Availability**:
+The share of time in a period during which an environment's backend is running and answers. It is measured as the share of Prometheus's successful scrapes of the backend.
+_Avoid_: Uptime, reliability
+
+**Rejection share**:
+The share of the orders placed in a period that the restaurant rejected.
+_Avoid_: Rejection rate, rejected-order share, decline rate
 
 **Orders per 24 hours**:
 The average number of orders placed per 24 hours over a recent period. Rejected orders count, because they were placed.

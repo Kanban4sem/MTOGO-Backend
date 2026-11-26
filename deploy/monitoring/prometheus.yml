@@ -1,0 +1,26 @@
+# What Prometheus collects (ADR-008). Check it before a restart with:
+# docker compose exec prometheus promtool check config /etc/prometheus/prometheus.yml
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+
+scrape_configs:
+  # The backends' management port, reachable only on the web network (ADR-007)
+  - job_name: backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [stage-backend:8081]
+        labels:
+          env: stage
+      - targets: [prod-backend:8081]
+        labels:
+          env: prod
+
+  # cAdvisor and Node Exporter describe the droplet that stage and prod share, so they have no env
+  - job_name: cadvisor
+    static_configs:
+      - targets: [cadvisor:8080]
+
+  - job_name: node
+    static_configs:
+      - targets: [node-exporter:9100]

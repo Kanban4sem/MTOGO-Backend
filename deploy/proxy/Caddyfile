@@ -17,3 +17,8 @@ mtogo.saldic.dev {
 		reverse_proxy prod-frontend:80
 	}
 }
+
+# Monitoring (ADR-008). Grafana asks for a login itself
+grafana.mtogo.saldic.dev {
+	reverse_proxy monitoring-grafana:3000
+}

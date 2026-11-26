@@ -1,0 +1,10 @@
+# The MTOGO dashboard comes only from the JSON in the repository. A change made in Grafana is never saved.
+apiVersion: 1
+
+providers:
+  - name: mtogo
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards

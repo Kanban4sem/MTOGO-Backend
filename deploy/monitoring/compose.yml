@@ -1,0 +1,95 @@
+# Monitoring for stage and prod (ADR-008), in /opt/mtogo/monitoring on the droplet.
+# Set up and updated by hand, as described in docs/deployment.md. No container publishes a port:
+# Grafana is reached only through Caddy, and the rest only on the Docker networks.
+services:
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    restart: unless-stopped
+    mem_limit: 256m
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      # A safety limit: the oldest blocks are deleted first if the data ever reaches it
+      - --storage.tsdb.retention.size=1GB
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    # On web to reach stage-backend and prod-backend, on default to reach cAdvisor and Node Exporter
+    networks: [default, web]
+
+  grafana:
+    # Grafana 13 is OOM-killed within 192 MB, so this stays on the 12.4 line while it gets fixes
+    image: grafana/grafana:12.4.16
+    restart: unless-stopped
+    mem_limit: 192m
+    env_file: grafana.env
+    environment:
+      # Makes Go collect garbage before the container reaches its limit
+      GOMEMLIMIT: 160MiB
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_SERVER_ROOT_URL: https://grafana.mtogo.saldic.dev
+      GF_SECURITY_COOKIE_SECURE: "true"
+      # Every team member logs in with their own Viewer account, created by the admin
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_ORG_CREATE: "false"
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Viewer
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      # Holds the accounts. Deleting the volume deletes them
+      - grafana-data:/var/lib/grafana
+    networks:
+      default:
+      web:
+        aliases: [monitoring-grafana]
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:0.61.1
+    restart: unless-stopped
+    mem_limit: 128m
+    command:
+      - --docker_only
+      - --housekeeping_interval=30s
+      # Only the groups the Grafana dashboard uses
+      - --enable_metrics=cpu,memory
+      # Labels and environment variables of containers never become metric labels
+      - --store_container_labels=false
+    # Access to these sockets is effectively root on the droplet, and :ro doesn't limit their APIs (ADR-008).
+    # Docker on the droplet uses the containerd image store, and then cAdvisor names containers only
+    # through containerd (google/cadvisor#3772).
+    # /var/lib/docker is not mounted, since it holds every container's configuration, secrets included.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
+      - /sys:/sys:ro
+      - /:/rootfs:ro
+    networks: [default]
+
+  node-exporter:
+    image: prom/node-exporter:v1.13.1
+    restart: unless-stopped
+    mem_limit: 32m
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      # Without host networking these would describe the container's own network, not the droplet's
+      - --no-collector.netdev
+      - --no-collector.netstat
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks: [default]
+
+networks:
+  web:
+    external: true
+
+volumes:
+  prometheus-data:
+  grafana-data:

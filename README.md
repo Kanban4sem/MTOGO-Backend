@@ -40,7 +40,7 @@ We work with Kanban and trunk-based development using [TakT](https://github.com/
 - [Getting started](docs/getting-started.md): set up your machine and the dev container
 - [Local development](docs/local-development.md): configuration, running the backend, feature flags, seeded users, pgAdmin and the Docker image
 - [Build and test](docs/build-and-test.md): running the tests, test JVMs and the SonarQube Cloud analysis
-- [Deployment](docs/deployment.md): stage, releasing to prod and rolling back
+- [Deployment](docs/deployment.md): stage, releasing to prod, rolling back and monitoring
 
 ## How we work
 
