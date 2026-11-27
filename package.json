@@ -1,0 +1,7 @@
+{
+  "name": "mtogo-backend",
+  "private": true,
+  "devDependencies": {
+    "@cspell/dict-da-dk": "4.1.3"
+  }
+}

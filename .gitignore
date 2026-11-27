@@ -10,6 +10,7 @@ Thumbs.db
 # === Maven / build output ===
 # NOTE: the Maven wrapper (mvnw, .mvn/wrapper/) MUST be committed
 target/
+node_modules/
 
 # === SonarQube scanner (local analysis) ===
 .sonar/

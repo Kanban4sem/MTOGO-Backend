@@ -37,6 +37,8 @@ Restart your terminal and VS Code afterwards.
 
    Both agents are installed by default. If you don't use one, set `MTOGO_SKIP_CLAUDE=1` or `MTOGO_SKIP_CODEX=1` as an environment variable on your own machine, restart VS Code and rebuild the dev container. The container then skips that command-line install. The VS Code extensions stay installed. Disable them for yourself in VS Code.
 
+Before VS Code connects, the dev container installs the linting tools and puts the Danish cSpell dictionary in the repository's `node_modules`. GitHub Actions installs the same dictionary from `package-lock.json`.
+
 All commands in the documentation are run in the terminal **inside** the dev container.
 
 ## 4. Check that everything works

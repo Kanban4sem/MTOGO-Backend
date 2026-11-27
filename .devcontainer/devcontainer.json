@@ -20,7 +20,9 @@
     "source=mtogo-claude,target=/home/vscode/.claude,type=volume",
     "source=mtogo-codex,target=/home/vscode/.codex,type=volume"
   ],
-  "postCreateCommand": "gh ext install devx-cafe/gh-insitu && gh insitu run post-create install-agents",
+  "onCreateCommand": "gh ext install devx-cafe/gh-insitu && gh insitu run on-create",
+  "waitFor": "onCreateCommand",
+  "postCreateCommand": ["gh", "insitu", "run", "post-create", "install-agents"],
   "postStartCommand": "bash .devcontainer/start-pgadmin.sh",
   "forwardPorts": [8080],
   "portsAttributes": {
