@@ -16,8 +16,8 @@ class UserTest
 {
     @ParameterizedTest(name = "[{index}] {3}")
     @CsvFileSource(resources = "/testcases/user/user/assign-role-restaurant.csv", numLinesToSkip = 1)
-    @DisplayName("Assign role - only a restaurant user has a restaurant, and always has one")
-    void assignRoleLinksOnlyRestaurantUsersToARestaurant(RoleName roleName, boolean hasRestaurant, String expected,
+    @DisplayName("Assign role - only a restaurant manager has a restaurant, and always has one")
+    void assignRoleLinksOnlyRestaurantManagersToARestaurant(RoleName roleName, boolean hasRestaurant, String expected,
             String reason)
     {
         User user = new User();

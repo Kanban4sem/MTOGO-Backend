@@ -42,12 +42,12 @@ class DeliveryAgentOrderControllerTest extends OrderTestData
     void deliverReadyOrder()
     {
         long restaurantId = restaurant("Bakery", true);
-        long restaurantUser = restaurantUser("restaurant@example.test", restaurantId);
+        long restaurantManager = restaurantManager("restaurant@example.test", restaurantId);
         long agent = deliveryAgent("first");
         long orderId = place(restaurantId);
-        orders.updateRestaurantOrderStatus(restaurantUser, orderId,
+        orders.updateRestaurantOrderStatus(restaurantManager, orderId,
                 new UpdateRestaurantOrderStatusDTO(OrderStatus.ACCEPTED));
-        orders.updateRestaurantOrderStatus(restaurantUser, orderId,
+        orders.updateRestaurantOrderStatus(restaurantManager, orderId,
                 new UpdateRestaurantOrderStatusDTO(OrderStatus.READY));
 
         request(agent).get(PATH).then().statusCode(200).body("id", contains((int) orderId))

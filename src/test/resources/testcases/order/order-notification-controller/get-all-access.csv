@@ -1,4 +1,4 @@
 role,expected,reason
 ANONYMOUS,401,"DT: a token is required"
-RESTAURANT,403,"DT: restaurant users cannot list notifications"
+RESTAURANT,403,"DT: restaurant managers cannot list notifications"
 DELIVERY_AGENT,403,"DT: agents cannot list notifications"

@@ -1,8 +1,8 @@
 roleName,hasRestaurant,expected,reason
 CUSTOMER,false,ACCEPT,"EP: a customer has no restaurant"
 CUSTOMER,true,BadRequestException,"EP: a customer cannot have a restaurant"
-RESTAURANT,true,ACCEPT,"EP: a restaurant user handles orders for one restaurant"
-RESTAURANT,false,BadRequestException,"EP: a restaurant user cannot exist without a restaurant"
+RESTAURANT,true,ACCEPT,"EP: a restaurant manager handles orders for one restaurant"
+RESTAURANT,false,BadRequestException,"EP: a restaurant manager cannot exist without a restaurant"
 DELIVERY_AGENT,false,ACCEPT,"EP: a delivery agent has no restaurant"
 DELIVERY_AGENT,true,BadRequestException,"EP: a delivery agent cannot have a restaurant"
 ADMIN,false,ACCEPT,"EP: an admin has no restaurant"

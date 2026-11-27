@@ -62,7 +62,7 @@ class AdminDashboardControllerTest extends OrderTestData
         Long userId = switch (role)
         {
             case ANONYMOUS -> null;
-            case RESTAURANT -> restaurantUser("requester@example.test", restaurant("Bakery", true));
+            case RESTAURANT -> restaurantManager("requester@example.test", restaurant("Bakery", true));
             default -> user("requester@example.test", role.name());
         };
         if (userId != null)

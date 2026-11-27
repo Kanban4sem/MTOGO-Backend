@@ -220,7 +220,8 @@ public class OrderService
         return clock.instant().truncatedTo(ChronoUnit.MICROS);
     }
 
-    // Every restaurant user has a restaurant: the role cannot be assigned without
+    // Every restaurant manager has a restaurant: the role cannot be assigned
+    // without
     // one.
     private Long getRestaurantId(Long userId)
     {

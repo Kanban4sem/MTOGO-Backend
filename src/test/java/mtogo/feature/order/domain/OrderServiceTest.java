@@ -313,7 +313,7 @@ class OrderServiceTest extends CommissionTestData
             OrderStatus requestedStatus, String expected, String reason)
     {
         long restaurantId = restaurant("Requested", true);
-        long requesterId = restaurantUser("restaurant@example.test",
+        long requesterId = restaurantManager("restaurant@example.test",
                 order.equals("OTHER") ? restaurant("Other", true) : restaurantId);
         long placedId = order(customer(), restaurantId);
         setOrder(placedId, currentStatus.name(), null);
@@ -439,7 +439,7 @@ class OrderServiceTest extends CommissionTestData
     void onlyDeliveryStoresAmounts(OrderStatus currentStatus, OrderStatus nextStatus, Scale expected, String reason)
     {
         long restaurantId = restaurant("Requested", true);
-        long restaurantUserId = restaurantUser("restaurant@example.test", restaurantId);
+        long restaurantManagerId = restaurantManager("restaurant@example.test", restaurantId);
         long agentId = deliveryAgent("me");
         long orderId = placeOrder(restaurantId, customer(), "125.00");
         if (currentStatus != null)
@@ -451,7 +451,7 @@ class OrderServiceTest extends CommissionTestData
                         new UpdateDeliveryAgentOrderDTO(DeliveryAction.PICK_UP));
                 case DELIVERED -> orders.updateDeliveryAgentOrder(agentId, orderId,
                         new UpdateDeliveryAgentOrderDTO(DeliveryAction.DELIVER));
-                default -> orders.updateRestaurantOrderStatus(restaurantUserId, orderId,
+                default -> orders.updateRestaurantOrderStatus(restaurantManagerId, orderId,
                         new UpdateRestaurantOrderStatusDTO(nextStatus));
             }
         }

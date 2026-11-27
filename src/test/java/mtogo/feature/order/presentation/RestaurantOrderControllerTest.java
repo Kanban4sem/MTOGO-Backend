@@ -38,7 +38,7 @@ class RestaurantOrderControllerTest extends OrderTestData
     {
         long customerId = customer();
         long restaurantId = restaurant("Kebab restaurant", true);
-        long requesterId = restaurantUser(restaurantId);
+        long requesterId = restaurantManager(restaurantId);
         long otherRestaurantId = restaurant("Bakery", true);
         long itemId = item(menu(restaurantId, "Lunch", true), "Kebab", "89.95");
         long firstOrderId = place(customerId, itemId);
@@ -54,13 +54,13 @@ class RestaurantOrderControllerTest extends OrderTestData
 
     @ParameterizedTest(name = "[{index}] {2}")
     @CsvFileSource(resources = "/testcases/order/restaurant-order-controller/get-all-access.csv", numLinesToSkip = 1)
-    @DisplayName("Get all - only restaurant accounts can list their orders")
+    @DisplayName("Get all - only restaurant managers can list their orders")
     void getAllAccess(String role, int expected, String reason)
     {
         RequestSpecification request = switch (role)
         {
             case "ANONYMOUS" -> given().port(port);
-            case "RESTAURANT" -> request(port, restaurantUser(restaurant("Empty restaurant", true)));
+            case "RESTAURANT" -> request(port, restaurantManager(restaurant("Empty restaurant", true)));
             default -> request(port, user("requester@example.test", role));
         };
 
@@ -80,7 +80,7 @@ class RestaurantOrderControllerTest extends OrderTestData
     void updateStatusFields(String status, int expected, String reason)
     {
         long restaurantId = restaurant("Kebab restaurant", true);
-        long requesterId = restaurantUser(restaurantId);
+        long requesterId = restaurantManager(restaurantId);
         long orderId = place(customer(), item(menu(restaurantId, "Lunch", true), "Kebab", true));
         String body = switch (status)
         {
@@ -117,7 +117,7 @@ class RestaurantOrderControllerTest extends OrderTestData
         {
             case "ANONYMOUS" -> given().port(port);
             case "RESTAURANT" ->
-                request(port, restaurantUser(order.equals("OTHER") ? restaurant("Bakery", true) : restaurantId));
+                request(port, restaurantManager(order.equals("OTHER") ? restaurant("Bakery", true) : restaurantId));
             default -> request(port, user("requester@example.test", role));
         };
         String requestedId = switch (order)
@@ -133,9 +133,9 @@ class RestaurantOrderControllerTest extends OrderTestData
         assertEquals(List.of("PLACED"), orderHistory(orderId));
     }
 
-    private long restaurantUser(long restaurantId)
+    private long restaurantManager(long restaurantId)
     {
-        return restaurantUser("restaurant@example.test", restaurantId);
+        return restaurantManager("restaurant@example.test", restaurantId);
     }
 
     private long place(long customerId, long itemId)

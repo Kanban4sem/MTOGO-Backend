@@ -52,12 +52,12 @@ public class User
     // in another table, so every user gets both here.
     public void assignRole(Role role, Restaurant restaurant)
     {
-        boolean isRestaurantUser = role.getName() == RoleName.RESTAURANT;
-        if (isRestaurantUser != (restaurant != null))
+        boolean isRestaurantManager = role.getName() == RoleName.RESTAURANT;
+        if (isRestaurantManager != (restaurant != null))
         {
-            throw new BadRequestException(isRestaurantUser
-                    ? "A restaurant user must have a restaurant"
-                    : "Only a restaurant user can have a restaurant");
+            throw new BadRequestException(isRestaurantManager
+                    ? "A restaurant manager must have a restaurant"
+                    : "Only a restaurant manager can have a restaurant");
         }
         this.role = role;
         this.restaurant = restaurant;

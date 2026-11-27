@@ -72,7 +72,7 @@ class OrderMetricsTest extends OrderTestData
     void updateRestaurantOrderStatusCountsRejectedOrders(OrderStatus status, int expected, String reason)
     {
         long restaurantId = restaurant("Requested", true);
-        long requesterId = restaurantUser("restaurant@example.test", restaurantId);
+        long requesterId = restaurantManager("restaurant@example.test", restaurantId);
         long orderId = order(customer(), restaurantId);
         double before = rejectedOrders();
 
@@ -86,7 +86,7 @@ class OrderMetricsTest extends OrderTestData
     void updateRestaurantOrderStatusDoesNotCountRolledBackRejection()
     {
         long restaurantId = restaurant("Requested", true);
-        long requesterId = restaurantUser("restaurant@example.test", restaurantId);
+        long requesterId = restaurantManager("restaurant@example.test", restaurantId);
         long orderId = order(customer(), restaurantId);
         double before = rejectedOrders();
 

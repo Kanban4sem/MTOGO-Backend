@@ -6,7 +6,7 @@ This repository holds the backend: the REST API behind the MTOGO website. The [M
 
 ## What the backend does
 
-- **Accounts:** customers register, log in and manage their details and delivery addresses. Restaurant users and delivery agents sign in with a role.
+- **Accounts:** customers register, log in and manage their details and delivery addresses. Restaurant managers and delivery agents sign in with a role.
 - **Restaurants and menus:** the restaurants that accept orders and their menu items and prices.
 - **Orders and payment:** customers place and pay for orders. Payment goes through a mocked payment service.
 - **Order handling:** restaurants accept or reject new orders and mark them as ready. Delivery agents take ready orders, pick them up and deliver them.

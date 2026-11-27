@@ -1,6 +1,6 @@
 role,expected,reason
 ANONYMOUS,401,No login
 CUSTOMER,403,Customers cannot view bonuses
-RESTAURANT,403,Restaurant users cannot view bonuses
+RESTAURANT,403,Restaurant managers cannot view bonuses
 ADMIN,403,Admins cannot use the agent endpoint
 DELIVERY_AGENT,200,Agents can view their own bonus

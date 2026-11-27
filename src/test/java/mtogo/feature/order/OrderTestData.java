@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 public abstract class OrderTestData extends RestaurantTestData
 {
-    // Overrides the restaurant cleanup, because order lines and restaurant users
+    // Overrides the restaurant cleanup, because order lines and restaurant managers
     // must be deleted before the menu items and restaurants they reference.
     @BeforeEach
     @Override
@@ -46,7 +46,7 @@ public abstract class OrderTestData extends RestaurantTestData
         return user("customer@example.test", "CUSTOMER");
     }
 
-    protected long restaurantUser(String email, long restaurantId)
+    protected long restaurantManager(String email, long restaurantId)
     {
         long id = user(email, "RESTAURANT");
         jdbc.update("UPDATE users SET restaurant_id = ? WHERE id = ?", restaurantId, id);

@@ -26,8 +26,8 @@ public enum OrderStatus
     }
 
     /**
-     * Whether a restaurant user sets this status. The other statuses are set when
-     * an order is placed or by a delivery agent.
+     * Whether a restaurant manager sets this status. The other statuses are set
+     * when an order is placed or by a delivery agent.
      */
     public boolean isSetByRestaurant()
     {

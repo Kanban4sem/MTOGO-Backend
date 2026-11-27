@@ -1,7 +1,7 @@
 role,order,expected,reason
 ANONYMOUS,EXISTING,401,"DT: authentication is required"
 CUSTOMER,EXISTING,403,"DT: a customer cannot change a delivery"
-RESTAURANT,EXISTING,403,"DT: a restaurant user cannot change a delivery"
+RESTAURANT,EXISTING,403,"DT: a restaurant manager cannot change a delivery"
 DELIVERY_AGENT,EXISTING,409,"DT: a delivery agent reaches an existing order, but a placed order is not ready to take"
 DELIVERY_AGENT,UNKNOWN,404,"DT, EP: an order that does not exist cannot be taken"
 DELIVERY_AGENT,not-a-number,400,"EP: a non-numeric order ID is invalid"

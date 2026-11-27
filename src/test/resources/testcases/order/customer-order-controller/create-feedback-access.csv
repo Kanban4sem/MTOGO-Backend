@@ -1,6 +1,6 @@
 role,order,expected,reason
 ANONYMOUS,OTHER,401,"DT: submitting feedback requires authentication"
-RESTAURANT,OTHER,403,"DT: restaurant users cannot submit customer feedback"
+RESTAURANT,OTHER,403,"DT: restaurant managers cannot submit customer feedback"
 DELIVERY_AGENT,OTHER,403,"DT: delivery agents cannot rate their own delivery as a customer"
 ADMIN,OTHER,403,"DT: admins cannot submit customer feedback"
 CUSTOMER,OTHER,404,"DT: another customer's delivered order is hidden"

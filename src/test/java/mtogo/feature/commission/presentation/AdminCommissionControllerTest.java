@@ -201,7 +201,7 @@ class AdminCommissionControllerTest extends CommissionTestData
         Long userId = switch (role)
         {
             case ANONYMOUS -> null;
-            case RESTAURANT -> restaurantUser("requester@example.test", restaurant("Bakery", true));
+            case RESTAURANT -> restaurantManager("requester@example.test", restaurant("Bakery", true));
             default -> user("requester@example.test", role.name());
         };
         return userId == null ? requester : requester.auth().oauth2(tokens.issue(userId, 0).value());

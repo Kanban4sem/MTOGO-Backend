@@ -54,7 +54,7 @@ class DeliveryBonusControllerTest extends OrderTestData
         RequestSpecification requester = switch (role)
         {
             case "ANONYMOUS" -> request();
-            case "RESTAURANT" -> asUser(restaurantUser("owner@example.test", restaurant("Bistro", true)));
+            case "RESTAURANT" -> asUser(restaurantManager("owner@example.test", restaurant("Bistro", true)));
             default -> asUser(user("requester@example.test", role));
         };
 

@@ -106,7 +106,7 @@ class MaintenanceControllerTest extends OrderTestData
     void completeExistingOrder()
     {
         long restaurantId = restaurant("Bakery", true);
-        long restaurantUser = restaurantUser("restaurant@example.test", restaurantId);
+        long restaurantManager = restaurantManager("restaurant@example.test", restaurantId);
         long deliveryAgent = deliveryAgent("agent");
         long itemId = item(menu(restaurantId, "Lunch", true), "Sandwich", true);
         int orderId = request(customer()).contentType(ContentType.JSON).body(placeOrder(List.of(line(itemId, 1))))
@@ -114,8 +114,8 @@ class MaintenanceControllerTest extends OrderTestData
 
         setPause(user("admin@example.test", "ADMIN"), "ORDERING", true);
 
-        updateOrder(restaurantUser, "/v1/restaurant/orders/{id}", orderId, "status", "ACCEPTED", "ACCEPTED");
-        updateOrder(restaurantUser, "/v1/restaurant/orders/{id}", orderId, "status", "READY", "READY");
+        updateOrder(restaurantManager, "/v1/restaurant/orders/{id}", orderId, "status", "ACCEPTED", "ACCEPTED");
+        updateOrder(restaurantManager, "/v1/restaurant/orders/{id}", orderId, "status", "READY", "READY");
         updateOrder(deliveryAgent, "/v1/delivery-agent/orders/{id}", orderId, "action", "TAKE", "READY");
         updateOrder(deliveryAgent, "/v1/delivery-agent/orders/{id}", orderId, "action", "PICK_UP", "PICKED_UP");
         updateOrder(deliveryAgent, "/v1/delivery-agent/orders/{id}", orderId, "action", "DELIVER", "DELIVERED");

@@ -49,27 +49,27 @@ class OrderNotificationControllerTest extends OrderTestData
         long customerId = customer();
         long otherCustomerId = user("other@example.test", "CUSTOMER");
         long restaurantId = restaurant("Lunch restaurant", true);
-        long restaurantUserId = restaurantUser("lunch@example.test", restaurantId);
+        long restaurantManagerId = restaurantManager("lunch@example.test", restaurantId);
         long itemId = item(menu(restaurantId, "Lunch", true), "Kebab", true);
         long orderId = place(customerId, itemId);
         long otherOrderId = place(otherCustomerId, itemId);
 
         request(customerId).get(NOTIFICATIONS).then().statusCode(expected).body("size()", is(0));
-        changeStatus(restaurantUserId, otherOrderId, OrderStatus.ACCEPTED);
+        changeStatus(restaurantManagerId, otherOrderId, OrderStatus.ACCEPTED);
         if (isRejected)
         {
-            changeStatus(restaurantUserId, orderId, OrderStatus.REJECTED);
+            changeStatus(restaurantManagerId, orderId, OrderStatus.REJECTED);
         } else
         {
-            changeStatus(restaurantUserId, orderId, OrderStatus.ACCEPTED);
-            changeStatus(restaurantUserId, orderId, OrderStatus.READY);
+            changeStatus(restaurantManagerId, orderId, OrderStatus.ACCEPTED);
+            changeStatus(restaurantManagerId, orderId, OrderStatus.READY);
             long agentId = deliveryAgent("agent");
             orders.updateDeliveryAgentOrder(agentId, orderId, new UpdateDeliveryAgentOrderDTO(DeliveryAction.TAKE));
             orders.updateDeliveryAgentOrder(agentId, orderId, new UpdateDeliveryAgentOrderDTO(DeliveryAction.PICK_UP));
             orders.updateDeliveryAgentOrder(agentId, orderId, new UpdateDeliveryAgentOrderDTO(DeliveryAction.DELIVER));
         }
 
-        request(restaurantUserId).contentType("application/json").body("{\"status\":\"ACCEPTED\"}")
+        request(restaurantManagerId).contentType("application/json").body("{\"status\":\"ACCEPTED\"}")
                 .patch("/v1/restaurant/orders/{id}", orderId).then().statusCode(409);
 
         request(customerId).get(NOTIFICATIONS).then().statusCode(expected)
@@ -86,18 +86,18 @@ class OrderNotificationControllerTest extends OrderTestData
     {
         long customerId = customer();
         long restaurantId = restaurant("Lunch restaurant", true);
-        long restaurantUserId = restaurantUser("lunch@example.test", restaurantId);
+        long restaurantManagerId = restaurantManager("lunch@example.test", restaurantId);
         long itemId = item(menu(restaurantId, "Lunch", true), "Kebab", true);
         long orderId = place(customerId, itemId);
-        changeStatus(restaurantUserId, orderId, OrderStatus.ACCEPTED);
-        changeStatus(restaurantUserId, orderId, OrderStatus.READY);
+        changeStatus(restaurantManagerId, orderId, OrderStatus.ACCEPTED);
+        changeStatus(restaurantManagerId, orderId, OrderStatus.READY);
         int id = request(customerId).get(NOTIFICATIONS).then().statusCode(200).extract().path("[0].id");
 
         RequestSpecification actor = switch (requester)
         {
             case "OWNER", "UNKNOWN", "INVALID" -> request(customerId);
             case "OTHER" -> request(user("other@example.test", "CUSTOMER"));
-            case "RESTAURANT" -> request(restaurantUserId);
+            case "RESTAURANT" -> request(restaurantManagerId);
             case "DELIVERY_AGENT" -> request(deliveryAgent("agent"));
             default -> given().port(port);
         };
@@ -137,12 +137,12 @@ class OrderNotificationControllerTest extends OrderTestData
                 WHERE id = (SELECT profile_id FROM users WHERE id = ?)
                 """, phoneNumber, language, customerId);
         long restaurantId = restaurant("Lunch restaurant", true);
-        long restaurantUserId = restaurantUser("lunch@example.test", restaurantId);
+        long restaurantManagerId = restaurantManager("lunch@example.test", restaurantId);
         long itemId = item(menu(restaurantId, "Lunch", true), "Kebab", true);
         long orderId = place(customerId, itemId);
 
         transactions.executeWithoutResult(transaction -> {
-            changeStatus(restaurantUserId, orderId, OrderStatus.ACCEPTED);
+            changeStatus(restaurantManagerId, orderId, OrderStatus.ACCEPTED);
             verifyNoInteractions(sms);
             if (isRolledBack)
             {
@@ -173,8 +173,8 @@ class OrderNotificationControllerTest extends OrderTestData
                 .id();
     }
 
-    private void changeStatus(long restaurantUserId, long orderId, OrderStatus status)
+    private void changeStatus(long restaurantManagerId, long orderId, OrderStatus status)
     {
-        orders.updateRestaurantOrderStatus(restaurantUserId, orderId, new UpdateRestaurantOrderStatusDTO(status));
+        orders.updateRestaurantOrderStatus(restaurantManagerId, orderId, new UpdateRestaurantOrderStatusDTO(status));
     }
 }
