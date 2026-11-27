@@ -1,6 +1,6 @@
 # Glossary
 
-**Version:** 1.0 · **Date:** 2026-11-27
+**Version:** 1.1 · **Date:** 2026-11-27
 
 The domain language of MTOGO. Code, issues, specs and documentation call each concept by the name recorded here, as described in [CONTRIBUTING](../CONTRIBUTING.md#language). Terms are added while an issue is grilled.
 
@@ -165,8 +165,23 @@ _Avoid_: Volume tier, level, discount tier
 The sales tier from 0 DKK, which applies to every restaurant without its own scale or a higher tier.
 _Avoid_: Standard rate, base scale
 
+### Delivery bonuses
+
+**Delivery bonus**:
+Performance pay earned by a delivery agent for completing a delivery.
+_Avoid_: Tip, service fee
+
+**Bonus period**:
+The calendar month in Copenhagen in which a delivery earns its delivery bonus.
+_Avoid_: Pay period
+
+**Bonus cap**:
+The most a delivery can earn in bonus, based on its commission.
+_Avoid_: Bonus budget
+
 ## Changelog
 
 | Version | Date       | Change               | Issue |
 | ------- | ---------- | -------------------- | ----- |
 | 1.0     | 2026-11-27 | Add maintenance mode | #99   |
+| 1.1     | 2026-11-27 | Add delivery bonuses | #25   |

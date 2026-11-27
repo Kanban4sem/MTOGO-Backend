@@ -1,0 +1,14 @@
+total,commission,deliveredAt,deliveryRating,expected,reason
+125.00,6.00,2026-11-10T06:59:59.999999Z,NULL,1.00,Just before local 08:00
+125.00,6.00,2026-11-10T07:00:00Z,NULL,0.75,At local 08:00
+125.00,6.00,2026-11-10T07:00:00.000001Z,4,0.75,Rating four and just after local 08:00
+125.00,6.00,2026-11-10T20:59:59.999999Z,5,0.90,Rating five and just before local 22:00
+125.00,6.00,2026-11-10T21:00:00Z,6,1.30,Rating six and exactly local 22:00
+125.00,6.00,2026-11-10T21:00:00.000001Z,NULL,1.00,Just after local 22:00
+125.00,6.00,2026-07-10T20:00:00Z,NULL,1.00,Local 22:00 during summer time
+125.00,0.00,2026-11-10T21:00:00Z,6,0.00,Zero commission leaves no bonus despite the service fee
+125.00,2.99,2026-11-10T12:00:00Z,NULL,0.74,One ore of commission below the exact cap
+125.00,3.00,2026-11-10T12:00:00Z,NULL,0.75,Uncapped amount equals the cap
+125.00,3.01,2026-11-10T12:00:00Z,NULL,0.75,One ore of commission above the exact cap
+125.84,6.00,2026-11-10T12:00:00Z,NULL,0.76,Round the order value component to the nearest ore
+125.84,3.02,2026-11-10T12:00:00Z,NULL,0.75,Round a half ore cap down

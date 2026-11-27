@@ -36,6 +36,19 @@ public interface OrderRepository extends JpaRepository<Order, Long>
 
     long countByStatusAndDeliveryAgentIsNull(OrderStatus status);
 
+    @Query("""
+            select new mtogo.feature.order.data.BonusDelivery(o.total, o.commission, c.changedAt, f.deliveryRating)
+            from Order o
+            join o.statusChanges c
+            left join OrderFeedback f on f.order = o
+            where o.deliveryAgent.id = :agentId
+              and o.status = mtogo.feature.order.domain.OrderStatus.DELIVERED
+              and c.status = mtogo.feature.order.domain.OrderStatus.DELIVERED
+              and c.changedAt >= :from and c.changedAt < :until
+            """)
+    List<BonusDelivery> findBonusDeliveries(@Param("agentId") Long agentId, @Param("from") Instant from,
+            @Param("until") Instant until);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from Order o where o.id = :id")
     Optional<Order> findByIdForUpdate(@Param("id") Long id);

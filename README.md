@@ -28,7 +28,7 @@ The order endpoints that a role uses live under that role's path, and each role 
 
 - **Customer:** `POST /v1/orders` places and pays for an order. `GET /v1/customer/orders` and `GET /v1/customer/orders/{id}` show the customer's orders and their status. `/v1/customer/orders/notifications` lists the status changes and marks them as read.
 - **Restaurant:** `GET /v1/restaurant/orders` lists the restaurant's orders. `PATCH /v1/restaurant/orders/{id}` accepts or rejects a placed order, or marks an accepted order as ready.
-- **Delivery agent:** `GET /v1/delivery-agent/orders` lists the ready orders no one has taken, and the agent's own orders. `PATCH /v1/delivery-agent/orders/{id}` takes a ready order, or marks it as picked up or delivered.
+- **Delivery agent:** `GET /v1/delivery-agent/orders` lists the ready orders no one has taken, and the agent's own orders. `PATCH /v1/delivery-agent/orders/{id}` takes a ready order, or marks it as picked up or delivered. `GET /v1/delivery-agent/bonuses?month=2026-11` returns the agent's delivery count and bonus in DKK for the selected Copenhagen calendar month. Omit `month` for the current month.
 - **Admin:** `GET /v1/admin/dashboard` shows the management dashboard. `GET /v1/admin/commission-scales` shows the commission scales, `PUT /v1/admin/commission-scales/tiers` replaces the sales tiers, and `PUT` and `DELETE /v1/admin/commission-scales/restaurants/{id}` give, change or remove a restaurant's own scale.
 
 Why a role's path is singular is in the [coding standards](docs/coding-standards.md).

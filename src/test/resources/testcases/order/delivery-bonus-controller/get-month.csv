@@ -1,0 +1,9 @@
+month,expected,reason
+2026-11,200,A past month with no deliveries
+2026-12,200,The current month in Copenhagen
+2027-01,400,A future month
+2026-00,400,Month below the valid range
+2026-13,400,Month above the valid range
+2026-1,400,Month must have two digits
+0000-12,400,Year zero is invalid
+"",400,An explicit empty month is invalid
